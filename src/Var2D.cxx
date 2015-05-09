@@ -298,6 +298,7 @@ void Var2D::FillAsymmetry(double xval, double yval, double eta1, double eta2, do
   else m_hist_bwd->Fill(xval,yval,w);
 }
 
+#ifdef WITHPYTHON
 PyObject* Var2D::GetHist_py(){
   TH2F* newCxxObj = new TH2F(*m_hist);
   return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
@@ -311,3 +312,4 @@ PyObject* Var2D::GetProfile2_py(){
   TProfile* newCxxObj = new TProfile(*m_prof2);
   return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
 }
+#endif

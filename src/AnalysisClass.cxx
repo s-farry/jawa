@@ -40,20 +40,11 @@ void AnalysisClass::AddTemplate(string name, TTree* t){
   m_templates.insert(std::pair<string,Template*>(temp->GetName(),temp));
 }
 
-void AnalysisClass::AddTemplate1_py(string name, PyObject* pyt){
-  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
-  AddTemplate(name, t);
-}
 void AnalysisClass::AddTemplate(string name, TTree* t, enum EColor color){
   m_stackorder.push_back(name);
   m_fitorder.push_back(name);
   Template* temp = new Template(name, t, m_selcut, color);
   m_templates.insert(std::pair<string,Template*>(temp->GetName(),temp));
-}
-void AnalysisClass::AddTemplate3_py(string name, PyObject* pyt, int color){
-  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
-  enum EColor col = (enum EColor)color;
-  AddTemplate(name, t, col);
 }
 
 void AnalysisClass::AddTemplate(string name, TTree* t, TCut cut){
@@ -64,18 +55,6 @@ void AnalysisClass::AddTemplate(string name, TTree* t, TCut cut){
   
 }
 
-void AnalysisClass::AddTemplate2_py(string name, PyObject* pyt, PyObject* pycut){
-  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
-  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
-  AddTemplate(name, t, *cut);
-}
-
-void AnalysisClass::AddTemplate4_py(string name, PyObject* pyt, PyObject* pycut, int color){
-  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
-  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
-  enum EColor col = (EColor)color;
-  AddTemplate(name, t, *cut, col);
-}
 void AnalysisClass::AddTemplate(string name, TTree* t, TCut cut, enum EColor color){
   m_stackorder.push_back(name);
   m_fitorder.push_back(name);
@@ -83,18 +62,11 @@ void AnalysisClass::AddTemplate(string name, TTree* t, TCut cut, enum EColor col
   m_templates.insert(std::pair<string,Template*>(temp->GetName(),temp));
 }
 
-void AnalysisClass::AddTemplate5_py(Template* t){
-  AddTemplate(t);
-}
 
 void AnalysisClass::SetData(string name, TTree* t){
   m_data = new Template(name,t,m_selcut);
 }
 
-void AnalysisClass::SetData_py(string name, PyObject* pyt){
-  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
-  SetData(name, t);
-}
 
 void AnalysisClass::SetData(string name, TTree* t, TCut cut){
   m_data = new Template(name,t,cut);
@@ -119,23 +91,6 @@ void AnalysisClass::NormaliseTemplates(double n){
 }
 
 
-PyObject* AnalysisClass::RedoFit_py(string var){
-  TFractionFitter* fit = RedoFit(var);
-  return TPython::ObjectProxy_FromVoidPtr(fit, fit->ClassName());
-}
-PyObject* AnalysisClass::TFracFit_py(string var){
-  TFractionFitter* fit = TFracFit(var);
-  return TPython::ObjectProxy_FromVoidPtr(fit, fit->ClassName());
-}
-PyObject* AnalysisClass::TFracFit3_py(string var1, string var2){
-  TFractionFitter* fit = TFracFit(var1, var2);
-  return TPython::ObjectProxy_FromVoidPtr(fit, fit->ClassName());
-}
-
-PyObject* AnalysisClass::TFracFit2_py(string var, double lo, double hi){
-  TFractionFitter* fit = TFracFit(var, lo, hi);
-  return TPython::ObjectProxy_FromVoidPtr(fit, fit->ClassName());
-}
 
 /*
 TFractionFitter* AnalysisClass::TFracFit(string var1, string var2){
@@ -196,10 +151,6 @@ TFractionFitter* AnalysisClass::TFracFit(string var1, string var2){
   return fit;
 }
 */
-PyObject* AnalysisClass::CombTFracFit_py(string var1, string var2){
-  TFractionFitter* fit = CombTFracFit(var1, var2); 
-  return TPython::ObjectProxy_FromVoidPtr(fit, fit->ClassName());
-}
 
 void AnalysisClass::ConstrainRatio(string tempA, string tempB, double r){
   pair<string, string> temps(tempA, tempB);
@@ -289,9 +240,6 @@ void AnalysisClass::ClearFitter(){
   m_fitter = NULL;
 }
 
-void AnalysisClass::AddFitter_py(string var){
-  AddFitter(var);
-}
 
 void AnalysisClass::UnscaleTemplates(){
   for (std::map<string,Template*>::iterator it = m_templates.begin() ; it != m_templates.end() ; ++it ){
@@ -353,9 +301,6 @@ void AnalysisClass::ApplyFitResults(bool combine){
 
 }
 
-void AnalysisClass::ApplyFitResults_py(){
-  ApplyFitResults();
-}
 
 TFractionFitter* AnalysisClass::TFracFit(string var1, string var2){
   //Helper function that performs the key TFracFit stages
@@ -432,12 +377,6 @@ void AnalysisClass::FillVars(){
 }
 
 
-void AnalysisClass::SaveToFile1_py(){
-  SaveToFile();
-}
-void AnalysisClass::SaveToFile2_py(string output){
-  SaveToFile(output);
-}
 
 void AnalysisClass::SaveToFile(string output){
   //cout<<"Saving to file for "<< (output == "") ? m_name : output<<endl;
@@ -476,44 +415,6 @@ void AnalysisClass::SaveToFile(string output){
 
 double AnalysisClass::GetChi2nDoF(){
   return double(m_fitchi2/m_ndof);
-}
-
-void AnalysisClass::AddVar1_py(string name, string var, int bins, double lo, double hi){
-  return AddVar(name, var, bins, lo, hi);
-}
-
-
-void AnalysisClass::AddVar2_py(boost::python::list& varlist){
-  if (len(varlist) == 5){
-    string name = boost::python::extract<string>(varlist[0]);
-    string var  = boost::python::extract<string>(varlist[1]);
-    int bins    = boost::python::extract<int>(varlist[2]);
-    double lo   = boost::python::extract<double>(varlist[3]);
-    double hi   = boost::python::extract<double>(varlist[4]);
-    AddVar(name, var, bins, lo, hi);
-  }
-  else if (len(varlist) == 3){
-    string name = boost::python::extract<string>(varlist[0]);
-    string var  = boost::python::extract<string>(varlist[1]);
-    boost::python::list ns = (boost::python::list)(varlist[2]);
-    AddVar3_py(name, var, ns);
-  }
-}
-
-void AnalysisClass::AddVar3_py(string name, string var, boost::python::list& ns){
-  std::vector<double> edges;
-  for (int i = 0; i < len(ns); ++i){
-    double val = boost::python::extract<double>(ns[i]);
-    edges.push_back(val);
-  }
-  AddVar(name, var, edges);
-}
-
-void AnalysisClass::AddVars_py(boost::python::list& ns){
-  for (int i = 0; i < len(ns); ++i){
-    boost::python::list var = (boost::python::list)ns[i];
-    AddVar2_py(var);
-  }
 }
 
 
@@ -588,19 +489,6 @@ void AnalysisClass::Add2DVar(string var1, string var2){
   }
 }
 
-void AnalysisClass::Add2DVars_py(boost::python::list& ns){
-  for (int i = 0; i < len(ns); ++i){
-    boost::python::list var = (boost::python::list)ns[i];
-    if (len(var) == 2){
-      string var1 = boost::python::extract<string>(var[0]);
-      string var2 = boost::python::extract<string>(var[1]);
-      Add2DVar(var1, var2);
-    }
-    else{
-      cout<<"Cannot Add 2D Variable - Wrong Dimensions"<<endl;
-    }
-  }
-}
 
 void AnalysisClass::StyleTemplates(){
  for(std::map<std::string,Template*>::iterator it = m_templates.begin(); it != m_templates.end(); ++it) {
@@ -661,16 +549,6 @@ THStack* AnalysisClass::GetStack(string name){
 
 }
 
-PyObject* AnalysisClass::GetStack_py(string name){
-  THStack* stack = GetStack(name);
-  if (stack){
-    return TPython::ObjectProxy_FromVoidPtr(stack, stack->ClassName());
-  }
-  else {
-    return 0;
-  }
-
-}
 
 THStack* AnalysisClass::MakeCombStack(string name){
   THStack *hs0 = new THStack((m_name + "_" + name+"_stack").c_str(), name.c_str());
@@ -699,10 +577,6 @@ THStack* AnalysisClass::MakeCombStack(string name){
   return hs0;
 }
 
-double AnalysisClass::GetLumi_py(PyObject* pyf){
-  TFile* f = (TFile*)(TPython::ObjectProxy_AsVoidPtr(pyf));
-  return GetLumi(f);
-}
 
 double AnalysisClass::GetLumi(TFile* f){
   TTree* lumit = (TTree*)f->Get("GetIntegratedLuminosity/LumiTuple");
@@ -745,12 +619,6 @@ void AnalysisClass::SetSelCut(TCut cut){
   m_selcut = cut;
 }
 
-void AnalysisClass::SetSelCut_py(PyObject* pycut){
-
-  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
-  SetSelCut(*cut);
-
-}
 
 string AnalysisClass::GetName(){return m_name;}
 
@@ -841,6 +709,159 @@ void AnalysisClass::SetToStack(vector<string> toStack){ m_stackorder = toStack;}
 vector<string> AnalysisClass::GetToStack(){ return m_stackorder;}
 
 
+
+TCanvas* AnalysisClass::DrawFitted(){
+  string var = m_fitter ? m_fitter->GetVar(): "";
+  TCanvas* c1 = new TCanvas();
+  THStack* stack = GetStack(var);
+  if (stack){
+    stack->Draw("hist");
+  }
+  else cout<<"No stack found"<<endl;
+  if (m_data->GetVar(var)){
+    m_data->GetVar(var)->GetHist()->Draw("e1same");
+  }
+  if (m_fit){
+    m_fit->Draw("same");
+  }
+  else cout <<"No variable "<<var<<" found in data template"<<endl;
+  return c1;
+}
+
+#ifdef WITHPYTHON
+void AnalysisClass::AddTemplate1_py(string name, PyObject* pyt){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
+  AddTemplate(name, t);
+}
+void AnalysisClass::AddTemplate2_py(string name, PyObject* pyt, PyObject* pycut){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
+  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
+  AddTemplate(name, t, *cut);
+}
+void AnalysisClass::AddTemplate3_py(string name, PyObject* pyt, int color){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
+  enum EColor col = (enum EColor)color;
+  AddTemplate(name, t, col);
+}
+
+void AnalysisClass::AddTemplate4_py(string name, PyObject* pyt, PyObject* pycut, int color){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
+  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
+  enum EColor col = (EColor)color;
+  AddTemplate(name, t, *cut, col);
+}
+void AnalysisClass::AddTemplate5_py(Template* t){
+  AddTemplate(t);
+}
+void AnalysisClass::SetData_py(string name, PyObject* pyt){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
+  SetData(name, t);
+}
+PyObject* AnalysisClass::RedoFit_py(string var){
+  TFractionFitter* fit = RedoFit(var);
+  return TPython::ObjectProxy_FromVoidPtr(fit, fit->ClassName());
+}
+PyObject* AnalysisClass::TFracFit_py(string var){
+  TFractionFitter* fit = TFracFit(var);
+  return TPython::ObjectProxy_FromVoidPtr(fit, fit->ClassName());
+}
+PyObject* AnalysisClass::TFracFit3_py(string var1, string var2){
+  TFractionFitter* fit = TFracFit(var1, var2);
+  return TPython::ObjectProxy_FromVoidPtr(fit, fit->ClassName());
+}
+
+PyObject* AnalysisClass::TFracFit2_py(string var, double lo, double hi){
+  TFractionFitter* fit = TFracFit(var, lo, hi);
+  return TPython::ObjectProxy_FromVoidPtr(fit, fit->ClassName());
+}
+PyObject* AnalysisClass::CombTFracFit_py(string var1, string var2){
+  TFractionFitter* fit = CombTFracFit(var1, var2); 
+  return TPython::ObjectProxy_FromVoidPtr(fit, fit->ClassName());
+}
+void AnalysisClass::AddFitter_py(string var){
+  AddFitter(var);
+}
+void AnalysisClass::ApplyFitResults_py(){
+  ApplyFitResults();
+}
+void AnalysisClass::SaveToFile1_py(){
+  SaveToFile();
+}
+void AnalysisClass::SaveToFile2_py(string output){
+  SaveToFile(output);
+}
+void AnalysisClass::AddVar1_py(string name, string var, int bins, double lo, double hi){
+  return AddVar(name, var, bins, lo, hi);
+}
+
+
+void AnalysisClass::AddVar2_py(boost::python::list& varlist){
+  if (len(varlist) == 5){
+    string name = boost::python::extract<string>(varlist[0]);
+    string var  = boost::python::extract<string>(varlist[1]);
+    int bins    = boost::python::extract<int>(varlist[2]);
+    double lo   = boost::python::extract<double>(varlist[3]);
+    double hi   = boost::python::extract<double>(varlist[4]);
+    AddVar(name, var, bins, lo, hi);
+  }
+  else if (len(varlist) == 3){
+    string name = boost::python::extract<string>(varlist[0]);
+    string var  = boost::python::extract<string>(varlist[1]);
+    boost::python::list ns = (boost::python::list)(varlist[2]);
+    AddVar3_py(name, var, ns);
+  }
+}
+
+void AnalysisClass::AddVar3_py(string name, string var, boost::python::list& ns){
+  std::vector<double> edges;
+  for (int i = 0; i < len(ns); ++i){
+    double val = boost::python::extract<double>(ns[i]);
+    edges.push_back(val);
+  }
+  AddVar(name, var, edges);
+}
+
+void AnalysisClass::AddVars_py(boost::python::list& ns){
+  for (int i = 0; i < len(ns); ++i){
+    boost::python::list var = (boost::python::list)ns[i];
+    AddVar2_py(var);
+  }
+}
+
+void AnalysisClass::Add2DVars_py(boost::python::list& ns){
+  for (int i = 0; i < len(ns); ++i){
+    boost::python::list var = (boost::python::list)ns[i];
+    if (len(var) == 2){
+      string var1 = boost::python::extract<string>(var[0]);
+      string var2 = boost::python::extract<string>(var[1]);
+      Add2DVar(var1, var2);
+    }
+    else{
+      cout<<"Cannot Add 2D Variable - Wrong Dimensions"<<endl;
+    }
+  }
+}
+
+PyObject* AnalysisClass::GetStack_py(string name){
+  THStack* stack = GetStack(name);
+  if (stack){
+    return TPython::ObjectProxy_FromVoidPtr(stack, stack->ClassName());
+  }
+  else {
+    return 0;
+  }
+
+}
+double AnalysisClass::GetLumi_py(PyObject* pyf){
+  TFile* f = (TFile*)(TPython::ObjectProxy_AsVoidPtr(pyf));
+  return GetLumi(f);
+}
+void AnalysisClass::SetSelCut_py(PyObject* pycut){
+
+  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
+  SetSelCut(*cut);
+
+}
 void AnalysisClass::SetToFit_py(boost::python::list& ns){ 
   vector<string> toFit;
   for (int i = 0; i < len(ns); ++i){
@@ -876,25 +897,6 @@ boost::python::list AnalysisClass::GetToStack_py(){
 
   return l;
 }
-
-TCanvas* AnalysisClass::DrawFitted(){
-  string var = m_fitter ? m_fitter->GetVar(): "";
-  TCanvas* c1 = new TCanvas();
-  THStack* stack = GetStack(var);
-  if (stack){
-    stack->Draw("hist");
-  }
-  else cout<<"No stack found"<<endl;
-  if (m_data->GetVar(var)){
-    m_data->GetVar(var)->GetHist()->Draw("e1same");
-  }
-  if (m_fit){
-    m_fit->Draw("same");
-  }
-  else cout <<"No variable "<<var<<" found in data template"<<endl;
-  return c1;
-}
-
 PyObject* AnalysisClass::DrawFitted_py(){
   TCanvas* c1 = DrawFitted();
   if (c1){
@@ -904,3 +906,5 @@ PyObject* AnalysisClass::DrawFitted_py(){
 
     
 }
+
+#endif

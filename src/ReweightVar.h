@@ -19,11 +19,13 @@ class ReweightVar{
  public:
   ReweightVar(string name, TH1F* hist);
   ReweightVar(string name1, string name2, TH2F* hist);
-  ReweightVar(string name, TF1 func);
+  ReweightVar(string name, TF1* func);
   ReweightVar(string name1, TH1F* hist1, string name2, TH1F* hist2);
-  ReweightVar(string name1, string name2, TH2F* hist, string name3, string name4, TH2F* hist2);
   ReweightVar(string name, std::map<int,double> map);
   ReweightVar(string weight);
+
+  enum WeightType{Hist1D, Hist2D, Func, Leaf, Vect};
+  
   //~ReweightVar();
   double GetWeight(double val);
   double GetWeight(double val1, double val2);
@@ -38,22 +40,15 @@ class ReweightVar{
   string GetWeightName();
 
 
+
  private:
   vector<string> m_names;
   vector<Expr*> m_exprs;
   vector<TH1F*>  m_hists;
   vector<TH2F*>  m_2dhists;
-  TF1 m_func;
+  TF1* m_func;
   std::map<int,double> m_vect;
   string m_weightname;
-
-  bool m_weighthist;
-  bool m_weightfunc;
-  bool m_weightvect;
-  bool m_weightleaf;
-  bool m_weight2dhist;
-
-
-
+  WeightType m_weighttype;  
 };
 #endif

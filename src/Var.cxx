@@ -205,10 +205,6 @@ void Var::SmearHist(){
   }
 }
 
-PyObject* Var::GetHist_py(){
-  TH1F* newCxxObj = new TH1F(*m_hist);
-  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
-}
 /*
 DataType::DataType(double dbl){
   d = dbl;
@@ -297,24 +293,8 @@ int Var::FindBin(double val){
   return bin;
 }
 
-double Var::GetVal_py(boost::python::list& input){
-  vector<double> dbl_vec;
-  for (unsigned int i = 0; i < len(input); ++i){
-    double d = boost::python::extract<double>(input[i]);
-    dbl_vec.push_back(d);
-  }
-  return GetVal(dbl_vec);
-}
 
 std::vector<string> Var::GetVarNames(){ return m_expr->GetVarNames();}
-boost::python::list Var::GetVarNames_py(){ 
-  boost::python::list l;
-  vector<string> varnames = GetVarNames();
-    for (vector<string>::iterator is = varnames.begin(); is != varnames.end(); ++is){
-    l.append((*is));
-  }
-  return l;
-}
 
 void Var::SetVarExp(string varexp){
   m_expr = new Expr(varexp);
@@ -322,29 +302,11 @@ void Var::SetVarExp(string varexp){
 
 std::vector<double> Var::GetEdges(){ return m_edges;}
 
-boost::python::list Var::GetEdges_py(){
-  vector<double> edges = m_edges;
-  boost::python::object get_iter = boost::python::iterator<std::vector<double> >();
-  boost::python::object iter = get_iter(edges);
-  boost::python::list l(iter);
-  return l;
-}
 
 void Var::Draw(const char* options){
   m_hist->Draw(options);
 }
 
-void Var::Draw1_py(){ Draw();}
-void Var::Draw2_py(const char* options) {Draw(options);}
-
-std::vector<double> Var::GetBinEdges(TH1F* hist){
-  int nbins = hist->GetNbinsX();
-  std::vector<double> edges;
-  for (int i = 0; i <nbins+1 ; ++i){
-    edges.push_back(hist->GetBinLowEdge(i+1));
-  }
-  return edges;
-}
 std::vector<double> Var::GetBinEdges(TGraphAsymmErrors* graph){
   double x = 0.0, y = 0.0;
   std::vector<double> edges;
@@ -362,6 +324,51 @@ std::vector<double> Var::GetBinEdges(TGraphAsymmErrors* graph){
   return edges;
 }
 
+
+bool is_number(const std::string& s){
+  return (strspn( s.c_str(), "-.01234567890") == s.size() );
+}
+//python files
+#ifdef WITHPYTHON
+
+PyObject* Var::GetHist_py(){
+  TH1F* newCxxObj = new TH1F(*m_hist);
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
+double Var::GetVal_py(boost::python::list& input){
+  vector<double> dbl_vec;
+  for (unsigned int i = 0; i < len(input); ++i){
+    double d = boost::python::extract<double>(input[i]);
+    dbl_vec.push_back(d);
+  }
+  return GetVal(dbl_vec);
+}
+boost::python::list Var::GetVarNames_py(){ 
+  boost::python::list l;
+  vector<string> varnames = GetVarNames();
+    for (vector<string>::iterator is = varnames.begin(); is != varnames.end(); ++is){
+    l.append((*is));
+  }
+  return l;
+}
+boost::python::list Var::GetEdges_py(){
+  vector<double> edges = m_edges;
+  boost::python::object get_iter = boost::python::iterator<std::vector<double> >();
+  boost::python::object iter = get_iter(edges);
+  boost::python::list l(iter);
+  return l;
+}
+void Var::Draw1_py(){ Draw();}
+void Var::Draw2_py(const char* options) {Draw(options);}
+
+std::vector<double> Var::GetBinEdges(TH1F* hist){
+  int nbins = hist->GetNbinsX();
+  std::vector<double> edges;
+  for (int i = 0; i <nbins+1 ; ++i){
+    edges.push_back(hist->GetBinLowEdge(i+1));
+  }
+  return edges;
+}
 boost::python::list Var::GetBinEdges_py(PyObject* pyObj){
   TH1F* hist = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
   TGraphAsymmErrors* graph = (TGraphAsymmErrors*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
@@ -378,7 +385,5 @@ boost::python::list Var::GetBinEdges_py(PyObject* pyObj){
   return l;
 }
 
-bool is_number(const std::string& s){
-  return (strspn( s.c_str(), "-.01234567890") == s.size() );
-}
 
+#endif

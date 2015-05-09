@@ -34,12 +34,8 @@ class Expr{
   double GetVal(std::vector<double>& input);
   void SetVarExp(string varexp);
 
-  //pair< vector<string>, vector<string> > GetBracketExp(string varexp);
-  //boost::python::list GetBracketExp_py(string varexp);
   vector<string>& GetVarNames();
 
-  //vector<Expr*> GetExpressions();
-  //boost::python::list GetExpressions_py();
   static bool is_number(const std::string& s);
   bool isInExpr(string var);
   int VarIdx(string var);

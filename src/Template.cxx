@@ -19,12 +19,8 @@ using namespace std;
 
 void Template::Init(){
 
-  m_reweight = false;
   m_fixed = false;
   m_asymm = false;
-  m_reweightfunc = false;
-  m_reweight_map = false;
-  m_reweight_hist = false;
   m_verbose = false;
   m_fitFrac = 0;
   m_fitFracErr = 0;
@@ -63,12 +59,8 @@ Template::Template(string name, PyObject* pyt, PyObject* pycut){
   m_name = name;
   m_trees.push_back(new Tree(name+"_tree", t, 1.0));
   m_selcut = (*cut);
-  m_reweight = false;
   m_fixed = false;
   m_asymm = false;
-  m_reweightfunc = false;
-  m_reweight_map = false;
-  m_reweight_hist = false;
   m_fillTree = false;
   m_verbose = false;
   m_fitFrac = 0;
@@ -168,27 +160,6 @@ Tree* Template::GetTree(string name){
 
 }
 
-Tree* Template::GetTree1_py(){
-  return GetTree();
-}
-Tree* Template::GetTree2_py(string name){
-  return GetTree(name);
-}
-
-
-void Template::SetTree_py(PyObject* pyObj){
-  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  SetTree(t);
-}
-
-void Template::SetTree2_py(PyObject* pyObj, double w){
-  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  SetTree(t, w);
-}
-void Template::AddTree_py(string name, PyObject* pyObj){
-  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  AddTree(name, t);
-}
 
 void Template::SetTrees(vector<TTree*>& trees){
   for (std::vector<TTree*>::iterator it = trees.begin(); it != trees.end(); ++it){
@@ -196,15 +167,6 @@ void Template::SetTrees(vector<TTree*>& trees){
   }
 }
 
-void Template::SetTrees_py(boost::python::list& ns){
-  for (int i = 0; i < len(ns); ++i){
-    boost::python::object obj = ns[i];
-    //PyObject* pyObj = boost::python::extract<PyObject*>(ns[i]);
-    PyObject* pyObj = obj.ptr();
-    TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-    SetTree(t);
-  }
-}
 
 void Template::SetTree(TTree* t){
   m_trees.push_back(new Tree(m_name+"_tree", t, 1.0));
@@ -262,22 +224,12 @@ Var3D* Template::Get3DVar(string name){
   return 0;
 }
 
-Var2D* Template::Get2DVar_py(string name1, string name2){
-  return Get2DVar(name1, name2);
-}
-
-Var3D* Template::Get3DVar_py(string name1, string name2, string name3){
-  return Get3DVar(name1, name2, name3);
-}
 
 void Template::SetFitFrac(double f, double err){
   m_fitFrac = f;
   m_fitFracErr = err;
 }
 
-void Template::SetFitFrac_py(double f, double err){
-  SetFitFrac(f, err);
-}
 
 void Template::IsVerbose(){
   m_verbose=true;
@@ -287,10 +239,6 @@ void Template::SetSelCut(TCut cut){
   m_selcut = cut;
 }
 
-void Template::SetSelCut_py(PyObject* pyObj){
-  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  SetSelCut((*cut));
-}
 
 void Template::ApplyCut(){
   m_evts = 0;
@@ -311,9 +259,6 @@ void Template::ApplyCut(){
   m_normN = 0;
 }
 
-void Template::AddVar1_py(string name, string var, int bins, double lo, double hi){
-  AddVar(name, var, bins, lo, hi);
-}
 
 void Template::AddVar(string name, string var, int bins, double lo, double hi, string prefix){
   if (prefix == "") prefix = m_name;
@@ -384,78 +329,6 @@ void Template::Add3DVar(string name, string var1, string var2, string var3, stri
 }
 
 
-void Template::Add2DVar_py(boost::python::list& var){
-  if (len(var) == 2){
-    string var1 = boost::python::extract<string>(var[0]);
-    string var2 = boost::python::extract<string>(var[1]);
-    Add2DVar(var1, var2);
-  }
-}
-void Template::Add3DVar_py(boost::python::list& var){
-  if (len(var) == 3){
-    string var1 = boost::python::extract<string>(var[0]);
-    string var2 = boost::python::extract<string>(var[1]);
-    string var3 = boost::python::extract<string>(var[2]);
-    Add3DVar(var1, var2, var3);
-  }
-  else{
-    cout<<"Can't add 3D Var"<<endl;
-  }
-}
-
-void Template::Add2DVars_py(boost::python::list& varlist){
-  for (int i = 0; i < len(varlist); ++i){
-    boost::python::list ns = (boost::python::list)(varlist[i]);
-    Add2DVar_py(ns);
-  }
-}
-void Template::Add3DVars_py(boost::python::list& varlist){
-  for (int i = 0; i < len(varlist); ++i){
-    boost::python::list ns = (boost::python::list)(varlist[i]);
-    Add3DVar_py(ns);
-  }
-}
-
-void Template::AddVar2_py(boost::python::list& varlist){
-  if (len(varlist) == 5){
-    string name = boost::python::extract<string>(varlist[0]);
-    string var  = boost::python::extract<string>(varlist[1]);
-    int bins    = boost::python::extract<int>(varlist[2]);
-    double lo   = boost::python::extract<double>(varlist[3]);
-    double hi   = boost::python::extract<double>(varlist[4]);
-    AddVar(name, var, bins, lo, hi);
-  }
-  else if (len(varlist) == 3){
-    string name = boost::python::extract<string>(varlist[0]);
-    string var  = boost::python::extract<string>(varlist[1]);
-    boost::python::list ns = (boost::python::list)(varlist[2]);
-    AddVar3_py(name, var, ns);
-  }
-}
-
-void Template::AddVar3_py(string name, string var, boost::python::list& ns){
-  std::vector<double> edges;
-  for (int i = 0; i < len(ns); ++i){
-    double val = boost::python::extract<double>(ns[i]);
-    edges.push_back(val);
-  }
-  AddVar(name, var, edges,"");
-}
-
-void Template::SetVars_py(boost::python::list& ns){
-  m_variables.clear();
-  for (int i = 0; i < len(ns); ++i){
-    boost::python::list var = (boost::python::list)ns[i];
-    AddVar2_py(var);
-  }
-}
-
-void Template::AddVars_py(boost::python::list& ns){
-  for (int i = 0; i < len(ns); ++i){
-    boost::python::list var = (boost::python::list)ns[i];
-    AddVar2_py(var);
-  }
-}
 
 
 void Template::SetName(string name){
@@ -517,19 +390,13 @@ void Template::FillVars(){
       tree->SetBranches(varnames);
     }
     if (m_verbose) cout<<"Branches set for vars"<<endl;
-    for (std::vector<ReweightVar>::iterator iv = m_reweightvariables.begin(); iv!=m_reweightvariables.end();++iv){
+    for (std::vector<ReweightVar*>::iterator iv = m_reweightvariables.begin(); iv!=m_reweightvariables.end();++iv){
       vector<string> rwnames;
-      vector<Expr*> exprs = (*iv).GetExprs();
+      vector<Expr*> exprs = (*iv)->GetExprs();
       for (vector<Expr*>::iterator ie = exprs.begin(); ie != exprs.end(); ++ie){
 	vector<string> names = (*ie)->GetVarNames();
 	rwnames.insert(rwnames.end(), names.begin(), names.end());
       } 
-	  //
-	  //rwnames = (*iv).GetExpr()->GetVarNames();
-	  //}
-	  //else{
-	  //rwnames = (*iv).GetNames();
-	  //}
       tree->SetBranches(rwnames);
     }
     
@@ -551,26 +418,19 @@ void Template::FillVars(){
       double w = tree_w;
 
       // Get The Weight
-      for (std::vector<ReweightVar>::iterator iv = m_reweightvariables.begin(); iv!=m_reweightvariables.end();++iv){
-	if ((*iv).GetNames().size() == 1){
-	  string var = (*iv).GetName();
-	  Expr* e  = (*iv).GetExprs()[0];
+      for (std::vector<ReweightVar*>::iterator iv = m_reweightvariables.begin(); iv!=m_reweightvariables.end();++iv){
+	if ((*iv)->GetExprs().size() == 1){
+	  string var = (*iv)->GetName();
+	  Expr* e  = (*iv)->GetExprs()[0];
 	  double val = tree->GetVal(e);
-	  w = w * ((*iv).GetWeight(val));
+	  w = w * ((*iv)->GetWeight(val));
 	}
-	else if ((*iv).GetNames().size() == 2){
-	  Expr* e1 = (*iv).GetExprs().at(0);
-	  Expr* e2 = (*iv).GetExprs().at(1);
+	else if ((*iv)->GetExprs().size() == 2){
+	  Expr* e1 = (*iv)->GetExprs().at(0);
+	  Expr* e2 = (*iv)->GetExprs().at(1);
 	  double val1 = tree->GetVal(e1);
 	  double val2 = tree->GetVal(e2);
-	  w = w * ((*iv).GetWeight(val1, val2));
-	}
-	else if ((*iv).GetNames().size() == 4){
-	  double val1 = tree->GetVal((*iv).GetNames().at(0));
-	  double val2 = tree->GetVal((*iv).GetNames().at(1));
-	  double val3 = tree->GetVal((*iv).GetNames().at(2));
-	  double val4 = tree->GetVal((*iv).GetNames().at(3));
-	  w = w * ((*iv).GetWeight(val1, val2, val3, val4));
+	  w = w * ((*iv)->GetWeight(val1, val2));
 	}
       }
       m_normN += w;
@@ -657,12 +517,6 @@ void Template::SetNormEvts(double evts){
     }*/
 }
 
-void Template::NormaliseToEvts1_py(double evts, bool fixed){
-  NormaliseToEvts(evts,fixed);
-}
-void Template::NormaliseToEvts2_py(double evts){
-  NormaliseToEvts(evts);
-}
 void Template::NormaliseToEvts(double evts, bool fixed){
   m_fixed = fixed;
   for (std::map<string, Var*>::iterator iv = m_variables.begin() ; iv != m_variables.end() ; ++iv ){
@@ -676,12 +530,6 @@ void Template::NormaliseToEvts(double evts, bool fixed){
   }
   m_normN = evts;
 }
-void Template::NormaliseToMC1_py(double xsec, double acc, double Lumi, double nEvts, bool fixed){
-  return NormaliseToMC(xsec, acc, Lumi, nEvts, fixed);
-}
-void Template::NormaliseToMC2_py(double xsec, double acc, double Lumi, double nEvts){
-  return NormaliseToMC(xsec, acc, Lumi, nEvts);
-}
 
 void Template::NormaliseToMC(double xsec, double acc, double Lumi, double nEvts, bool fixed){
   cout<<"Normalising to MC for: "<<m_name<<endl;
@@ -694,12 +542,6 @@ void Template::Unscale(){
   Scale(m_evts/m_normN);
 }
 
-void Template::Scale1_py(double scale, bool fixed){
-  Scale(scale,fixed);
-}
-void Template::Scale2_py(double scale){
-  Scale(scale);
-}
 void Template::Scale(double scale, bool fixed){
   m_fixed=fixed;
   m_normN = m_normN * scale;
@@ -715,92 +557,26 @@ void Template::Scale(double scale, bool fixed){
   }
 }
 
-void Template::Reweight1_py(string var, PyObject* tf1){
-  
-  TF1* f = (TF1*)(TPython::ObjectProxy_AsVoidPtr(tf1));
-  Reweight(var,*f);
-}
-void Template::Reweight2_py(string var, PyObject* pyObj){
-  
-  TH1F* hist = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  TF1*  f    = (TF1*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  if (strcmp(hist->ClassName(),"TH1F") == 0){
-    Reweight(var,hist);
-  }
-  else if (strcmp(f->ClassName(),"TF1") == 0){
-    Reweight(var,*f);
-  }
-  else{
-    cout<<hist->ClassName()<<" is not matched to any possibilities"<<endl;
-  }
-  //std::cout<<hist->ClassName()<<std::endl;
-  //Reweight(var,hist);
-}
-void Template::Reweight3_py(string var, PyObject* th1f, string var2, PyObject* th1f2){
-  
-  TH1F* hist  = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(th1f));
-  TH1F* hist2 = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(th1f2));
-  Reweight(var,hist, var2, hist2);
-}
-void Template::Reweight4_py(string var1, string var2, PyObject* th2f){
-  TH2F* hist  = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(th2f));
-  Reweight(var1, var2, hist);
-}
-void Template::Reweight5_py(string var1, string var2, PyObject* th2f, string var3, string var4, PyObject* th2f2){
-  TH2F* hist   = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(th2f));
-  TH2F* hist2  = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(th2f2));
-
-  Reweight(var1, var2, hist, var3, var4, hist2);
-}
-void Template::Reweight6_py(string leaf){
-  Reweight(leaf);
-}
 
 
 
-void Template::Reweight(string var, TF1 f){
-  m_reweight = true;
-  m_reweightfunc = true;
-  //m_reweightTF1 = (TF1*)f->Clone();
-  m_reweightTF1 = f;
-  //m_reweightTF1->SetBit(kCanDelete);
-  m_reweightvar = var;
-  ReweightVar v = ReweightVar(var,f);
+void Template::Reweight(string var, TF1* f){
+  ReweightVar* v = new ReweightVar(var,f);
   m_reweightvariables.push_back(v);
 }
 void Template::Reweight(string var, std::map<int,double> weights){
-  m_reweight = true;
-  m_reweightvar = var;
-  m_reweight_map = true;
-  m_reweightmap = weights;
-  m_reweightvariables.push_back(ReweightVar(var,weights));
+  m_reweightvariables.push_back(new ReweightVar(var,weights));
 }
 void Template::Reweight(string var, TH1F* scale){
-  m_reweight = true;
-  m_reweightvar = var;
-  m_reweight_hist = true;
-  //m_reweightTH1F = (TH1F*)scale->Clone();
-  m_reweightTH1F = (TH1F*)scale->Clone();
-  m_reweightvariables.push_back(ReweightVar(var,scale));
-}
-void Template::Reweight(string var, TH1F* scale, string var2, TH1F* scale2){
-  //m_reweight = true;
-  //m_reweightvar = var;
-  //m_reweight_hist = true;
-  //m_reweightTH1F = (TH1F*)scale->Clone();
-  //m_reweightTH1F = (TH1F*)scale->Clone();
-  m_reweightvariables.push_back(ReweightVar(var,scale, var2, scale2));
+  m_reweightvariables.push_back(new ReweightVar(var,scale));
 }
 
 void Template::Reweight(string var1, string var2, TH2F* scale){
-  m_reweightvariables.push_back(ReweightVar(var1,var2, scale));
-}
-void Template::Reweight(string var1, string var2, TH2F* scale, string var3, string var4, TH2F* scale2){
-  m_reweightvariables.push_back(ReweightVar(var1,var2, scale, var3, var4, scale2));
+  m_reweightvariables.push_back(new ReweightVar(var1,var2, scale));
 }
 
 void Template::Reweight(string weightname){
-  m_reweightvariables.push_back(ReweightVar(weightname));
+  m_reweightvariables.push_back(new ReweightVar(weightname));
 }
 
 void Template::SetStyle(enum EColor fillcolor){
@@ -808,10 +584,6 @@ void Template::SetStyle(enum EColor fillcolor){
   m_linecolor = fillcolor;
   m_fillstyle = 1001;
   m_fillcolor = fillcolor;
-  //m_linecolor = TColor(linecolor);
-  //m_fillstyle = 0;
-  //m_fillcolor = 0;
-
 
 };
 
@@ -835,21 +607,6 @@ void Template::SetStyle(enum EColor fillcolor, enum EColor linecolor, Style_t fi
 
 
 };
-void Template::SetStyle1_py(int fillcolor){
-  enum EColor col = (EColor)fillcolor;
-  SetStyle(col);
-}
-void Template::SetStyle2_py(int fillcolor, int linecolor){
-  enum EColor fillcol = (EColor)fillcolor;
-  enum EColor linecol = (EColor)linecolor;
-  SetStyle(fillcol, linecol);
-}
-void Template::SetStyle3_py(int fillcolor, int linecolor, int fillstyle){
-  enum EColor fillcol = (EColor)fillcolor;
-  enum EColor linecol = (EColor)linecolor;
-  Style_t fillsty = (Style_t)fillstyle;
-  SetStyle(fillcol, linecol, fillsty);
-}
 
 
 void Template::SaveToFile(){
@@ -873,11 +630,6 @@ TH1F* Template::GetHist(string name){
 
 }
 
-PyObject* Template::GetHist_py(string name){
-  TH1F* hist = GetHist(name);
-  if (hist) return TPython::ObjectProxy_FromVoidPtr(hist, hist->ClassName());
-  else return 0;
-}
 
 void Template::SaveToCurrentFile(){
   for (std::map<string, Var*>::iterator iv = m_variables.begin() ; iv != m_variables.end() ; ++iv ){
@@ -949,13 +701,6 @@ void Template::PrintVars(){
   }
 }
 
-boost::python::list Template::GetVariables_py(){
-  boost::python::list l;
-  for (map<string, Var* >::iterator im = m_variables.begin(); im != m_variables.end(); ++im){
-    l.append((*im).second);
-  }
-  return l;
-}
 
 
 string Template::GetRootName(const char* file){
@@ -977,3 +722,202 @@ string Template::GetRootName(const char* file){
   }
   return output;
 }
+
+#ifdef WITHPYTHON
+
+Tree* Template::GetTree1_py(){
+  return GetTree();
+}
+Tree* Template::GetTree2_py(string name){
+  return GetTree(name);
+}
+
+
+void Template::SetTree_py(PyObject* pyObj){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  SetTree(t);
+}
+
+void Template::SetTree2_py(PyObject* pyObj, double w){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  SetTree(t, w);
+}
+void Template::AddTree_py(string name, PyObject* pyObj){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  AddTree(name, t);
+}
+void Template::SetTrees_py(boost::python::list& ns){
+  for (int i = 0; i < len(ns); ++i){
+    boost::python::object obj = ns[i];
+    //PyObject* pyObj = boost::python::extract<PyObject*>(ns[i]);
+    PyObject* pyObj = obj.ptr();
+    TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+    SetTree(t);
+  }
+}
+Var2D* Template::Get2DVar_py(string name1, string name2){
+  return Get2DVar(name1, name2);
+}
+
+Var3D* Template::Get3DVar_py(string name1, string name2, string name3){
+  return Get3DVar(name1, name2, name3);
+}
+void Template::SetFitFrac_py(double f, double err){
+  SetFitFrac(f, err);
+}
+void Template::SetSelCut_py(PyObject* pyObj){
+  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  SetSelCut((*cut));
+}
+void Template::AddVar1_py(string name, string var, int bins, double lo, double hi){
+  AddVar(name, var, bins, lo, hi);
+}
+void Template::Add2DVar_py(boost::python::list& var){
+  if (len(var) == 2){
+    string var1 = boost::python::extract<string>(var[0]);
+    string var2 = boost::python::extract<string>(var[1]);
+    Add2DVar(var1, var2);
+  }
+}
+void Template::Add3DVar_py(boost::python::list& var){
+  if (len(var) == 3){
+    string var1 = boost::python::extract<string>(var[0]);
+    string var2 = boost::python::extract<string>(var[1]);
+    string var3 = boost::python::extract<string>(var[2]);
+    Add3DVar(var1, var2, var3);
+  }
+  else{
+    cout<<"Can't add 3D Var"<<endl;
+  }
+}
+
+void Template::Add2DVars_py(boost::python::list& varlist){
+  for (int i = 0; i < len(varlist); ++i){
+    boost::python::list ns = (boost::python::list)(varlist[i]);
+    Add2DVar_py(ns);
+  }
+}
+void Template::Add3DVars_py(boost::python::list& varlist){
+  for (int i = 0; i < len(varlist); ++i){
+    boost::python::list ns = (boost::python::list)(varlist[i]);
+    Add3DVar_py(ns);
+  }
+}
+
+void Template::AddVar2_py(boost::python::list& varlist){
+  if (len(varlist) == 5){
+    string name = boost::python::extract<string>(varlist[0]);
+    string var  = boost::python::extract<string>(varlist[1]);
+    int bins    = boost::python::extract<int>(varlist[2]);
+    double lo   = boost::python::extract<double>(varlist[3]);
+    double hi   = boost::python::extract<double>(varlist[4]);
+    AddVar(name, var, bins, lo, hi);
+  }
+  else if (len(varlist) == 3){
+    string name = boost::python::extract<string>(varlist[0]);
+    string var  = boost::python::extract<string>(varlist[1]);
+    boost::python::list ns = (boost::python::list)(varlist[2]);
+    AddVar3_py(name, var, ns);
+  }
+}
+
+void Template::AddVar3_py(string name, string var, boost::python::list& ns){
+  std::vector<double> edges;
+  for (int i = 0; i < len(ns); ++i){
+    double val = boost::python::extract<double>(ns[i]);
+    edges.push_back(val);
+  }
+  AddVar(name, var, edges,"");
+}
+
+void Template::SetVars_py(boost::python::list& ns){
+  m_variables.clear();
+  for (int i = 0; i < len(ns); ++i){
+    boost::python::list var = (boost::python::list)ns[i];
+    AddVar2_py(var);
+  }
+}
+
+void Template::AddVars_py(boost::python::list& ns){
+  for (int i = 0; i < len(ns); ++i){
+    boost::python::list var = (boost::python::list)ns[i];
+    AddVar2_py(var);
+  }
+}
+void Template::NormaliseToEvts1_py(double evts, bool fixed){
+  NormaliseToEvts(evts,fixed);
+}
+void Template::NormaliseToEvts2_py(double evts){
+  NormaliseToEvts(evts);
+}
+void Template::NormaliseToMC1_py(double xsec, double acc, double Lumi, double nEvts, bool fixed){
+  return NormaliseToMC(xsec, acc, Lumi, nEvts, fixed);
+}
+void Template::NormaliseToMC2_py(double xsec, double acc, double Lumi, double nEvts){
+  return NormaliseToMC(xsec, acc, Lumi, nEvts);
+}
+void Template::Scale1_py(double scale, bool fixed){
+  Scale(scale,fixed);
+}
+void Template::Scale2_py(double scale){
+  Scale(scale);
+}
+void Template::Reweight1_py(string var, PyObject* tf1){
+  
+  TF1* f = (TF1*)(TPython::ObjectProxy_AsVoidPtr(tf1));
+  Reweight(var,f);
+}
+void Template::Reweight2_py(string var, PyObject* pyObj){
+  
+  TH1F* hist = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  TF1*  f    = (TF1*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  if (strcmp(hist->ClassName(),"TH1F") == 0){
+    Reweight(var,hist);
+  }
+  else if (strcmp(f->ClassName(),"TF1") == 0){
+    Reweight(var,f);
+  }
+  else{
+    cout<<hist->ClassName()<<" is not matched to any possibilities"<<endl;
+  }
+  //std::cout<<hist->ClassName()<<std::endl;
+  //Reweight(var,hist);
+}
+void Template::Reweight4_py(string var1, string var2, PyObject* th2f){
+  TH2F* hist  = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(th2f));
+  Reweight(var1, var2, hist);
+}
+
+void Template::Reweight6_py(string leaf){
+  Reweight(leaf);
+}
+void Template::SetStyle1_py(int fillcolor){
+  enum EColor col = (EColor)fillcolor;
+  SetStyle(col);
+}
+void Template::SetStyle2_py(int fillcolor, int linecolor){
+  enum EColor fillcol = (EColor)fillcolor;
+  enum EColor linecol = (EColor)linecolor;
+  SetStyle(fillcol, linecol);
+}
+void Template::SetStyle3_py(int fillcolor, int linecolor, int fillstyle){
+  enum EColor fillcol = (EColor)fillcolor;
+  enum EColor linecol = (EColor)linecolor;
+  Style_t fillsty = (Style_t)fillstyle;
+  SetStyle(fillcol, linecol, fillsty);
+}
+PyObject* Template::GetHist_py(string name){
+  TH1F* hist = GetHist(name);
+  if (hist) return TPython::ObjectProxy_FromVoidPtr(hist, hist->ClassName());
+  else return 0;
+}
+boost::python::list Template::GetVariables_py(){
+  boost::python::list l;
+  for (map<string, Var* >::iterator im = m_variables.begin(); im != m_variables.end(); ++im){
+    l.append((*im).second);
+  }
+  return l;
+}
+
+
+#endif

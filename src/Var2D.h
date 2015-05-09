@@ -49,9 +49,6 @@ class Var2D{
   Var* GetVar1();
   Var* GetVar2();
 
-  PyObject* GetHist_py();
-  PyObject* GetProfile_py();
-  PyObject* GetProfile2_py();
   
   int GetBins1();
   double GetVar1Lo();
@@ -59,8 +56,12 @@ class Var2D{
   int GetBins2();
   double GetVar2Lo();
   double GetVar2Hi();
-
-
+#ifdef WITHPYTHON
+  PyObject* GetHist_py();
+  PyObject* GetProfile_py();
+  PyObject* GetProfile2_py();
+#endif
+  
  protected:
   string m_name;
   string m_varname1;

@@ -11,8 +11,11 @@
 #include <TColor.h>
 #include <TFractionFitter.h>
 #include <TPython.h>
-#include <boost/python.hpp>
 #include <Expr.h>
+
+#ifdef WITHPYTHON
+#include <boost/python.hpp>
+#endif
 
 using namespace std;
 
@@ -63,6 +66,7 @@ class Var{
   int FindBin(double val);
 
   //For python
+  #ifdef WITHPYTHON
   boost::python::list GetVarNames_py();
   double GetVal_py(boost::python::list& input);
   boost::python::list GetBinEdges_py(PyObject* pyObj);
@@ -70,7 +74,8 @@ class Var{
   PyObject* GetHist_py();
   void Draw1_py();
   void Draw2_py(const char* options);
-
+  #endif
+  
  protected:
   string m_name;
   //string m_var;
