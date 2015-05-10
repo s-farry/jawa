@@ -311,8 +311,8 @@ vector< vector< pair<double, double> > > Tune::getVals(Tree* tree, Expr* var, Va
   
   //Set names for reweighted variables
   for (std::vector<ReweightVar*>::iterator iv = rwvars.begin(); iv!= rwvars.end();++iv){
-    vector<string> rwnames = (*iv)->GetNames();
-    tree->SetBranches(rwnames);
+    vector<Expr*> rwnames = (*iv)->GetExprs();
+    for (unsigned int i = 0 ; i < rwnames.size(); ++i) tree->SetBranches(rwnames.at(i)->GetVarNames());
   }
   
 
@@ -369,13 +369,13 @@ void Tune::tune(){
       fitter.Minimize();
       
       double mean = 0.0, mean_err = 0.0, sigma = 0.0, sigma_err = 0.0;
-      double status = 0;
+      //double status = 0;
 
       mean = fitter.X()[0];
       mean_err = fitter.Errors()[0];
       sigma = fitter.X()[1];
       sigma_err = fitter.Errors()[1];
-      status = fitter.Status();	
+      //status = fitter.Status();	
       
       ostringstream data_name;
       data_name<<m_name<<"_data_"<<i;
@@ -516,22 +516,15 @@ double Tune::standard_deviation_py(boost::python::list& ns){
 double Tune::GetWeight(Tree* tree, vector<ReweightVar*> rwvars){
   double w = 1.0;
   for (std::vector<ReweightVar*>::iterator iv = rwvars.begin(); iv!= rwvars.end();++iv){
-    if ((*iv)->GetNames().size() == 1){
-      string var = (*iv)->GetName();
+    if ((*iv)->GetExprs().size() == 1){
+      Expr* var = (*iv)->GetExpr();
       double val = tree->GetVal(var);
       w = w * ((*iv)->GetWeight(val));
     }
-    else if ((*iv)->GetNames().size() == 2){
-      double val1 = tree->GetVal((*iv)->GetNames().at(0));
-      double val2 = tree->GetVal((*iv)->GetNames().at(1));
+    else if ((*iv)->GetExprs().size() == 2){
+      double val1 = tree->GetVal((*iv)->GetExprs().at(0));
+      double val2 = tree->GetVal((*iv)->GetExprs().at(1));
       w = w * ((*iv)->GetWeight(val1, val2));
-    }
-    else if ((*iv)->GetNames().size() == 4){
-      double val1 = tree->GetVal((*iv)->GetNames().at(0));
-      double val2 = tree->GetVal((*iv)->GetNames().at(1));
-      double val3 = tree->GetVal((*iv)->GetNames().at(2));
-      double val4 = tree->GetVal((*iv)->GetNames().at(3));
-      w = w * ((*iv)->GetWeight(val1, val2, val3, val4));
     }
   }
   return w;

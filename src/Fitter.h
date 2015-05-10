@@ -9,9 +9,10 @@
 #include <TColor.h>
 #include <TFractionFitter.h>
 #include <TF1.h>
+#ifdef WITHPYTHON
 #include <TPython.h>
 #include <boost/python.hpp>
-
+#endif
 using namespace std;
 
 class Fitter{
@@ -30,9 +31,6 @@ class Fitter{
   void AddConstraint(string name, double val, double pc);
   void AddConstraint(string name, double val, double lo, double hi);
   void AddConstraints(double lo, double hi);
-  void AddConstraint_py(boost::python::list& ns);
-  void AddConstraints_py(boost::python::list& ns);
-  void AddConstraints2_py(double lo, double hi);
   void SetFitRange(int lo, int hi);
   void ExcludeBins(double evts);
   void AddTFractionFitter();
@@ -49,7 +47,7 @@ class Fitter{
   TH1F* GetData();
   TObjArray* GetTemplates();
   TFractionFitter* GetFitter();
-
+#ifdef WITHPYTHON
   //For python
   PyObject* GetTemplates_py();
   PyObject* GetData_py();
@@ -58,6 +56,11 @@ class Fitter{
   boost::python::list GetConstraints_py();
   boost::python::list GetResults_py();
   void SetResults_py(boost::python::list& ns);
+  void AddConstraint_py(boost::python::list& ns);
+  void AddConstraints_py(boost::python::list& ns);
+  void AddConstraints2_py(double lo, double hi);
+#endif
+  
  private:
   map<string, int> m_names;           // name of templates and their location
   TObjArray* m_toFit;                 // Templates to be fit

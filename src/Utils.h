@@ -27,13 +27,10 @@ namespace Utils{
   void fillhist(TH1F* h , vector<double>& vals);
   double get_mean(vector<double>& vals);
   double standard_deviation(vector<double>& vals, double max = -1);
-  double standard_deviation_py(boost::python::list& ns);
-  boost::python::list GetStdDevs_py();
   double cholesky(double *A, int n);
   vector< vector<double> > cholesky( vector< vector<double> > A);
   void printMatrix(vector< vector<double> > A);
   //boost::python::list getCorrelatedRandoms_py(boost::python::list& ns);
-  boost::python::list cholesky_py(boost::python::list& ns);
   vector<double> getCorrelatedRandoms(TRandom3* r3, vector< vector<double> > corrs );
   vector<double> getRandoms(TRandom3* r3, int n );
 
@@ -49,13 +46,22 @@ namespace Utils{
   vector<double> getVals(Tree* t, Expr* var, TCut cut);
   TH1F* GetWeightHist(string name, TH1F* histA, TH1F* histB);
   double GetSum(TTree* t, string leaf);
-  double GetSum_py(PyObject* t, string leaf);
 
   void RemoveErrors(TGraphAsymmErrors* graph);
-  void RemoveErrors_py(PyObject* pyObj);
   //void FCN_func(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag);
 
   double GetWeightSum(TTree* t, string w, string cut);
+  #ifdef WITHPYTHON
   double GetWeightSum_py(PyObject* py, string w, string cut);
+  void RemoveErrors_py(PyObject* pyObj);
+  double GetSum_py(PyObject* t, string leaf);
+  double GetLumi_py(PyObject* f);
+  double standard_deviation_py(boost::python::list& ns);
+  boost::python::list GetStdDevs_py();
+  boost::python::list cholesky_py(boost::python::list& ns);
+
+  #endif
+
+  
 };
 #endif

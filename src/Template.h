@@ -27,16 +27,19 @@ class Template{
   Template(string name);
   Template(string name, TTree* t, TCut cut);
   Template(string name, TTree* t, TCut cut, enum EColor color);
+  Template(string name, vector<TTree*> trees, TCut cut);
+  Template(string name, vector<TTree*> trees, TCut cut, enum EColor color);
   Template(string name, Template* t); // essentially a clone
   Template(string name, Template* A, Template* B);
   Template operator+(const Template& rhs);
 
   //~Template();
   void Init();
-  void SetTree(TTree* t);
+  void AddTree(TTree* t);
+  void AddTree(TTree* t, double w);
   void AddTree(string name, TTree* t);
-  void SetTree(TTree* t, double w);
-  void SetTrees(vector<TTree*>& trees);
+  void AddTree(string name, TTree* t, double w);
+  void AddTrees(vector<TTree*>& trees);
   void ApplyCut();
   void FillVars();
   void AddVar(string name, string var, int bins, double lo, double hi, string prefix = "");
@@ -93,12 +96,11 @@ class Template{
   Tree* GetTree();
   Tree* GetTree(string name);
   void PrintVars();
-
+  void Run();
 
   // For python
   #ifdef WITHPYTHON
-    Template(string name, PyObject* t, PyObject* cut);
-
+  Template(string name, PyObject* t, PyObject* cut);
   void AddVar1_py(string name, string var, int bins, double lo, double hi);
   void AddVar2_py(boost::python::list& ns);
   void AddVar3_py(string name, string var, boost::python::list& ns);
@@ -107,8 +109,6 @@ class Template{
   PyObject* GetHist_py(string name);
   boost::python::list GetVariables_py();
   void SetFitFrac_py(double f, double err);
-  void SetTree2_py(PyObject* py, double w);
-  void AddTree_py(string name, PyObject* py);
   Tree* GetTree1_py();
   Tree* GetTree2_py(string name);
   void Add2DVar_py(boost::python::list& var);
@@ -116,14 +116,14 @@ class Template{
   void Add3DVar_py(boost::python::list& var);
   void Add3DVars_py(boost::python::list& varlist);
   void Reweight1_py(string var, PyObject* tf1);
-  void Reweight2_py(string var, PyObject* th1f);
-  void Reweight3_py(string var, PyObject* th1f, string var2, PyObject* th1f2);
-  void Reweight4_py(string var1, string var2, PyObject* th2f);
-  void Reweight5_py(string var1, string var2, PyObject* th2f, string var3, string var4, PyObject* th2f2);
-  void Reweight6_py(string leaf);
+  void Reweight2_py(string var1, string var2, PyObject* th2f);
+  void Reweight3_py(string leaf);
   void SetSelCut_py(PyObject* pyObj);
-  void SetTree_py(PyObject* py);
-  void SetTrees_py(boost::python::list& ns);
+  void AddTree_py(PyObject* py);
+  void AddTree2_py(string name, PyObject* py);
+  void AddTree3_py(PyObject* py, double w);
+  void AddTree4_py(string name, PyObject* py, double w);
+  void AddTrees_py(boost::python::list& ns);
   Var2D* Get2DVar_py(string name1, string name2);
   Var3D* Get3DVar_py(string name1, string name2, string name3);
   void Scale1_py(double scale, bool fixed);

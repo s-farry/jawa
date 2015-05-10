@@ -78,6 +78,17 @@ Template::Template(string name, TTree* t, TCut cut){
   m_selcut = cut;
   if (m_verbose) cout<<"Name is "<<m_name<<endl;
 }
+Template::Template(string name, vector<TTree*> trees, TCut cut){
+  Init();
+  if (m_verbose) cout<<"Initialising as "<<name<<endl;
+  m_name = name;
+  for (unsigned int i = 0; i < trees.size(); ++i){
+    m_trees.push_back(new Tree(name+"_tree", trees.at(i), 1.0));
+  }
+  m_selcut = cut;
+  if (m_verbose) cout<<"Name is "<<m_name<<endl;
+}
+
 
 Template::Template(string name, TTree* t, TCut cut, enum EColor color){
   m_name = name;
@@ -86,6 +97,17 @@ Template::Template(string name, TTree* t, TCut cut, enum EColor color){
   SetStyle(color);
   Init();
 }
+
+Template::Template(string name, vector<TTree*> trees, TCut cut, enum EColor color){
+  m_name = name;
+  for (unsigned int i = 0; i < trees.size(); ++i){
+    m_trees.push_back(new Tree(name+"_tree", trees.at(i), 1.0));
+  }
+  m_selcut = cut;
+  SetStyle(color);
+  Init();
+}
+
 
 Template Template::operator+(const Template& rhs){
   //Incomplete to say the least - don't use yet
@@ -161,22 +183,26 @@ Tree* Template::GetTree(string name){
 }
 
 
-void Template::SetTrees(vector<TTree*>& trees){
+void Template::AddTrees(vector<TTree*>& trees){
   for (std::vector<TTree*>::iterator it = trees.begin(); it != trees.end(); ++it){
     m_trees.push_back(new Tree(m_name+"_tree", (*it), 1.0));
   }
 }
 
 
-void Template::SetTree(TTree* t){
+void Template::AddTree(TTree* t){
   m_trees.push_back(new Tree(m_name+"_tree", t, 1.0));
 }
-void Template::SetTree(TTree* t, double w){  
+void Template::AddTree(TTree* t, double w){  
   m_trees.push_back(new Tree(m_name+"_tree", t, w));
 }
 void Template::AddTree(string name, TTree* t){
   m_trees.push_back(new Tree(name, t));
 }
+void Template::AddTree(string name, TTree* t, double w){
+  m_trees.push_back(new Tree(name, t, w));
+}
+
 void Template::StyleHists(){
   for (std::map<string, Var*>::iterator iv = m_variables.begin() ; iv != m_variables.end() ; ++iv ){
     Var* var = (*iv).second;
@@ -420,7 +446,6 @@ void Template::FillVars(){
       // Get The Weight
       for (std::vector<ReweightVar*>::iterator iv = m_reweightvariables.begin(); iv!=m_reweightvariables.end();++iv){
 	if ((*iv)->GetExprs().size() == 1){
-	  string var = (*iv)->GetName();
 	  Expr* e  = (*iv)->GetExprs()[0];
 	  double val = tree->GetVal(e);
 	  w = w * ((*iv)->GetWeight(val));
@@ -723,6 +748,12 @@ string Template::GetRootName(const char* file){
   return output;
 }
 
+void Template::Run(){
+  ApplyCut();
+  FillVars();
+}
+
+
 #ifdef WITHPYTHON
 
 Tree* Template::GetTree1_py(){
@@ -733,26 +764,30 @@ Tree* Template::GetTree2_py(string name){
 }
 
 
-void Template::SetTree_py(PyObject* pyObj){
+void Template::AddTree_py(PyObject* pyObj){
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  SetTree(t);
+  AddTree(t);
 }
-
-void Template::SetTree2_py(PyObject* pyObj, double w){
-  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  SetTree(t, w);
-}
-void Template::AddTree_py(string name, PyObject* pyObj){
+void Template::AddTree2_py(string name, PyObject* pyObj){
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
   AddTree(name, t);
 }
-void Template::SetTrees_py(boost::python::list& ns){
+void Template::AddTree3_py(PyObject* pyObj, double w){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  AddTree(t, w);
+}
+void Template::AddTree4_py(string name, PyObject* pyObj, double w){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  AddTree(name, t, w);
+}
+
+void Template::AddTrees_py(boost::python::list& ns){
   for (int i = 0; i < len(ns); ++i){
     boost::python::object obj = ns[i];
     //PyObject* pyObj = boost::python::extract<PyObject*>(ns[i]);
     PyObject* pyObj = obj.ptr();
     TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-    SetTree(t);
+    AddTree(t);
   }
 }
 Var2D* Template::Get2DVar_py(string name1, string name2){
@@ -862,12 +897,7 @@ void Template::Scale1_py(double scale, bool fixed){
 void Template::Scale2_py(double scale){
   Scale(scale);
 }
-void Template::Reweight1_py(string var, PyObject* tf1){
-  
-  TF1* f = (TF1*)(TPython::ObjectProxy_AsVoidPtr(tf1));
-  Reweight(var,f);
-}
-void Template::Reweight2_py(string var, PyObject* pyObj){
+void Template::Reweight1_py(string var, PyObject* pyObj){
   
   TH1F* hist = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
   TF1*  f    = (TF1*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
@@ -883,12 +913,12 @@ void Template::Reweight2_py(string var, PyObject* pyObj){
   //std::cout<<hist->ClassName()<<std::endl;
   //Reweight(var,hist);
 }
-void Template::Reweight4_py(string var1, string var2, PyObject* th2f){
+void Template::Reweight2_py(string var1, string var2, PyObject* th2f){
   TH2F* hist  = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(th2f));
   Reweight(var1, var2, hist);
 }
 
-void Template::Reweight6_py(string leaf){
+void Template::Reweight3_py(string leaf){
   Reweight(leaf);
 }
 void Template::SetStyle1_py(int fillcolor){

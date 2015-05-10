@@ -135,36 +135,6 @@ namespace Utils{
     }
     return ns2;
     }*/
-  boost::python::list cholesky_py(boost::python::list& ns){
-    vector< vector<double> > corrmat(len(ns), vector<double>(len(ns), 0.0));
-    for (unsigned int i = 0; i < len(ns); ++i){
-      for (unsigned int j = 0; j < len(ns[i]); ++j){
-	double d = boost::python::extract<double>(ns[i][j]);
-	corrmat[i][j] = d;
-      }
-    }
-
-    vector< vector<double> > chol = cholesky(corrmat);
-    
-    boost::python::list ns2;
-    for (unsigned int i = 0 ; i < chol.size() ; ++i){
-      boost::python::list ns3;
-      for (unsigned int j = 0 ; j < chol.size() ; ++j){
-	ns3.append(chol[i][j]);
-      }
-      ns2.append(ns3);
-    }
-    return ns2;
-  }
-
-  double standard_deviation_py(boost::python::list& ns){
-    vector<double> vals;
-    for (unsigned int i = 0; i < len(ns); ++i){
-      double d = boost::python::extract<double>(ns[i]);
-      vals.push_back(d);
-    }
-    return standard_deviation(vals);
-  }
 
   vector<double> getColumn(int n, vector<vector<double> > vals){
     vector<double> col;
@@ -415,10 +385,6 @@ namespace Utils{
     return sum;
   }
 
-  double GetSum_py(PyObject* pyf, string leaf){
-    TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyf));
-    return GetSum(t, leaf);
-  }
 
   void RemoveErrors(TGraphAsymmErrors* graph){
     int i = 0;
@@ -431,6 +397,18 @@ namespace Utils{
       hasPoint = graph->GetPoint(i,x,y);
     }
   }
+
+  #ifdef WITHPYTHON
+
+  double GetLumi_py(PyObject* pyf){
+    TFile* f = (TFile*)(TPython::ObjectProxy_AsVoidPtr(pyf));
+    return GetLumi(f);
+  }
+  
+  double GetSum_py(PyObject* pyf, string leaf){
+    TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyf));
+    return GetSum(t, leaf);
+  }
   void RemoveErrors_py(PyObject* pyObj){
     TGraphAsymmErrors* graph = (TGraphAsymmErrors*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
     int i = 0;
@@ -441,5 +419,38 @@ namespace Utils{
       graph->SetPointEYlow(i, 0.0);
     }
   }
+  boost::python::list cholesky_py(boost::python::list& ns){
+    vector< vector<double> > corrmat(len(ns), vector<double>(len(ns), 0.0));
+    for (unsigned int i = 0; i < len(ns); ++i){
+      for (unsigned int j = 0; j < len(ns[i]); ++j){
+	double d = boost::python::extract<double>(ns[i][j]);
+	corrmat[i][j] = d;
+      }
+    }
 
+    vector< vector<double> > chol = cholesky(corrmat);
+    
+    boost::python::list ns2;
+    for (unsigned int i = 0 ; i < chol.size() ; ++i){
+      boost::python::list ns3;
+      for (unsigned int j = 0 ; j < chol.size() ; ++j){
+	ns3.append(chol[i][j]);
+      }
+      ns2.append(ns3);
+    }
+    return ns2;
+  }
+
+  double standard_deviation_py(boost::python::list& ns){
+    vector<double> vals;
+    for (unsigned int i = 0; i < len(ns); ++i){
+      double d = boost::python::extract<double>(ns[i]);
+      vals.push_back(d);
+    }
+    return standard_deviation(vals);
+  }
+
+
+  #endif
+  
 }

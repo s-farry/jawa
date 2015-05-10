@@ -24,9 +24,9 @@ class AnalysisClass{
   AnalysisClass(string name);
   //~AnalysisClass();
   void SetSelCut(TCut cut);
-  void SetData(Template* temp);
-  void SetData(string name, TTree* t);
-  void SetData(string name, TTree* t, TCut cut);
+  void AddData(Template* temp);
+  void AddData(string name, TTree* t);
+  void AddData(string name, TTree* t, TCut cut);
   void AddTemplate(Template* temp);
   void AddTemplate(string name, TTree* t);
   void AddTemplate(string name, TTree* t, TCut cut);
@@ -83,11 +83,12 @@ class AnalysisClass{
   void SetToFit(vector<string> toFit);
   vector<string> GetToStack();
   void SetToStack(vector<string> toStack);
+  void Run();
 
 
   #ifdef WITHPYTHON
   void SetSelCut_py(PyObject* cut);
-  void SetData_py(string name, PyObject* t);
+  void AddData_py(string name, PyObject* t);
   void AddTemplate1_py(string name, PyObject* t);
   void AddTemplate2_py(string name, PyObject* t, PyObject* cut);
   void AddTemplate3_py(string name, PyObject* t, int color);

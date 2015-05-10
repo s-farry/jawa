@@ -32,8 +32,6 @@ class ReweightVar{
   double GetWeight(double val1, double val2, double val3, double val4);
   double GetWeight(int val);
   double GetWeight(float val);
-  string GetName();
-  vector<string> GetNames();
   Expr* GetExpr();
   vector<Expr*> GetExprs();
 

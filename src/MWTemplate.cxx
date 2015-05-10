@@ -94,26 +94,14 @@ void MWTemplate::FillVars(){
     
     if (m_verbose) cout<<"Branches set for vars"<<endl;
     
-    for (std::vector<ReweightVar>::iterator iv = m_reweightvariables.begin(); iv!=m_reweightvariables.end();++iv){
-      vector<string> rwnames;
-      if ((*iv).GetExpr()){
-	rwnames = (*iv).GetExpr()->GetVarNames();
-      }
-      else{
-	rwnames = (*iv).GetNames();
-      }
-      tree->SetBranches(rwnames);
+    for (std::vector<ReweightVar*>::iterator iv = m_reweightvariables.begin(); iv!=m_reweightvariables.end();++iv){
+      vector<Expr*> rwnames = (*iv)->GetExprs();
+      for (unsigned int i = 0 ; i < rwnames.size() ; ++i) tree->SetBranches(rwnames.at(i)->GetVarNames());
     }
     
     for (std::map<string, ReweightVar*>::iterator im = m_mwreweightvars.begin(); im != m_mwreweightvars.end();++im){
-      vector<string> rwnames;
-      if ((*im).second->GetExpr()){
-	rwnames = (*im).second->GetExpr()->GetVarNames();
-      }
-      else{
-	rwnames = (*im).second->GetNames();
-      }
-      tree->SetBranches(rwnames);
+      vector<Expr*> rwnames = (*im).second->GetExprs();
+      for (unsigned int i = 0 ; i < rwnames.size() ; ++i) tree->SetBranches(rwnames.at(i)->GetVarNames());
     }
     
     if (m_verbose) cout<<"Branches set for reweighted variables"<<endl;
@@ -139,8 +127,7 @@ void MWTemplate::FillVars(){
       // Get The Weight
       for (std::map<string, ReweightVar*>::iterator iv = m_mwreweightvars.begin(); iv!=m_mwreweightvars.end();++iv){
 	double w = tw;
-	if ((*iv).second->GetNames().size() == 1){
-	  string var = (*iv).second->GetName();
+	if ((*iv).second->GetExprs().size() == 1){
 	  Expr* e  = (*iv).second->GetExpr();
 	  double val = tree->GetVal(e);
 	  w = w * ((*iv).second->GetWeight(val));

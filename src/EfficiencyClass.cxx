@@ -218,9 +218,6 @@ void EfficiencyBaseClass::SetTrees(TTree* priTree, TTree* secTree){
   m_trees.push_back(new Tree("", secTree, 1.0));
 
 }
-void EfficiencyBaseClass::SetTree_py(PyObject* pyObj){
-  AddTree_py(pyObj);
-}
 
 void EfficiencyBaseClass::AddTree_py(PyObject* pyObj){
   TTree* tree = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));

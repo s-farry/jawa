@@ -1,5 +1,4 @@
 from os import sys
-from analysis import AnalysisClass
 from ROOT import TFile, TTree, TH1, TCut, kRed, kYellow, kBlue, kOrange, kGreen, TF1, kMagenta, TMath, TH1F, TGraphAsymmErrors, Double
 from math import sqrt
 

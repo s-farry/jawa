@@ -139,41 +139,6 @@ void Fitter::AddConstraint(string name, double value, double lo, double hi){
   m_constraints[name] = constraint;
 }
 
-void Fitter::AddConstraint_py(boost::python::list& ns){
-  if (len(ns) == 2){
-    string name = boost::python::extract<string>(ns[0]);
-    double val  = boost::python::extract<double>(ns[1]);
-    AddConstraint(name, val);
-  }
-  else if (len(ns) == 3){
-    string name = boost::python::extract<string>(ns[0]);
-    double val  = boost::python::extract<double>(ns[1]);
-    double pc   = boost::python::extract<double>(ns[2]);
-    AddConstraint(name, val, pc);
-  }
-  else if (len(ns) == 4){
-    string name = boost::python::extract<string>(ns[0]);
-    double val  = boost::python::extract<double>(ns[1]);
-    double lo   = boost::python::extract<double>(ns[2]);
-    double hi   = boost::python::extract<double>(ns[3]);
-    AddConstraint(name, val, lo, hi);
-  }
-}
-void Fitter::AddConstraints_py(boost::python::list& ns){
-  for (unsigned int i = 0; i < len(ns); ++i){
-    boost::python::list ns2 = (boost::python::list)ns[i];
-    string name = boost::python::extract<string>(ns2[0]);
-    double val  = boost::python::extract<double>(ns2[1]);
-    AddConstraint(name, val);
-  }
-}
-
-/*boost::python::list Fitter::GetConstraint_py(){
-  
-  boost::python::object get_iter = boost::python::iterator<std::vector<double> >();
-  boost::python::object iter = get_iter(effs);
-  boost::python::list l(iter);
-  }*/
 
 
 void Fitter::ConstrainParams(){
@@ -213,9 +178,6 @@ void Fitter::AddConstraints(double lo, double hi){
   m_chi = hi;
 }
 
-void Fitter::AddConstraints2_py(double lo, double hi){
-  AddConstraints(lo, hi);
-}
 
 void Fitter::AddTFractionFitter(){
   m_fit = new TFractionFitter(m_data, m_toFit);
@@ -284,9 +246,6 @@ void Fitter::RooFit(){
 
   for (int i = 0 ; i < nmc; ++i){
     RooDataHist hist(m_toFit->At(i)->GetName(), m_toFit->At(i)->GetName(), x, ((TH1F*)m_toFit->At(i)));
-    double mc_evts = ((TH1F*)m_toFit->At(i))->Integral();
-    double ival = (1/nmc) * (data_evts / mc_evts);
-    double maxval = (data_evts / mc_evts);
     rooyields_mc->Add(new RooRealVar(m_toFit->At(i)->GetName(), m_toFit->At(i)->GetName(),0,data_evts));
     roohistpdfs_mc->Add(new RooHistPdf(m_toFit->At(i)->GetName(), m_toFit->At(i)->GetName(), x, hist));
   }
@@ -299,7 +258,7 @@ void Fitter::RooFit(){
   params->Print("v");
 
   for(map<string, int>::iterator im = m_names.begin(); im != m_names.end(); ++im){
-    double mc_evts = ((TH1F*)m_toFit->At((*im).second))->Integral();
+    //double mc_evts = ((TH1F*)m_toFit->At((*im).second))->Integral();
     string name = m_toFit->At((*im).second)->GetName();
     RooRealVar* param = (RooRealVar*)params->find(name.c_str());
     double value = param->getValV();
@@ -391,6 +350,68 @@ map<string, vector<double> > Fitter::GetConstraints(){
   return m_constraints;
 }
 
+
+vector<string> Fitter::GetNames(){
+  vector<string> names;
+  for (map<string, int>::iterator im = m_names.begin(); im != m_names.end(); ++im){
+    names.push_back((*im).first);
+  }
+  return names;
+}
+
+TFractionFitter* Fitter::GetFitter(){
+  return m_fit;
+}
+
+TObjArray* Fitter::GetTemplates(){
+  return m_toFit;
+}
+TH1F* Fitter::GetData(){
+  return m_data;
+}
+
+#ifdef WITHPYTHON
+PyObject* Fitter::GetTemplates_py(){
+  return TPython::ObjectProxy_FromVoidPtr(m_toFit, m_toFit->ClassName());
+}
+PyObject* Fitter::GetData_py(){
+  return TPython::ObjectProxy_FromVoidPtr(m_data, m_data->ClassName());
+}
+PyObject* Fitter::GetFitter_py(){
+  return TPython::ObjectProxy_FromVoidPtr(m_fit, m_fit->ClassName());
+
+}
+void Fitter::AddConstraint_py(boost::python::list& ns){
+  if (len(ns) == 2){
+    string name = boost::python::extract<string>(ns[0]);
+    double val  = boost::python::extract<double>(ns[1]);
+    AddConstraint(name, val);
+  }
+  else if (len(ns) == 3){
+    string name = boost::python::extract<string>(ns[0]);
+    double val  = boost::python::extract<double>(ns[1]);
+    double pc   = boost::python::extract<double>(ns[2]);
+    AddConstraint(name, val, pc);
+  }
+  else if (len(ns) == 4){
+    string name = boost::python::extract<string>(ns[0]);
+    double val  = boost::python::extract<double>(ns[1]);
+    double lo   = boost::python::extract<double>(ns[2]);
+    double hi   = boost::python::extract<double>(ns[3]);
+    AddConstraint(name, val, lo, hi);
+  }
+}
+void Fitter::AddConstraints_py(boost::python::list& ns){
+  for (unsigned int i = 0; i < len(ns); ++i){
+    boost::python::list ns2 = (boost::python::list)ns[i];
+    string name = boost::python::extract<string>(ns2[0]);
+    double val  = boost::python::extract<double>(ns2[1]);
+    AddConstraint(name, val);
+  }
+}
+void Fitter::AddConstraints2_py(double lo, double hi){
+  AddConstraints(lo, hi);
+}
 boost::python::list Fitter::GetResults_py(){
   boost::python::list l;
   for (map<string, pair<double, double> >::iterator im = m_results.begin(); im != m_results.end(); ++im){
@@ -438,14 +459,6 @@ boost::python::list Fitter::GetConstraints_py(){
   }
   return l;
 }
-
-vector<string> Fitter::GetNames(){
-  vector<string> names;
-  for (map<string, int>::iterator im = m_names.begin(); im != m_names.end(); ++im){
-    names.push_back((*im).first);
-  }
-  return names;
-}
 boost::python::list Fitter::GetNames_py(){
   boost::python::list names;
   for (map<string, int>::iterator im = m_names.begin(); im != m_names.end(); ++im){
@@ -454,23 +467,4 @@ boost::python::list Fitter::GetNames_py(){
   return names;
 }
 
-TFractionFitter* Fitter::GetFitter(){
-  return m_fit;
-}
-
-TObjArray* Fitter::GetTemplates(){
-  return m_toFit;
-}
-TH1F* Fitter::GetData(){
-  return m_data;
-}
-PyObject* Fitter::GetTemplates_py(){
-  return TPython::ObjectProxy_FromVoidPtr(m_toFit, m_toFit->ClassName());
-}
-PyObject* Fitter::GetData_py(){
-  return TPython::ObjectProxy_FromVoidPtr(m_data, m_data->ClassName());
-}
-PyObject* Fitter::GetFitter_py(){
-  return TPython::ObjectProxy_FromVoidPtr(m_fit, m_fit->ClassName());
-
-}
+#endif

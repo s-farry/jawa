@@ -1,11 +1,12 @@
 #include "pyboost.h"
 
-BOOST_PYTHON_MODULE(analysis)
+BOOST_PYTHON_MODULE(Jawa)
 {
     using namespace boost::python;
     //Add some vectors
     
     def("GetSum", &Utils::GetSum_py);
+    def("GetLumi", &Utils::GetLumi_py);
     def("RemoveErrors", &Utils::RemoveErrors_py);
     def("GetWeightSum", &Utils::GetWeightSum_py);
 
@@ -73,10 +74,12 @@ BOOST_PYTHON_MODULE(analysis)
       .def(init<string, Template*, Template* >())
       .def(init<string, Template* >())
       .def(self + self)
-      .def("SetTree",    &Template::SetTree_py)
       .def("AddTree",    &Template::AddTree_py)
+      .def("AddTree",    &Template::AddTree2_py)
+      .def("AddTree",    &Template::AddTree3_py)
+      .def("AddTree",    &Template::AddTree4_py)
       .def("SetSelCut",  &Template::SetSelCut_py)
-      .def("SetTrees",   &Template::SetTrees_py)
+      .def("AddTrees",   &Template::AddTrees_py)
       .def("AddVar",     &Template::AddVar1_py)
       .def("AddVar",     &Template::AddVar2_py)
       .def("AddVar",     &Template::AddVar3_py)
@@ -91,10 +94,9 @@ BOOST_PYTHON_MODULE(analysis)
       .def("IsVerbose",  &Template::IsVerbose)
       .def("GetName",    &Template::GetName)
       .def("SetName",    &Template::SetName)
-      //.def("Reweight",   &Template::Reweight1_py)
+      .def("Reweight",   &Template::Reweight1_py)
       .def("Reweight",   &Template::Reweight2_py)
-      .def("Reweight",   &Template::Reweight4_py)
-      .def("Reweight",   &Template::Reweight6_py)
+      .def("Reweight",   &Template::Reweight3_py)
       .def("GetHist",    &Template::GetHist_py)
       .def("Scale",      &Template::Scale1_py)
       .def("Scale",      &Template::Scale2_py)
@@ -118,6 +120,7 @@ BOOST_PYTHON_MODULE(analysis)
       .def("OutputEvts", &Template::OutputEvts)
       .def("GetEvts",    &Template::GetEvts)
       .def("GetNormEvts",&Template::GetNormEvts)
+      .def("Run",        &Template::Run)
       .add_property("Vars",  &Template::GetVariables_py, &Template::SetVars_py)
       .add_property("FitFrac", &Template::GetFitFrac, &Template::SetFitFrac_py)
       ;
@@ -187,7 +190,7 @@ BOOST_PYTHON_MODULE(analysis)
     
     class_<AnalysisClass>("AnalysisClass", init<string>())
       .def("SetSelCut",        &AnalysisClass::SetSelCut_py)
-      .def("SetData",          &AnalysisClass::SetData_py)
+      .def("AddData",          &AnalysisClass::AddData_py)
       .def("AddTemplate",      &AnalysisClass::AddTemplate1_py)
       .def("AddTemplate",      &AnalysisClass::AddTemplate2_py)
       .def("AddTemplate",      &AnalysisClass::AddTemplate3_py)
@@ -229,6 +232,7 @@ BOOST_PYTHON_MODULE(analysis)
       .def("UnscaleTemplates", &AnalysisClass::UnscaleTemplates)
       .def("DrawFitted",       &AnalysisClass::DrawFitted_py)
       .def("GetChi2nDoF",      &AnalysisClass::GetChi2nDoF)
+      .def("Run",              &AnalysisClass::Run)
       .add_property("ToFit",   &AnalysisClass::GetToFit_py, &AnalysisClass::SetToFit_py)
       .add_property("ToStack", &AnalysisClass::GetToStack_py, &AnalysisClass::SetToStack_py)
       ;
@@ -297,7 +301,6 @@ BOOST_PYTHON_MODULE(analysis)
     
     class_<EfficiencyClass>("EfficiencyClass", init<string>())
       .def(init<string, EfficiencyClass*, EfficiencyClass*>())
-      .def("SetTree",             &EfficiencyClass::SetTree_py)
       .def("AddTree",             &EfficiencyClass::AddTree_py)
       .def("SetSelectionCut",     &EfficiencyClass::SetSelectionCut_py)
       .def("SetPassCut",          &EfficiencyClass::SetPassCut_py)

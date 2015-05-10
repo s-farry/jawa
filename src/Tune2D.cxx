@@ -74,8 +74,8 @@ vector< vector< vector< pair<double, double> > > > Tune2D::getVals(Tree* tree, E
 
   //Set names for reweighted variables for data
   for (std::vector<ReweightVar*>::iterator iv = rwvars.begin(); iv!= rwvars.end();++iv){
-    vector<string> rwnames = (*iv)->GetNames();
-    tree->SetBranches(rwnames);
+    vector<Expr*> rwnames = (*iv)->GetExprs();
+    for (unsigned int i = 0 ; i < rwnames.size() ; ++i) tree->SetBranches(rwnames.at(i)->GetVarNames());
   }
   
   Long64_t nentries = list->GetN();
@@ -135,12 +135,12 @@ void Tune2D::tune(){
       m_current_stddev = m_data_2Dstddev[i][j];
 
       double mean = 0.0, mean_err = 0.0, sigma = 0.0, sigma_err = 0.0;
-      double status = 0;
+      //double status = 0;
 
       if (m_current_data->size() > 0 && m_current_mc->size() > 0){
 	fitter.Minimize();
 	
-	status = fitter.Status();
+	//status = fitter.Status();
 	//if (status == 1 || status ==3){
 	mean = fitter.X()[0];
 	mean_err = fitter.Errors()[0];

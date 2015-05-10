@@ -25,14 +25,6 @@ AnalysisClass::AnalysisClass(string name){
   m_fitratio = false;
 }
 
-//AnalysisClass::~AnalysisClass(){
-//  delete m_data;
-//  for(std::map<std::string,Template*>::iterator it = m_templates.begin(); it != m_templates.end(); ++it) delete it->second;
-  //for( std::map<string, THStack*>::iterator it = m_stacks.begin(); it != m_stacks.end(); ++it) ((THStack*)it->second)->Delete();
-  //while(!m_stacks.empty()) delete m_stacks.end()->second;
-  //m_fit->Delete();
-//}
-
 void AnalysisClass::AddTemplate(string name, TTree* t){
   m_stackorder.push_back(name);
   m_fitorder.push_back(name);
@@ -63,16 +55,16 @@ void AnalysisClass::AddTemplate(string name, TTree* t, TCut cut, enum EColor col
 }
 
 
-void AnalysisClass::SetData(string name, TTree* t){
+void AnalysisClass::AddData(string name, TTree* t){
   m_data = new Template(name,t,m_selcut);
 }
 
 
-void AnalysisClass::SetData(string name, TTree* t, TCut cut){
+void AnalysisClass::AddData(string name, TTree* t, TCut cut){
   m_data = new Template(name,t,cut);
 }
 
-void AnalysisClass::SetData(Template* temp){
+void AnalysisClass::AddData(Template* temp){
   m_data = temp;
 }
 
@@ -83,7 +75,7 @@ void AnalysisClass::AddTemplate(Template* temp){
 }
 
 void AnalysisClass::NormaliseTemplates(double n){
-  m_data->NormaliseToEvts(n);
+  if (m_data) m_data->NormaliseToEvts(n);
   
   for (std::map<string, Template*>::iterator it = m_templates.begin() ; it != m_templates.end() ; ++it ){
     (*it).second->NormaliseToEvts(n);
@@ -161,12 +153,18 @@ void AnalysisClass::ConstrainRatio(string tempA, string tempB, double r){
 void AnalysisClass::AddFitter(string var, double lo, double hi, bool combine){
   //Set up fitter as a tfractionfitter
 
+  if (!m_data) {
+    cout<<"No Data Set! - Not adding Fitter"<<endl;
+    return;
+  }
+  
+  
   TObjArray* toFit = new TObjArray();
   TH1F* data;
 
   if (combine) data = m_data->Get2DVar(var)->GetCombHist();
   else data = m_data->GetVar(var)->GetHist(); 
-  
+
   vector<string> names;
   vector< string > constrain_names;
   vector< double > constrain_vals;
@@ -202,7 +200,11 @@ void AnalysisClass::AddFitter(string var, double lo, double hi, bool combine){
 
 void AnalysisClass::Add2DFitter(string var){
   //Set up fitter as a tfractionfitter
-
+  if (!m_data){
+    cout<<"No data set - not additing fitter"<<endl;
+    return;
+  }
+  
   cout<<"getting 2d fitter"<<endl;
   TObjArray* toFit = new TObjArray();
   TH2F* data;
@@ -251,7 +253,13 @@ void AnalysisClass::UnscaleTemplates(){
 
 void AnalysisClass::Apply2DFitResults(){
   //Get the results from the fitter and scale templates appropriately
+  if ((!m_data) || (!m_fitter)) {
+    cout<<"No fit results to apply - not applying"<<endl;
+    return;
+
+  }
   string var = m_fitter ? m_fitter->GetVar() : "";
+  
   map<string, pair<double, double> > results = m_fitter->GetResults();
   for(map<string, pair<double, double> >::iterator ij= results.begin(); ij != results.end(); ++ij){
     double value = (*ij).second.first;
@@ -276,6 +284,12 @@ void AnalysisClass::Apply2DFitResults(){
 }
 void AnalysisClass::ApplyFitResults(bool combine){
   //Get the results from the fitter and scale templates appropriately
+  
+  if ((!m_data) || (!m_fitter)) {
+    cout<<"No fit results to apply - not applying"<<endl;
+    return;
+
+  }
   string var = m_fitter ? m_fitter->GetVar() : "";
   map<string, pair<double, double> > results = m_fitter->GetResults();
   for(map<string, pair<double, double> >::iterator ij= results.begin(); ij != results.end(); ++ij){
@@ -357,8 +371,13 @@ Template* AnalysisClass::GetData(){
 }
 
 void AnalysisClass::ApplyCuts(){
-  cout<<"Applying cuts to "<<m_data->GetName()<<endl;
-  m_data->ApplyCut();
+  if (m_data){
+    cout<<"Applying cuts to "<<m_data->GetName()<<endl;
+    m_data->ApplyCut();
+  }
+  else{
+    cout<<"Note - no data to run over"<<endl;
+  }
   for (std::map<string,Template*>::iterator it = m_templates.begin() ; it != m_templates.end() ; ++it ){
     cout<<"Applying cuts to "<<(*it).first<<endl;
     Template* temp = (*it).second;
@@ -368,7 +387,7 @@ void AnalysisClass::ApplyCuts(){
 }
 
 void AnalysisClass::FillVars(){
-  m_data->FillVars();
+  if (m_data) m_data->FillVars();
   for (std::map<string, Template*>::iterator it = m_templates.begin() ; it != m_templates.end() ; ++it ){
     cout<<"Filling Variables for "<<(*it).first<<endl;
     Template* temp = (*it).second;
@@ -384,9 +403,11 @@ void AnalysisClass::SaveToFile(string output){
   string outputFile = output == "" ? m_name+".root" : output+".root";
   TFile* f = new TFile(outputFile.c_str(),"RECREATE");
   //gROOT->cd(cwd);
-  f->mkdir(m_data->GetName().c_str());
-  f->cd(m_data->GetName().c_str());
-  m_data->SaveToCurrentFile();
+  if (m_data){
+    f->mkdir(m_data->GetName().c_str());
+    f->cd(m_data->GetName().c_str());
+    m_data->SaveToCurrentFile();
+  }
   f->cd();
   for (std::map<string, Template*>::iterator it = m_templates.begin() ; it != m_templates.end() ; ++it ){
     Template* temp = (*it).second;
@@ -425,7 +446,7 @@ void AnalysisClass::AddVar(string name, string var, int bins, double lo, double 
 
   //if (var.find("-") == std::string::npos && var.find("+") == std::string::npos)
   //  {
-      m_data->AddVar(name , var , bins , lo , hi , m_name+"_" + m_data->GetName());
+  if (m_data) m_data->AddVar(name , var , bins , lo , hi , m_name+"_" + m_data->GetName());
       for (std::map<string,Template*>::iterator it = m_templates.begin() ; it != m_templates.end() ; ++it ){
 	Template* temp = (*it).second;
 	temp->AddVar( name, var, bins, lo, hi, m_name+"_"+temp->GetName());
@@ -444,7 +465,7 @@ void AnalysisClass::AddVar(string name, string var, std::vector<double> edges){
   if (m_templates.size() == 0) cout<<"No templates to add variables to"<<endl;
   //if (var.find("-") == std::string::npos && var.find("+") == std::string::npos)
   //{
-      m_data->AddVar(name , var , edges, m_name+"_"+m_data->GetName() );
+  if (m_data) m_data->AddVar(name , var , edges, m_name+"_"+m_data->GetName() );
        for (std::map<string,Template*>::iterator it = m_templates.begin() ; it != m_templates.end() ; ++it ){
 	 Template* temp = (*it).second;
 	temp->AddVar( name, var, edges, m_name+"_"+temp->GetName());
@@ -482,7 +503,7 @@ void AnalysisClass::Add2DVar(string var1, string var2){
   string name = var1+"_"+var2;
   m_2Dvars.push_back(name);
   if (m_templates.size() == 0) cout<<"No templates to add variables to"<<endl;
-  m_data->Add2DVar(name , var1, var2 , m_name+"_"+m_data->GetName() );
+  if (m_data) m_data->Add2DVar(name , var1, var2 , m_name+"_"+m_data->GetName() );
   for (std::map<string,Template*>::iterator it = m_templates.begin() ; it != m_templates.end() ; ++it ){
     Template* temp = (*it).second;
     temp->Add2DVar( name, var1, var2, m_name+"_"+temp->GetName());
@@ -711,6 +732,10 @@ vector<string> AnalysisClass::GetToStack(){ return m_stackorder;}
 
 
 TCanvas* AnalysisClass::DrawFitted(){
+  if ((!m_data) || (!m_fitter)) {
+    cout<<"No fit to draw"<<endl;
+    return 0;
+  }
   string var = m_fitter ? m_fitter->GetVar(): "";
   TCanvas* c1 = new TCanvas();
   THStack* stack = GetStack(var);
@@ -726,6 +751,11 @@ TCanvas* AnalysisClass::DrawFitted(){
   }
   else cout <<"No variable "<<var<<" found in data template"<<endl;
   return c1;
+}
+
+void AnalysisClass::Run(){
+  ApplyCuts();
+  FillVars();
 }
 
 #ifdef WITHPYTHON
@@ -753,9 +783,9 @@ void AnalysisClass::AddTemplate4_py(string name, PyObject* pyt, PyObject* pycut,
 void AnalysisClass::AddTemplate5_py(Template* t){
   AddTemplate(t);
 }
-void AnalysisClass::SetData_py(string name, PyObject* pyt){
+void AnalysisClass::AddData_py(string name, PyObject* pyt){
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
-  SetData(name, t);
+  AddData(name, t);
 }
 PyObject* AnalysisClass::RedoFit_py(string var){
   TFractionFitter* fit = RedoFit(var);
