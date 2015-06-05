@@ -49,12 +49,12 @@ class Expr{
   bool isAssociative( const std::string& token, const int& type)   ;
   //template< typename T, typename InputIterator > ;
   int cmpPrecedence( const std::string& token1, const std::string& token2 )    ;
-  bool infixToRPN( const std::vector<std::string>& inputTokens,     
-		   const int& size,     
+  bool infixToRPN( const std::list<std::string>& inputTokens,     
+		   //		   const int& size,     
 		   std::vector<std::string>& strArray )   ;
 
-  std::vector<std::string> getExpressionTokens( const std::string& expression )    ; // make tokens from expression
-  std::vector<std::string>& getExpressionTokens( )    ; // get them if they exist already (reference)
+  std::list<std::string> Tokenize( const std::string& expression )    ; // make tokens from expression
+  std::list<std::string>& getTokens( )    ; // get them if they exist already (reference)
 
   std::vector<std::string> getRPN( )    ;
 
@@ -66,9 +66,10 @@ class Expr{
   #ifdef WITHPYTHON
   //Python functions
   boost::python::list getRPN_py(  )    ;
-  boost::python::list getExpressionTokens_py( const std::string& expression )    ;
-  boost::python::list getExpressionTokens2_py(  )    ;
-  boost::python::list infixToRPN_py( boost::python::list& inputTokens, const int& size )   ;
+  boost::python::list Tokenize_py( const std::string& expression )    ;
+  boost::python::list getTokens_py(  )    ;
+  //boost::python::list infixToRPN_py( boost::python::list& inputTokens, const int& size )   ;
+  boost::python::list infixToRPN_py( boost::python::list& inputTokens )   ;
   boost::python::list GetVarNames_py();
   string GetExpr_py();
   double GetVal_py(boost::python::list& input);
@@ -82,8 +83,8 @@ class Expr{
   //TH1F* m_dummy;
   string m_varexp;
   vector<string> m_varnames; // All the variable names
-  vector<string> m_tokens;  // Tokens for shunting yard algorithm
-  vector<string> m_values; // variable names + numbers
+  list<string> m_tokens;  // Tokens for shunting yard algorithm
+  //vector<string> m_values; // variable names + numbers
   vector<string> m_rpn;
   //vector<string> m_operations;
   //vector<string> m_delimiters;

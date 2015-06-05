@@ -34,9 +34,9 @@ const OpMap opmap( assocs, assocs + sizeof( assocs ) / sizeof( assocs[ 0 ] ) );
 
 Expr::Expr(string varexp){
   m_varexp = varexp;
-  m_tokens = getExpressionTokens(varexp);
+  m_tokens = Tokenize(varexp);
 
-  bool c = infixToRPN(m_tokens, m_tokens.size(), m_rpn);
+  bool c = infixToRPN(m_tokens, m_rpn);
   if (!c) {
     cout << "Parse Error in " << varexp << endl;
   }
@@ -64,136 +64,6 @@ Expr Expr::operator<(const Expr& rhs){
   return Expr("("+m_varexp+") < (" + rhs.GetExpr()+")");
 }
 
-/*
-pair<vector<string>, vector<string> > Expr::GetBracketExp(string varexp){
-  pair<vector<string>, vector<string> > output;
-  vector<size_t> left;
-  vector<size_t> right;
-  vector<string> strings;
-  vector<string> brkdelims;
-  vector<pair<size_t, char> > brackets;
-  //vector<pair<size_t, char> > delimiter;
-  size_t pos = 0;
-  size_t brpos_left  = varexp.find( "(" , 0  );
-  size_t brpos_right = varexp.find( ")" , 0  );
-
-  while (brpos_left != std::string::npos || brpos_right != std::string::npos){
-    if (brpos_left < brpos_right){
-      left.push_back(brpos_left);
-      brackets.push_back(pair<size_t,char>(brpos_left,'('));
-      pos = brpos_left;
-    }
-    else {
-      right.push_back(brpos_right);
-      brackets.push_back(pair<size_t,char>(brpos_right,')'));
-      pos = brpos_right;
-    }
-    brpos_left  = varexp.find( "(" , pos+1 , 1 );
-    brpos_right = varexp.find( ")" , pos+1 , 1 );
-  }
-
-  //Nor we have got all the brackets
-
-
-  if (left.size() == right.size()){
-    int nleft = 0;
-    int nright = 0;
-    size_t l = 0, r = 0;
-    for (std::vector<pair<size_t,char> >::iterator im = brackets.begin(); im != brackets.end(); ++im){
-      if ((*im).second == '('){
-	if (nleft == 0 || (r>0 && l < r && (*im).first > r)){
-	  l = (*im).first;
-	}
-	nleft++;
-      }
-      if ((*im).second == ')'){
-	nright++;
-	if (nleft == nright){
-	  r = (*im).first;
-	  strings.push_back(varexp.substr(l+1, r-(l+1)));
-	  //This closes the bracket, so we look in space before next open bracket
-
-	  size_t nxt = varexp.find("(", r+1, 1);
-	  string rst;
-	  if (nxt != std::string::npos)	  rst = varexp.substr(r+1, nxt - (r+1));
-	  else {
-	    rst = varexp.substr(r+1, std::string::npos);
-	    cout<<"string is "<<rst<<endl;
-	  }
-	  for (std::vector<string>::iterator id = m_delimiters.begin(); id !=m_delimiters.end(); ++id){
-	    if (rst.find(*id) !=std::string::npos) {
-	      brkdelims.push_back((*id));
-	      rst.erase(rst.find(*id),(*id).size());
-	      cout<<"Found "<<(*id)<<" so string is now "<<rst<<endl;
-	    }
-	  }
-	  boost::algorithm::trim(rst);
-	  cout<<"After trimming we have "<<rst<<endl;
-	  if (rst.size() > 0 ) strings.push_back(rst);
-	}
-      }
-    }
-  }
-  else cout<<"Brackets don't match"<<endl;
-  output.first = strings;
-  output.second = brkdelims;
-  return output;
-}
-
-boost::python::list Expr::GetBracketExp_py(string varexp){
-  pair<vector<string>, vector<string> > o = GetBracketExp(varexp);
-  std::vector<string> strings = o.first;
-  std::vector<string> chars = o.second;
-  boost::python::list s;
-  boost::python::list c;
-  boost::python::list l;
-  for (vector<string>::iterator is = strings.begin(); is != strings.end(); ++is){
-    s.append((*is));
-  }
-  for (vector<string>::iterator ic = chars.begin(); ic != chars.end(); ++ic){
-    c.append((*ic));
-  }
-  l.append(s);
-  l.append(c);
-  return l;
-}
-
-
-double Expr::GetVal(Tree* t){
-  if (t == 0) {
-    cout<<"No valid tree passed"<<endl;
-    return -1.0;
-  }
-  double output;
-  if (m_expressions.size() == 0){
-    vector<double> algvals;
-    for (std::vector<string>::iterator is = m_varnames.begin() ; is != m_varnames.end() ; ++is){
-      double value = 0.0;
-      if (is_number((*is))){
-	value = atof((*is).c_str());
-      }
-      else{
-	value = t->GetVal(*is);
-      }
-      
-      algvals.push_back(value);
-    }
-    output = GetVal(algvals);
-  }
-  else{
-    vector<double> algvals;
-    for (std::vector<Expr*>::iterator ie = m_expressions.begin() ; ie != m_expressions.end() ; ++ie){
-      double value = (*ie)->GetVal(t);
-      algvals.push_back(value);
-      cout<<"Pushing back "<<value<<endl;
-    }
-    output = GetVal(algvals);
-  }
-  
-  return output;
-}
-*/
-
 double Expr::GetVal(){
   if (m_varnames.size() == 0){
     return RPNtoDouble();
@@ -214,73 +84,6 @@ double Expr::GetVal(std::vector<double>& input){
   return RPNtoDouble(input);
 }
 
-/*
-double Expr::GetVal(std::vector<double>& input){
-  if ((input.size() != m_varnames.size() && input.size() !=  m_expressions.size()) || input.size() == 0) return -1;
-  double val = 1.0;
-  double eval = 0.0;
-
-  if (input.size() == m_expressions.size() || m_expressions.size() == 0){
-    int j = 0;
-    if (is_number(m_values.at(0))) val = atof(m_values.at(0).c_str());
-    else {
-      val = input[0];
-      j++;
-    }
-    for (unsigned int i = 0; i < m_operations.size(); ++i){
-      if (is_number(m_values.at(i+1))) {
-	eval = atof(m_values.at(i+1).c_str());
-      }
-      else {
-	eval = input.at(j);
-	j++;
-      }
-
-      if (m_operations.at(i) == "+")  val = val + eval;
-      if (m_operations.at(i) == "-")  val = val - eval;
-      if (m_operations.at(i) == "/")  val = val/eval;
-      if (m_operations.at(i) == "*")  val = val*eval;
-      if (m_operations.at(i) == "==") val = (val == eval ? 1.0 : 0.0);
-      if (m_operations.at(i) == ">")  val = (val > eval ? 1.0 : 0.0);
-      if (m_operations.at(i) == "<")  val = (val < eval ? 1.0 : 0.0);
-      if (m_operations.at(i) == ">=") val = (val >= eval ? 1.0 : 0.0);
-      if (m_operations.at(i) == "<=") val = (val <= eval ? 1.0 : 0.0);
-      if (m_operations.at(i) == "&&") val = val * eval;
-      if (m_operations.at(i) == "||") val = ((val == 1 || eval == 1) ? 1.0 : 0.0);
-    }
-  }
-  else if (input.size() == m_varnames.size() && m_expressions.size() > 0){
-    int s = 0;
-    vector<double> vals;
-    int n = m_expressions[0]->GetVarNames().size();
-    vals.insert(vals.end(), input.begin() + s, input.begin() + s + n); 
-    val = m_expressions[0]->GetVal(vals);
-    s = s + n;
-    vals.clear();
-    double output;
-    for (unsigned int i = 0; i < m_operations.size(); ++i){
-      n = m_expressions[i]->GetVarNames().size();
-      vals.insert(vals.end(), input.begin() + s, input.begin() + s + n); 
-      output = m_expressions[i]->GetVal(vals);
-      if (m_operations.at(i) == "+") val = val + output;
-      if (m_operations.at(i) == "-") val = val - output;
-      if (m_operations.at(i) == "/") val = val/output;
-      if (m_operations.at(i) == "*") val = val*output;
-      if (m_operations.at(i) == "==") val = (val == output ? 1.0 : 0.0);
-      if (m_operations.at(i) == ">") val = (val > output ? 1.0 : 0.0);
-      if (m_operations.at(i) == "<") val = (val < output ? 1.0 : 0.0);
-      if (m_operations.at(i) == ">=") val = (val >= output ? 1.0 : 0.0);
-      if (m_operations.at(i) == "<=") val = (val <= output ? 1.0 : 0.0);
-      if (m_operations.at(i) == "&&") val = val * output;
-      if (m_operations.at(i) == "||") val = ((val == 1 || output == 1) ? 1.0 : 0.0);
-      s = s+n;
-      vals.clear();
-    }
-  }
-  else cerr<<"Error Calculating Value - Check inputs"<<endl;
-  return val;
-}
-*/
 double Expr::GetVal_py(boost::python::list& input){
   vector<double> dbl_vec;
   for (unsigned int i = 0; i < len(input); ++i){
@@ -293,24 +96,6 @@ double Expr::GetVal_py(boost::python::list& input){
 double Expr::GetVal3_py(){
   return GetVal();
 }
-/*
-double Expr::GetVal2_py(PyObject* tree){
-  Tree* t = boost::python::extract<Tree*>(tree);
-  return GetVal(t);
-}
-
-void Expr::SetTree(Tree* t){
-  for (vector<string>::iterator iv = m_varnames.begin(); iv != m_varnames.end(); ++iv){
-    t->SetBranch(*iv);
-  }
-
-}
-
-void Expr::SetTree_py(PyObject* t){
-  Tree* tree = boost::python::extract<Tree*>(t);
-  SetTree(tree);
-}
-*/
 std::vector<string>& Expr::GetVarNames(){ return m_varnames;}
 boost::python::list Expr::GetVarNames_py(){ 
   boost::python::list l;
@@ -320,20 +105,7 @@ boost::python::list Expr::GetVarNames_py(){
 
   return l;
 }
-/*
-std::vector<Expr*> Expr::GetExpressions(){ return m_expressions;}
-boost::python::list Expr::GetExpressions_py(){ 
-  boost::python::list l;
-    for (vector<Expr*>::iterator is = m_expressions.begin(); is != m_expressions.end(); ++is){
-      //boost::python::object o(boost::python::handle<>(boost::python::borrowed(*is)));
-      //boost::python::reference_existing_object::apply<Expr*>::type converter;
-      //PyObject* o = converter( *is );
-      Expr* e = (*is);
-      l.append(e);
-    }
-    return l;
-}
-*/
+
 string Expr::GetExpr() const{ return m_varexp;}
 string Expr::GetExpr() {return m_varexp;}
 string Expr::GetExpr_py() {return m_varexp;}
@@ -434,10 +206,10 @@ int Expr::cmpPrecedence( const std::string& token1, const std::string& token2 )
   
   return p1.first - p2.first;          
 }          
-
+/*
 boost::python::list Expr::infixToRPN_py(boost::python::list& inputTokens,   const int& size){
-  vector<string> output;
-  std::vector<std::string> input;
+  std::vector<string> output;
+  std::list<std::string> input;
   for (unsigned int i = 0; i < len(inputTokens); ++i){
     string s = boost::python::extract<string>(inputTokens[i]);
     input.push_back(s);
@@ -450,13 +222,29 @@ boost::python::list Expr::infixToRPN_py(boost::python::list& inputTokens,   cons
   }
   return outputlist;
 
+  }*/
+boost::python::list Expr::infixToRPN_py(boost::python::list& inputTokens){
+  std::vector<string> output;
+  std::list<std::string> input;
+  for (unsigned int i = 0; i < len(inputTokens); ++i){
+    string s = boost::python::extract<string>(inputTokens[i]);
+    input.push_back(s);
+  }
+
+  infixToRPN(input, output);
+  boost::python::list outputlist;
+  for (vector<string>::iterator is = output.begin(); is != output.end(); ++is){
+    outputlist.append(*is);
+  }
+  return outputlist;
+
 }
 
 // Convert infix expression format into reverse Polish notation          
-bool Expr::infixToRPN( const std::vector<std::string>& inputTokens,     
-		       const int& size,     
+bool Expr::infixToRPN( const std::list<std::string>& inputTokens,     
+		       //		       const int& size,     
 		       std::vector<std::string>& strArray )          
-{       
+{     
   bool success = true;      
   
   //const int LEFT_ASSOC  = 0;      
@@ -465,10 +253,12 @@ bool Expr::infixToRPN( const std::vector<std::string>& inputTokens,
   std::stack<std::string> stack;
   
   // While there are tokens to be read      
-  for ( int i = 0; i < size; i++ )          
+  //for ( int i = 0; i < size; i++ )          
+    for ( std::list<std::string>::const_iterator it = inputTokens.begin(); it !=  inputTokens.end(); it++ )          
     {        
       // Read the token      
-      const std::string token = inputTokens[ i ];        
+      //const std::string token = inputTokens.at(i);
+      const std::string token = *it;
       if (isFunction( token ) ){
 	const std::string f = token;          
 	stack.push(f);
@@ -774,7 +564,7 @@ double Expr::RPNtoDouble( std::vector<double>& input )
   return strtod( st.top().c_str(), NULL );        
 }          
 */
-std::vector<std::string>& Expr::getExpressionTokens(){
+std::list<std::string>& Expr::getTokens(){
   return m_tokens;
 }
 
@@ -791,9 +581,9 @@ bool Expr::isInExpr(string var){
   return (VarIdx(var) > -1);
 }
 
-std::vector<std::string> Expr::getExpressionTokens( const std::string& expression )    
+std::list<std::string> Expr::Tokenize( const std::string& expression )    
 {    
-  std::vector<std::string> tokens;          
+  std::list<std::string> tokens;          
   std::string str = "";
   
   for ( int i = 0; i < (int) expression.length(); ++i )      
@@ -855,22 +645,138 @@ std::vector<std::string> Expr::getExpressionTokens( const std::string& expressio
 	    }                             
 	}      
     }          
+
+  
+  //deal with start token being a minus sign
+  std::string firstToken = tokens.front();
+  if (firstToken == "-")
+    {
+      std::list<string>::iterator it = tokens.begin();
+      it++;
+      if ( it == tokens.end() ){
+	return tokens;
+      }
+      std::string nextToken = *(it);
+      
+      if (is_number( nextToken)){
+	  tokens.pop_front();
+	  tokens.front() = firstToken + nextToken;
+      }
+      else if (nextToken == "(" || isFunction( nextToken) || isOperator(nextToken) ){
+	tokens.front() = firstToken + "1";
+	tokens.insert(it, "*");
+      }
+      else if (nextToken == "-" && firstToken == "-"){
+	std::list<std::string>::iterator nit = it;
+	std::advance(nit, -1);
+	tokens.erase(it);
+	tokens.erase(nit);
+
+      }
+    }
+
+  typedef std::list<std::string>::iterator t_iter;
+  std::string prevToken = "";
+  for (t_iter it = tokens.begin(); it != boost::prior(tokens.end()); it++)
+    {
+      std::string token = *it;
+      t_iter nit = it;
+      std::advance(nit, 1);
+
+      if ( nit == tokens.end() ){
+	break;
+      }
+
+      std::string ntoken = *nit;
+      
+      if (token == "-" && prevToken == "(")
+	{
+	  if (is_number(ntoken)){
+	    tokens.erase(nit);
+	    *it = "-"+ntoken;
+	    token = *it;
+	  }
+	}
+      else if ( token == "-" &&
+		(isOperator (prevToken) || isFunction(prevToken)))
+	{
+	  if (token == "-" && prevToken == "-")
+	    {
+	      t_iter nit = it;
+	      t_iter nnit = nit;
+	      nnit++;
+	      std::advance(nit, -1);
+	      tokens.erase(it);
+	      *nit = "+";
+
+	      t_iter pnit = nit;
+	      std::advance(pnit, -1);
+	      if (isOperator(*pnit) || *pnit == "(")
+		{
+		  tokens.erase(nit);
+		}
+
+	      token = *nnit;
+	      it = nnit;
+
+	      if ( it == boost::prior(tokens.end()) )
+		{
+		  break;
+		}
+
+	    }
+	  else if (is_number(ntoken) || isFunction(ntoken) || isOperator(ntoken) )
+	    {
+	      bool exit = false;
+	      if (nit == boost::prior(tokens.end()) )
+		{
+		  exit = true;
+		}
+	      tokens.erase(nit);
+	      *it = "-" + ntoken;
+	      token = *it;
+	      if (exit) break;
+	    }
+	  else if ( ntoken == "(")
+	    {
+	      *it = "-1";
+	      token = *it;
+	      tokens.insert(nit, "*");
+	    }
+	}
+      prevToken = token;
+    }
+  
+  prevToken = "";
+  t_iter prevIt;
+
+  for (t_iter it = tokens.begin(); it != tokens.end(); it++){
+    std::string token = *it;
+    
+    if (token == "(" && prevToken == "-")
+      {
+	tokens.insert(it, "1");
+	tokens.insert(it, "*");
+      }
+    prevToken = token;
+    prevIt = it;
+  }
   
   return tokens;    
 }  
 
-boost::python::list Expr::getExpressionTokens_py( const std::string& expression ){
-  vector<string> tokens = getExpressionTokens(expression);
+boost::python::list Expr::Tokenize_py( const std::string& expression ){
+  list<string> tokens = Tokenize(expression);
   boost::python::list s;
-  for (vector<string>::iterator is = tokens.begin(); is != tokens.end(); ++is){
+  for (list<string>::iterator is = tokens.begin(); is != tokens.end(); ++is){
     s.append((*is));
   }
   return s;
 }
-boost::python::list Expr::getExpressionTokens2_py( ){
-  vector<string> tokens = getExpressionTokens();
+boost::python::list Expr::getTokens_py( ){
+  list<string> tokens = getTokens();
   boost::python::list s;
-  for (vector<string>::iterator is = tokens.begin(); is != tokens.end(); ++is){
+  for (list<string>::iterator is = tokens.begin(); is != tokens.end(); ++is){
     s.append((*is));
   }
   return s;
@@ -888,65 +794,3 @@ boost::python::list Expr::getRPN_py( ){
   }
   return s;
 }
-
-
-
-
-
-/*void Expr::Print( const std::string& message,  
-		  const InputIterator& itbegin,     
-		  const InputIterator& itend,     
-		  const std::string& delimiter)    
-{    
-  std::cout << message << std::endl;  
-  
-  std::copy(itbegin,     
-	    itend,     
-	    std::ostream_iterator<T>(std::cout, delimiter.c_str()));    
-  
-  std::cout << std::endl;  
-  } 
-
-double Expr::GetVal2_py(string s){
-  return GetVal(s);
-}
-
-double Expr::GetVal(string s)          
-{
-  // Tokenize input expression          
-  std::vector<std::string> tokens = getExpressionTokens( s );                             
-  
-  // Evaluate feasible expressions    
-  std::vector<std::string> rpn;          
-  if ( infixToRPN( tokens, tokens.size(), rpn ) )        
-    {
-      double d = RPNtoDouble( rpn );     
-      std::cout << "Result = " << d << std::endl;        
-    }        
-  else        
-    {        
-      std::cout << "Mis-match in parentheses" << std::endl;        
-    }           
-  
-  return 0;          
-}    
-
-
-double Expr::GetVal(vector<string>& tokens)          
-{
-  // Evaluate feasible expressions    
-  std::vector<std::string> rpn;          
-  double d = -1.0;
-  if ( infixToRPN( tokens, tokens.size(), rpn ) )        
-    {
-      d = RPNtoDouble( rpn );        
-      //std::cout << "Result = " << d << std::endl;        
-    }        
-  else        
-    {        
-      std::cout << "Mis-match in parentheses" << std::endl;        
-    }           
-  
-  return d;
-}    
-*/

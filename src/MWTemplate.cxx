@@ -20,10 +20,10 @@ MWTemplate::MWTemplate(string name): Template(name){};
 
 MWTemplate::MWTemplate(string name, PyObject* pyt, PyObject* pycut) : Template(name, pyt, pycut){};
 
-MWTemplate::MWTemplate(string name, TTree* t, TCut cut): Template(name, t, cut){
+MWTemplate::MWTemplate(string name, TTree* t, TCut* cut): Template(name, t, cut){
 };
 
-MWTemplate::MWTemplate(string name, TTree* t, TCut cut, enum EColor color) : Template(name, t, cut, color){};
+MWTemplate::MWTemplate(string name, TTree* t, TCut* cut, enum EColor color) : Template(name, t, cut, color){};
 
 MWTemplate::MWTemplate(string name, MWTemplate* A, MWTemplate* B) : Template(name, A, B){
  
@@ -234,12 +234,17 @@ void MWTemplate::SaveToCurrentFile(){
   TParameter<double>* normEvts    = new TParameter<double>("", m_normN);
   TParameter<double>* fitFrac     = new TParameter<double>("", m_fitFrac);
   TParameter<double>* fitFracErr  = new TParameter<double>("", m_fitFracErr);
-  TObjString* cut = new TObjString(m_selcut.GetTitle());
   totEvts->Write("TotEvts");
   normEvts->Write("NormEvts");
   fitFrac->Write("FitFrac");
   fitFracErr->Write("FitFracErr");
-  cut->Write("Cut");
+  for (unsigned int i = 0 ; i < m_selcuts.size() ; ++i){
+    TObjString* cut = new TObjString(m_selcuts.at(i)->GetTitle());
+    ostringstream ss;
+    ss<<"Cut"<<i;
+    string label = ss.str();
+    cut->Write(label.c_str());
+  }
   if (m_tree) m_tree->Write("tree");
 }
 

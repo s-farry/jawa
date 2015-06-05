@@ -63,7 +63,7 @@ void Tree::SetBranches(vector<string> variables){
 
 void Tree::SetBranch(string name){
   if (m_tree->FindBranch(name.c_str()) == 0) {
-    cout<<"No Branch -"<<name<<"- found in Tree"<<endl;
+    cout<<"No Branch - "<<name<<" - found in Tree"<<endl;
     return;
   }
   if (m_output.find(name) != m_output.end()){

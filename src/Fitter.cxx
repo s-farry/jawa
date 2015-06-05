@@ -15,12 +15,12 @@
 #include <TParameter.h>
 #include <TMinuit.h>
 #include <TFitter.h>
-#include <RooRealVar.h>
-#include <RooArgSet.h>
-#include <RooDataHist.h>
-#include <RooHistPdf.h>
-#include <RooAddPdf.h>
-#include <RooPlot.h>
+//#include <RooRealVar.h>
+//#include <RooArgSet.h>
+//#include <RooDataHist.h>
+//#include <RooHistPdf.h>
+//#include <RooAddPdf.h>
+//#include <RooPlot.h>
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
@@ -228,7 +228,7 @@ void Fitter::TFracFit(){
     }
   }
 }
-
+/*
 void Fitter::RooFit(){
   RooRealVar x("X","X", m_data->GetBinLowEdge(1), m_data->GetXaxis()->GetBinUpEdge(m_data->GetNbinsX() + 1));
   x.printValue(std::cout);
@@ -283,7 +283,7 @@ void Fitter::RooFit(){
     //c1->Print("test.pdf");
   }
 }
-
+*/
 
 void Fitter::ExcludeBins(double evts){
   //Exclude bins with < X events to see if this changes anything

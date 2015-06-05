@@ -24,6 +24,8 @@
 using namespace std;
 
 namespace Utils{
+
+  TH1F* tgraph2hist(string name, TGraphAsymmErrors* graph);
   void fillhist(TH1F* h , vector<double>& vals);
   double get_mean(vector<double>& vals);
   double standard_deviation(vector<double>& vals, double max = -1);

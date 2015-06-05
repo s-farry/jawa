@@ -641,7 +641,7 @@ class WJetPlot(Plot):
             print "We need four plots for the WJet Plot"
             return
 
-        c = ROOT.TCanvas("c1", "c1", 600, 800)
+        c = ROOT.TCanvas("c1", "c1", 600, 600)
 
         pads = Plot.getPads(self,3)
         
@@ -658,15 +658,10 @@ class WJetPlot(Plot):
       
         k = 0
         for plot in plotObjs:
-            #if k == 0: 
-            #    plot.DrawCtr()
-            #else:
-            #    plot.DrawCtr("same")
             if k == 0: 
                 plot.DrawLo("][")
             else:
                 plot.DrawLo("same][")
-            #plot.DrawLo("same")
             plot.DrawHi("same][")
             k = k+1
 
@@ -685,9 +680,14 @@ class WJetPlot(Plot):
         pads[2].cd()
         i = 0
         for plot in plotObjs[0:2]:
-            plot.norm.SetLabelOffset(999)
-            plot.norm.SetLabelSize(0)
-            plot.norm.SetTitle("")
+            plot.normsplit[0].GetXaxis().SetLabelOffset(999)
+            plot.normsplit[0].GetXaxis().SetLabelSize(0)
+            plot.normsplit[0].GetXaxis().SetTitleSize(0)
+            plot.normsplit[0].SetTitle("")
+            plot.normsplit[1].GetXaxis().SetLabelOffset(999)
+            plot.normsplit[1].GetXaxis().SetLabelSize(0)
+            plot.normsplit[1].GetXaxis().SetTitleSize(0)
+            plot.normsplit[1].SetTitle("")
             if i == 0:
                 plot.DrawNormLo("][")
             else:
@@ -870,10 +870,9 @@ class StackPlot:
           leg = ROOT.TLegend(leglims[0],leglims[1],leglims[2],leglims[3])
           leg.SetFillColor(10)
           leg.SetFillStyle(0)
-          leg.AddEntry(dummyhist, title)
           leg.AddEntry(plot, "2012 Data")
           for hist, label in zip(histlist, labels):
-              leg.AddEntry(hist, label, 'fl')
+              leg.AddEntry(hist, label, 'f')
 
       #ylimit = plot.GetMaximum()*2
       #plt.ylim(100,ylimit)

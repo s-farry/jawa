@@ -216,11 +216,16 @@ def GetWeightHist(name, histA, histB):
     return hist
 
 def GetWeightHist2D(name, histA, histB):
-    histA_norm = histA.Clone(name)
-    histB_norm = histB.Clone(name+"_denom")
-    histA_norm.Divide(histB_norm)
-    return histA_norm
-
+    hist_norm = histA.Clone(name)
+    for i in range(hist_norm.GetXaxis().GetNbins()):
+        for j in range(hist_norm.GetYaxis().GetNbins()):
+            a = histA.GetBinContent(i+1, j+1)
+            b = histB.GetBinContent(i+1, j+1)
+            if a == 0 or b == 0 :
+                hist_norm.SetBinContent(i+1, j+1, 1)
+            else:
+                hist_norm.SetBinContent(i+1, j+1, a/b)
+    return hist_norm
 
 def GetMCLumi(name, mcdict):
     mclist = mcdict[name]

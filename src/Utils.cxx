@@ -23,7 +23,21 @@
 using namespace std;
 
 namespace Utils{
-  
+  TH1F* tgraph2hist(string name, TGraphAsymmErrors* graph){
+    double x = 0.0, y= 0.0;
+    int N = graph->GetN();
+    graph->GetPoint(0, x, y);
+    double low = x - graph->GetErrorXlow(0);
+    graph->GetPoint(N - 1, x, y);
+    double hi  = x + graph->GetErrorXhigh(N-1);
+    TH1F* hist = new TH1F(name.c_str(), name.c_str(), N, low, hi);
+    for (int i = 0; i < N; ++i){
+      graph->GetPoint(i, x, y);
+      hist->SetBinContent(i+1,y);
+    }
+    return hist;
+  }
+
   vector<double> getCorrelatedRandoms(TRandom3* r3, vector< vector<double> > corrs ){
     vector< vector<double> > chol = cholesky(corrs);
     vector<double> randoms(corrs.size(), 0);
@@ -366,20 +380,46 @@ namespace Utils{
     return sum;
 
   }
-  double GetWeightSum_py(PyObject* pyObj, string w, string cut){
-    TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-    return GetWeightSum(t, w, cut);
-  }
   double GetSum(TTree* t, string leaf){
     double sum = 0;
-    double e;
+    double d;
+    float f;
+    TClass* cl = 0; EDataType type;
+    if (!t){
+      cout<<"Return - null tree passed"<<endl;
+      return 0;
+    }
+    TBranch* branch = (TBranch*)t->GetBranch(leaf.c_str());
+    if (!branch){
+      cout<<"Branch - "<<leaf<<" - not found"<<endl;
+      return 0;
+    }
+    int vartype = 0;
+    branch->GetExpectedType(cl, type);
     t->SetBranchStatus("*",0);
     t->SetBranchStatus(leaf.c_str(),1);
-    t->SetBranchAddress(leaf.c_str(), &e);
+    
+    if (type == 8){
+      t->SetBranchAddress(leaf.c_str(), &d);
+      vartype = 1;
+    }
+    else if (type == 5){
+      t->SetBranchAddress(leaf.c_str(), &f);
+      vartype = 2;
+    }
+    else{
+      cout<<"Cannot get sum for branch of type "<<type<<endl;
+      return 0;
+    }
     int nentries = t->GetEntries();
     for (int i = 0 ; i < nentries; ++i){
       t->GetEntry(i);
-      sum += e;
+      if (vartype == 1){
+	sum += d;
+      }
+      else if (vartype == 2){
+	sum += f;
+      }
     }
     t->SetBranchStatus("*",1);
     return sum;
@@ -405,6 +445,10 @@ namespace Utils{
     return GetLumi(f);
   }
   
+  double GetWeightSum_py(PyObject* pyObj, string w, string cut){
+    TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+    return GetWeightSum(t, w, cut);
+  }
   double GetSum_py(PyObject* pyf, string leaf){
     TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyf));
     return GetSum(t, leaf);

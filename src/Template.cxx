@@ -27,6 +27,7 @@ void Template::Init(){
   m_fillTree = false;
   m_tree = 0;
   m_outputevts = true;
+  m_selcut = new TCut("");
 
 }
 
@@ -46,64 +47,79 @@ Template::Template(string name){
 //  if (m_reweightTH1F) m_reweightTH1F->Delete();
 //}
 
-//Template::~Template(){
-  //delete m_tree;
-  //delete m_entryList;
-//}
-
-
-Template::Template(string name, PyObject* pyt, PyObject* pycut){
-  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
-  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
-  //Template(name, t, *cut);
-  m_name = name;
-  m_trees.push_back(new Tree(name+"_tree", t, 1.0));
-  m_selcut = (*cut);
-  m_fixed = false;
-  m_asymm = false;
-  m_fillTree = false;
-  m_verbose = false;
-  m_fitFrac = 0;
-  m_fitFracErr = 0;
-  m_tree = 0;
-  m_outputevts = true;
+Template::~Template(){
+  for (unsigned int i = 0 ; i < m_selcuts.size(); ++i){
+    m_selcuts.at(i)->Delete();
+  }
 }
 
-Template::Template(string name, TTree* t, TCut cut){
+
+Template::Template(string name, TTree* t, TCut* cut){
   Init();
   if (m_verbose) cout<<"Initialising as "<<name<<endl;
   m_name = name;
-  m_trees.push_back(new Tree(name+"_tree", t, 1.0));
+  m_selcut->Delete();
+  m_selcut = (TCut*)cut->Clone("selcut");
 
-  m_selcut = cut;
+  if (t){
+    m_trees.push_back(new Tree(name+"_tree", t, 1.0));
+    m_selcuts.push_back((TCut*)cut->Clone("cut"));
+  }
+  else{
+    cout<<"Tree "<<name<<" passed is null - not adding"<<endl;
+  }
   if (m_verbose) cout<<"Name is "<<m_name<<endl;
 }
-Template::Template(string name, vector<TTree*> trees, TCut cut){
+Template::Template(string name, vector<TTree*> trees, TCut* cut){
   Init();
   if (m_verbose) cout<<"Initialising as "<<name<<endl;
+  cout<<"Initialising as "<<name<<endl;
+  m_selcut->Delete();
+  m_selcut = (TCut*)cut->Clone("selcut");
   m_name = name;
   for (unsigned int i = 0; i < trees.size(); ++i){
-    m_trees.push_back(new Tree(name+"_tree", trees.at(i), 1.0));
+    if (trees.at(i)){
+      m_trees.push_back(new Tree(name+"_tree", trees.at(i), 1.0));
+      m_selcuts.push_back((TCut*)cut->Clone("cut"));
+      //cout<<"added "<<cut->GetTitle()<<endl<<endl;
+    }
+    else{
+      cout<<"Tree "<<name<<" passed is null - not adding"<<endl;
+    }
   }
-  m_selcut = cut;
   if (m_verbose) cout<<"Name is "<<m_name<<endl;
 }
 
 
-Template::Template(string name, TTree* t, TCut cut, enum EColor color){
+Template::Template(string name, TTree* t, TCut* cut, enum EColor color){
   m_name = name;
-  m_trees.push_back(new Tree(name+"_tree", t, 1.0));
-  m_selcut = cut;
+  Init();
+  m_selcut->Delete();
+  m_selcut = (TCut*)cut->Clone("selcut");
+  if (t){
+    m_trees.push_back(new Tree(name+"_tree", t, 1.0));
+    m_selcuts.push_back((TCut*)cut->Clone("cut"));
+  }
+  else{
+    cout<<"Tree "<<name<<" passed is null - not adding"<<endl;
+  }
   SetStyle(color);
-  Init();
 }
 
-Template::Template(string name, vector<TTree*> trees, TCut cut, enum EColor color){
+Template::Template(string name, vector<TTree*> trees, TCut* cut, enum EColor color){
   m_name = name;
+  m_selcut->Delete();
+  m_selcut = (TCut*)cut->Clone("selcut");
   for (unsigned int i = 0; i < trees.size(); ++i){
-    m_trees.push_back(new Tree(name+"_tree", trees.at(i), 1.0));
+    if (trees.at(i)){
+      m_trees.push_back(new Tree(name+"_tree", trees.at(i), 1.0));
+      m_selcuts.push_back((TCut*)cut->Clone("cut"));
+    }
+    else{
+      cout<<"Tree "<<name<<" passed is null - not adding"<<endl;
+    }
   }
-  m_selcut = cut;
+  //m_selcuts.push_back(cut);
   SetStyle(color);
   Init();
 }
@@ -114,7 +130,7 @@ Template Template::operator+(const Template& rhs){
   return Template(m_name+"_"+rhs.GetName());
 }
 
-map<string, Var*> Template::GetVariables(){return m_variables;}
+map<string, Var*>   Template::GetVariables(){return m_variables;}
 map<string, Var2D*> Template::Get2DVariables(){return m_2Dvariables;}
 map<string, Var3D*> Template::Get3DVariables(){return m_3Dvariables;}
 
@@ -188,20 +204,55 @@ void Template::AddTrees(vector<TTree*>& trees){
     m_trees.push_back(new Tree(m_name+"_tree", (*it), 1.0));
   }
 }
+void Template::AddTrees(vector<TTree*>& trees, vector<TCut*>& cuts){
+  if (trees.size() == cuts.size()){
+    //for (std::vector<TTree*>::iterator it = trees.begin(); it != trees.end(); ++it){
+    //m_trees.push_back(new Tree(m_name+"_tree", (*it), 1.0));
+    for (unsigned int i = 0 ; i < m_trees.size() ; ++i){
+      m_trees.push_back(new Tree(m_name+"_tree", trees.at(i), 1.0));
+      m_selcuts.push_back(cuts.at(i));
+    }
+  }
+  else{
+    cout<<"Mismatch between trees and cuts - not adding trees"<<endl;
+  }
+}
 
 
 void Template::AddTree(TTree* t){
   m_trees.push_back(new Tree(m_name+"_tree", t, 1.0));
+  m_selcuts.push_back(m_selcut);
+
+}
+void Template::AddTree(TTree* t, TCut* cut){
+  m_trees.push_back(new Tree(m_name+"_tree", t, 1.0));
+  m_selcuts.push_back(cut);
 }
 void Template::AddTree(TTree* t, double w){  
   m_trees.push_back(new Tree(m_name+"_tree", t, w));
+  m_selcuts.push_back(m_selcut);
+}
+void Template::AddTree(TTree* t, double w, TCut* cut){  
+  m_trees.push_back(new Tree(m_name+"_tree", t, w));
+  m_selcuts.push_back(cut);
 }
 void Template::AddTree(string name, TTree* t){
   m_trees.push_back(new Tree(name, t));
+  m_selcuts.push_back(m_selcut);
 }
 void Template::AddTree(string name, TTree* t, double w){
   m_trees.push_back(new Tree(name, t, w));
+  m_selcuts.push_back(m_selcut);
 }
+void Template::AddTree(string name, TTree* t, TCut* cut){
+  m_trees.push_back(new Tree(name, t));
+  m_selcuts.push_back(cut);
+}
+void Template::AddTree(string name, TTree* t, double w, TCut* cut){
+  m_trees.push_back(new Tree(name, t, w));
+  m_selcuts.push_back(cut);
+}
+
 
 void Template::StyleHists(){
   for (std::map<string, Var*>::iterator iv = m_variables.begin() ; iv != m_variables.end() ; ++iv ){
@@ -261,20 +312,30 @@ void Template::IsVerbose(){
   m_verbose=true;
 }
 
-void Template::SetSelCut(TCut cut){
-  m_selcut = cut;
+void Template::SetSelCut(TCut* cut){
+  m_selcut = (TCut*)cut->Clone("cut");
+  if (m_trees.size() > 0) cout<<"Note the "<<m_trees.size()<<" trees already present will not have sel cut applied!"<<endl;
 }
 
 
 void Template::ApplyCut(){
   m_evts = 0;
+  if ((m_trees.size()  != m_selcuts.size()) && m_selcuts.size() != 1) {
+    cout<<"Error - mismatch between number of trees and cuts ("<<m_trees.size()<<" , "<<m_selcuts.size()<<")"<<endl;
+    return;
+  }
+
   for (unsigned int i = 0; i < m_trees.size(); ++i){
+    TCut* cut = 0;
+    if (m_selcuts.size() == 1) cut = m_selcuts.at(0);
+    else cut = m_selcuts.at(i);
+
     ostringstream ss;
     ss<<">>myList"<<m_name<<"_"<<i;
     string label = ss.str();
     string trimlabel = ss.str();
     trimlabel.erase(0,2);
-    m_trees.at(i)->GetTTree()->Draw(label.c_str(), m_selcut , "entrylist");
+    m_trees.at(i)->GetTTree()->Draw(label.c_str(), (*cut) , "entrylist");
     const TEntryList* list = (TEntryList*)gDirectory->Get(trimlabel.c_str());
     m_entryLists.push_back(new TEntryList(*list));
     m_evts += m_entryLists.at(i)->GetN();
@@ -687,12 +748,17 @@ void Template::SaveToCurrentFile(){
   TParameter<double>* normEvts    = new TParameter<double>("", m_normN);
   TParameter<double>* fitFrac     = new TParameter<double>("", m_fitFrac);
   TParameter<double>* fitFracErr  = new TParameter<double>("", m_fitFracErr);
-  TObjString* cut = new TObjString(m_selcut.GetTitle());
   totEvts->Write("TotEvts");
   normEvts->Write("NormEvts");
   fitFrac->Write("FitFrac");
   fitFracErr->Write("FitFracErr");
-  cut->Write("Cut");
+  for (unsigned int i = 0 ; i < m_selcuts.size() ; ++i){
+    TObjString* cut = new TObjString(m_selcuts.at(i)->GetTitle());
+    ostringstream ss;
+    ss<<"Cut"<<i;
+    string label = ss.str();
+    cut->Write(label.c_str());
+  }
   if (m_tree) m_tree->Write("tree");
 }
 
@@ -756,6 +822,54 @@ void Template::Run(){
 
 #ifdef WITHPYTHON
 
+
+Template::Template(string name, PyObject* pyt, PyObject* pycut){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
+  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
+  //Template(name, t, *cut);
+  m_name = name;
+  m_trees.push_back(new Tree(name+"_tree", t, 1.0));
+  m_selcuts.push_back((TCut*)cut->Clone("cut"));
+  m_fixed = false;
+  m_asymm = false;
+  m_fillTree = false;
+  m_verbose = false;
+  m_fitFrac = 0;
+  m_fitFracErr = 0;
+  m_tree = 0;
+  m_outputevts = true;
+}
+
+
+Template::Template(string name, boost::python::list& ns, PyObject* pycut){
+  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
+  vector<TTree*> trees;
+  for (int i = 0; i < len(ns); ++i){
+    boost::python::object obj = ns[i];
+    PyObject* pyObj = obj.ptr();
+    TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+    trees.push_back(t);
+  }
+
+  Init();
+  if (m_verbose) cout<<"Initialising as "<<name<<endl;
+  cout<<"Initialising as "<<name<<endl;
+  m_name = name;
+  for (unsigned int i = 0; i < trees.size(); ++i){
+    if (trees.at(i)){
+      m_trees.push_back(new Tree(name+"_tree", trees.at(i), 1.0));
+      m_selcuts.push_back((TCut*)cut->Clone("cut"));
+      //cout<<"added "<<cut->GetTitle()<<endl<<endl;
+    }
+    else{
+      cout<<"Tree "<<name<<" passed is null - not adding"<<endl;
+    }
+  }
+  if (m_verbose) cout<<"Name is "<<m_name<<endl;
+
+}
+
+
 Tree* Template::GetTree1_py(){
   return GetTree();
 }
@@ -780,20 +894,54 @@ void Template::AddTree4_py(string name, PyObject* pyObj, double w){
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
   AddTree(name, t, w);
 }
-
+void Template::AddTree5_py(PyObject* pyObj, PyObject* pyCut){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  TCut*  c = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyCut));
+  AddTree(t, c);
+}
+void Template::AddTree6_py(string name, PyObject* pyObj, PyObject* pyCut){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  TCut*  c = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyCut));
+  AddTree(name, t, c);
+}
+void Template::AddTree7_py(PyObject* pyObj, double w, PyObject* pyCut){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  TCut*  c = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyCut));
+  AddTree(t, w, c);
+}
+void Template::AddTree8_py(string name, PyObject* pyObj, PyObject* pyCut){
+  TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  TCut*  c = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyCut));
+  AddTree(name, t, c);
+}
 void Template::AddTrees_py(boost::python::list& ns){
   for (int i = 0; i < len(ns); ++i){
     boost::python::object obj = ns[i];
-    //PyObject* pyObj = boost::python::extract<PyObject*>(ns[i]);
     PyObject* pyObj = obj.ptr();
     TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
     AddTree(t);
   }
 }
+void Template::AddTrees2_py(boost::python::list& ns, boost::python::list& ns2){
+  if (len(ns) != len(ns2)) {
+    cout<<"mistmatch between size of trees and cuts"<<endl;
+    return;
+  }
+  for (int i = 0; i < len(ns); ++i){
+    boost::python::object obj = ns[i];
+    PyObject* pyObj = obj.ptr();
+    boost::python::object cut = ns2[i];
+    PyObject* pyCut = cut.ptr();
+
+    TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+    TCut*  c = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyCut));
+
+    AddTree(t, c);
+  }
+}
 Var2D* Template::Get2DVar_py(string name1, string name2){
   return Get2DVar(name1, name2);
 }
-
 Var3D* Template::Get3DVar_py(string name1, string name2, string name3){
   return Get3DVar(name1, name2, name3);
 }
@@ -802,7 +950,7 @@ void Template::SetFitFrac_py(double f, double err){
 }
 void Template::SetSelCut_py(PyObject* pyObj){
   TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  SetSelCut((*cut));
+  SetSelCut(cut);
 }
 void Template::AddVar1_py(string name, string var, int bins, double lo, double hi){
   AddVar(name, var, bins, lo, hi);

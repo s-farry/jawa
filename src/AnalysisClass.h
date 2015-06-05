@@ -23,15 +23,15 @@ class AnalysisClass{
  public:
   AnalysisClass(string name);
   //~AnalysisClass();
-  void SetSelCut(TCut cut);
+  void SetSelCut(TCut* cut);
   void AddData(Template* temp);
   void AddData(string name, TTree* t);
-  void AddData(string name, TTree* t, TCut cut);
+  void AddData(string name, TTree* t, TCut* cut);
   void AddTemplate(Template* temp);
   void AddTemplate(string name, TTree* t);
-  void AddTemplate(string name, TTree* t, TCut cut);
+  void AddTemplate(string name, TTree* t, TCut* cut);
   void AddTemplate(string name, TTree* t, enum EColor color);
-  void AddTemplate(string name, TTree* t, TCut cut, enum EColor color);
+  void AddTemplate(string name, TTree* t, TCut* cut, enum EColor color);
   void NormaliseTemplates(double n = 1);
   void ApplyCuts();
   void FillVars();
@@ -121,7 +121,7 @@ class AnalysisClass{
 
  private:
   string m_name;
-  TCut   m_selcut;
+  TCut*  m_selcut;
   std::vector<string> m_stackorder;
   std::vector<string> m_fitorder;
   std::map<string,Template*> m_templates;

@@ -25,7 +25,7 @@ class Fitter{
   void ConstrainParams();
   //void ConstrainParam(string name, double val, double pc);
   void TFracFit();
-  void RooFit();
+  //void RooFit();
   void AddConstraints(vector<string> names, vector<double> vals);
   void AddConstraint(string name, double val);
   void AddConstraint(string name, double val, double pc);

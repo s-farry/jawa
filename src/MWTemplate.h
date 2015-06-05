@@ -21,8 +21,8 @@ using namespace std;
 class MWTemplate : public Template {
  public:
   MWTemplate(string name);
-  MWTemplate(string name, TTree* t, TCut cut);
-  MWTemplate(string name, TTree* t, TCut cut, enum EColor color);
+  MWTemplate(string name, TTree* t, TCut* cut);
+  MWTemplate(string name, TTree* t, TCut* cut, enum EColor color);
   MWTemplate(string name, PyObject* t, PyObject* cut);
   MWTemplate(string name, MWTemplate* A, MWTemplate* B);
 

@@ -39,7 +39,7 @@ void AnalysisClass::AddTemplate(string name, TTree* t, enum EColor color){
   m_templates.insert(std::pair<string,Template*>(temp->GetName(),temp));
 }
 
-void AnalysisClass::AddTemplate(string name, TTree* t, TCut cut){
+void AnalysisClass::AddTemplate(string name, TTree* t, TCut* cut){
   m_stackorder.push_back(name);
   m_fitorder.push_back(name);
   Template* temp = new Template(name, t, cut);
@@ -47,7 +47,7 @@ void AnalysisClass::AddTemplate(string name, TTree* t, TCut cut){
   
 }
 
-void AnalysisClass::AddTemplate(string name, TTree* t, TCut cut, enum EColor color){
+void AnalysisClass::AddTemplate(string name, TTree* t, TCut* cut, enum EColor color){
   m_stackorder.push_back(name);
   m_fitorder.push_back(name);
   Template* temp = new Template(name, t, cut, color);
@@ -56,11 +56,11 @@ void AnalysisClass::AddTemplate(string name, TTree* t, TCut cut, enum EColor col
 
 
 void AnalysisClass::AddData(string name, TTree* t){
-  m_data = new Template(name,t,m_selcut);
+    m_data = new Template(name,t,m_selcut);
 }
 
 
-void AnalysisClass::AddData(string name, TTree* t, TCut cut){
+void AnalysisClass::AddData(string name, TTree* t, TCut* cut){
   m_data = new Template(name,t,cut);
 }
 
@@ -636,8 +636,8 @@ double AnalysisClass::GetLumiError(TFile* f){
   return lumierr;
 }
 
-void AnalysisClass::SetSelCut(TCut cut){
-  m_selcut = cut;
+void AnalysisClass::SetSelCut(TCut* cut){
+  m_selcut = (TCut*)cut->Clone("cut");
 }
 
 
@@ -766,7 +766,7 @@ void AnalysisClass::AddTemplate1_py(string name, PyObject* pyt){
 void AnalysisClass::AddTemplate2_py(string name, PyObject* pyt, PyObject* pycut){
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
   TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
-  AddTemplate(name, t, *cut);
+  AddTemplate(name, t, cut);
 }
 void AnalysisClass::AddTemplate3_py(string name, PyObject* pyt, int color){
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
@@ -778,7 +778,7 @@ void AnalysisClass::AddTemplate4_py(string name, PyObject* pyt, PyObject* pycut,
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
   TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
   enum EColor col = (EColor)color;
-  AddTemplate(name, t, *cut, col);
+  AddTemplate(name, t, cut, col);
 }
 void AnalysisClass::AddTemplate5_py(Template* t){
   AddTemplate(t);
@@ -889,7 +889,7 @@ double AnalysisClass::GetLumi_py(PyObject* pyf){
 void AnalysisClass::SetSelCut_py(PyObject* pycut){
 
   TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
-  SetSelCut(*cut);
+  SetSelCut(cut);
 
 }
 void AnalysisClass::SetToFit_py(boost::python::list& ns){ 

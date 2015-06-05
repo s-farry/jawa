@@ -25,26 +25,33 @@ using namespace std;
 class Template{
  public:
   Template(string name);
-  Template(string name, TTree* t, TCut cut);
-  Template(string name, TTree* t, TCut cut, enum EColor color);
-  Template(string name, vector<TTree*> trees, TCut cut);
-  Template(string name, vector<TTree*> trees, TCut cut, enum EColor color);
+  Template(string name, TTree* t, TCut* cut);
+  Template(string name, TTree* t, TCut* cut, enum EColor color);
+  Template(string name, vector<TTree*> trees, TCut* cut);
+  Template(string name, vector<TTree*> trees, TCut* cut, enum EColor color);
   Template(string name, Template* t); // essentially a clone
   Template(string name, Template* A, Template* B);
   Template operator+(const Template& rhs);
 
-  //~Template();
+  ~Template();
   void Init();
   void AddTree(TTree* t);
   void AddTree(TTree* t, double w);
   void AddTree(string name, TTree* t);
   void AddTree(string name, TTree* t, double w);
+  void AddTree(TTree* t, TCut* cut);
+  void AddTree(TTree* t, double w, TCut* cut);
+  void AddTree(string name, TTree* t, TCut* cut);
+  void AddTree(string name, TTree* t, double w, TCut* cut);
+
   void AddTrees(vector<TTree*>& trees);
+  void AddTrees(vector<TTree*>& trees, vector<TCut*>& cuts);
+
   void ApplyCut();
   void FillVars();
   void AddVar(string name, string var, int bins, double lo, double hi, string prefix = "");
   void AddVar(string name, string var, std::vector<double>& edges, string prefix = "");
-  void SetSelCut(TCut cut);
+  void SetSelCut(TCut* cut);
   void SaveToFile();
   virtual void SaveToCurrentFile();
   bool IsFixed();
@@ -101,6 +108,7 @@ class Template{
   // For python
   #ifdef WITHPYTHON
   Template(string name, PyObject* t, PyObject* cut);
+  Template(string name, boost::python::list& ns, PyObject* cut);
   void AddVar1_py(string name, string var, int bins, double lo, double hi);
   void AddVar2_py(boost::python::list& ns);
   void AddVar3_py(string name, string var, boost::python::list& ns);
@@ -123,7 +131,12 @@ class Template{
   void AddTree2_py(string name, PyObject* py);
   void AddTree3_py(PyObject* py, double w);
   void AddTree4_py(string name, PyObject* py, double w);
+  void AddTree5_py(PyObject* py, PyObject* cut);
+  void AddTree6_py(string name, PyObject* py , PyObject* cut);
+  void AddTree7_py(PyObject* py, double w    , PyObject* cut);
+  void AddTree8_py(string name, PyObject* py , PyObject* cut);
   void AddTrees_py(boost::python::list& ns);
+  void AddTrees2_py(boost::python::list& ns, boost::python::list& ns2);
   Var2D* Get2DVar_py(string name1, string name2);
   Var3D* Get3DVar_py(string name1, string name2, string name3);
   void Scale1_py(double scale, bool fixed);
@@ -148,7 +161,8 @@ class Template{
   std::map<string, Var3D*> m_3Dvariables;
   std::vector<ReweightVar*> m_reweightvariables;
   double m_norm;
-  TCut m_selcut;
+  TCut* m_selcut;
+  vector<TCut*> m_selcuts;
   bool m_fixed;
   int m_evts;
 
