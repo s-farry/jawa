@@ -272,3 +272,19 @@ void Var3D::FillAsymmetry(double xval, double yval, double eta1, double eta2, do
   if (eta2 > eta1) m_hist_fwd->Fill(xval,yval,w);
   else m_hist_bwd->Fill(xval,yval,w);
 }
+
+#ifdef WITHPYTHON
+PyObject* Var3D::GetHist_py(){
+  TH3F* newCxxObj = new TH3F(*m_hist);
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
+
+PyObject* Var3D::GetProfile_py(){
+  TProfile* newCxxObj = new TProfile(*m_prof);
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
+PyObject* Var3D::GetProfile2_py(){
+  TProfile* newCxxObj = new TProfile(*m_prof2);
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
+#endif

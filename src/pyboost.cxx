@@ -5,10 +5,20 @@ BOOST_PYTHON_MODULE(Jawa)
     using namespace boost::python;
     //Add some vectors
     
-    def("GetSum", &Utils::GetSum_py);
-    def("GetLumi", &Utils::GetLumi_py);
-    def("RemoveErrors", &Utils::RemoveErrors_py);
-    def("GetWeightSum", &Utils::GetWeightSum_py);
+    def("GetSum"      ,  &Utils::GetSum_py       );
+    def("GetLumi"     ,  &Utils::GetLumi_py      );
+    def("RemoveErrors",  &Utils::RemoveErrors_py );
+    def("GetWeightSum",  &Utils::GetWeightSum_py );
+    def("geteff"      ,  &Utils::geteff_py       );
+    def("geteff"      ,  &Utils::geteff2_py      );
+    def("geteff"      ,  &Utils::geteff3_py      );
+    def("getEffVariations"  ,  &Utils::getEffVariations_py  );
+    def("getEffMatrix"      ,  &Utils::getEffMatrix_py      );
+    def("getEffMatrix"      ,  &Utils::getEffMatrix2_py     );
+    def("saveMatrix"        ,  &Utils::saveMatrix_py        );
+    def("saveTH1F"          ,  &Utils::saveTH1F_py          );
+    def("saveTGraph"        ,  &Utils::saveTGraph_py        );
+    def("tgraph2hist"       ,  &Utils::tgraph2hist_py       );
 
 
     class_<std::vector<double> >("vect")
@@ -42,6 +52,7 @@ BOOST_PYTHON_MODULE(Jawa)
       ;
     class_<Var3D>("Var3D", init<string, Var*, Var*, Var*, string>())
       .def("GetName",       &Var3D::GetName)
+      .def("GetHist",       &Var3D::GetHist_py)
       ;
     
     class_<Expr>("Expr", init<string>())

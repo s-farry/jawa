@@ -8,6 +8,7 @@
 #include <math.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TH3F.h>
 #include <TFile.h>
 #include <TF1.h>
 #include <TMVA/Tools.h>
@@ -19,6 +20,10 @@
 #include <TParameter.h>
 #include <Utils.h>
 #include <TCanvas.h>
+#ifdef WITHPYTHON
+#include <boost/python.hpp>
+#include <boost/python/handle.hpp>
+#endif
 
 using namespace std;
 
@@ -37,6 +42,253 @@ namespace Utils{
     }
     return hist;
   }
+
+  TH1D* geteff(string name, TH3F* data, TGraphAsymmErrors* eff, int varybin, string form){
+    TH1F* eff_hist = tgraph2hist("eff_hist", eff);
+    Expr* f = new Expr(form);
+    ostringstream title;
+    title<<data->GetTitle()<<"_"<<name<<"_eff_corr_"<<varybin;
+    ostringstream efftitle;
+    efftitle<<data->GetTitle()<<"_"<<name<<"_eff_"<<varybin;
+    TH3F* eff_corr = (TH3F*)data->Clone(title.str().c_str());
+
+    if (varybin == 999 ){
+      for (int i = 0 ; i < eff_hist->GetNbinsX() ; ++i){
+	eff_hist->SetBinContent(i+1, eff_hist->GetBinContent(i+1) + eff->GetErrorYhigh(i));
+      }
+    }
+    else if (varybin == -999){
+      for (int i = 0 ; i < eff_hist->GetNbinsX() ; ++i){
+	eff_hist->SetBinContent(i+1, eff_hist->GetBinContent(i+1) - eff->GetErrorYlow(i));
+      }
+    }
+    else if (varybin != 0 && varybin <= eff_hist->GetNbinsX()){
+      double err = varybin > 0 ? eff->GetErrorYhigh(abs(varybin-1)) : -1*eff->GetErrorYlow(abs(varybin-1));
+      //double errlo = eff->GetErrorYlow(varybin);
+      //double err = errhi > errlo ? errhi : -errlo;
+      eff_hist->SetBinContent(varybin, eff_hist->GetBinContent(varybin) + err);
+    }
+
+
+    //note z axis should be final variable and x, y should be in same bins as graph
+
+    for (int i = 0 ; i < data->GetXaxis()->GetNbins() ; ++i){
+      for (int j = 0 ; j < data->GetYaxis()->GetNbins() ; ++j){
+	for (int k = 0 ; k < data->GetZaxis()->GetNbins() ; ++k){
+	  vector<double> effs;
+	  effs.push_back(eff_hist->GetBinContent(i+1));
+	  effs.push_back(eff_hist->GetBinContent(j+1));
+	  eff_corr->SetBinContent(i+1,j+1,k+1, eff_corr->GetBinContent(i+1,j+1,k+1) / f->GetVal(effs));	  
+	}
+      }
+    }
+    TH1D* final_eff = data->ProjectionZ(efftitle.str().c_str());
+    TH1D* denom     = eff_corr->ProjectionZ();
+    final_eff->Divide(denom);
+
+    denom->Delete();
+    eff_hist->Delete();
+    eff_corr->Delete();
+
+    return final_eff;
+      
+  }
+
+  TH1D* geteff(string name, TH2F* data, TGraphAsymmErrors* eff, int varybin, string form){
+    TH1F* eff_hist = tgraph2hist("eff_hist", eff);
+    Expr* f = new Expr(form);
+    ostringstream title;
+    title<<data->GetTitle()<<"_"<<name<<"_eff_corr_"<<varybin;
+    ostringstream efftitle;
+    efftitle<<data->GetTitle()<<"_"<<name<<"_eff_"<<varybin;
+    TH2F* eff_corr = (TH2F*)data->Clone(title.str().c_str());
+
+
+    if (varybin == 999 ){
+      for (int i = 0 ; i < eff_hist->GetNbinsX() ; ++i){
+	eff_hist->SetBinContent(i+1, eff_hist->GetBinContent(i+1) + eff->GetErrorYhigh(i));
+      }
+    }
+    else if (varybin == -999){
+      for (int i = 0 ; i < eff_hist->GetNbinsX() ; ++i){
+	eff_hist->SetBinContent(i+1, eff_hist->GetBinContent(i+1) - eff->GetErrorYlow(i));
+      }
+    }
+    else if (varybin != 0 && varybin <= eff_hist->GetNbinsX()){
+      double err = varybin > 0 ? eff->GetErrorYhigh(abs(varybin-1)) : -1*eff->GetErrorYlow(abs(varybin-1));
+      //double errlo = eff->GetErrorYlow(varybin);
+      //double err = errhi > errlo ? errhi : -errlo;
+      eff_hist->SetBinContent(varybin, eff_hist->GetBinContent(varybin) + err);
+    }
+
+
+    //note y axis should be final variable and x should be in same bins as graph
+
+    for (int i = 0 ; i < data->GetXaxis()->GetNbins() ; ++i){
+      for (int j = 0 ; j < data->GetYaxis()->GetNbins() ; ++j){
+	  vector<double> effs;
+	  effs.push_back(eff_hist->GetBinContent(i+1));
+	  eff_corr->SetBinContent(i+1,j+1, eff_corr->GetBinContent(i+1,j+1) / f->GetVal(effs));	  
+	}
+      }
+    TH1D* final_eff = data->ProjectionY(efftitle.str().c_str());
+    TH1D* denom     = eff_corr->ProjectionY();
+    final_eff->Divide(denom);
+
+    denom->Delete();
+    eff_hist->Delete();
+    eff_corr->Delete();
+
+    return final_eff;
+      
+  }
+
+  TH1D* geteff(string name, TH1F* data, TGraphAsymmErrors* eff, int varybin, string form){
+    TH1F* eff_hist = tgraph2hist("eff_hist", eff);
+    Expr* f = new Expr(form);
+    ostringstream title;
+    title<<data->GetTitle()<<"_"<<name<<"_eff_corr_"<<varybin;
+    ostringstream efftitle;
+    efftitle<<data->GetTitle()<<"_"<<name<<"_eff_"<<varybin;
+    TH2F* eff_corr = (TH2F*)data->Clone(title.str().c_str());
+    
+    if (varybin == 999 ){
+      for (int i = 0  ; i < eff_hist->GetNbinsX() ; ++i){
+	eff_hist->SetBinContent(i+1, eff_hist->GetBinContent(i+1) + eff->GetErrorYhigh(i));
+      }
+    }
+    else if (varybin == -999){
+      for (int i = 0  ; i < eff_hist->GetNbinsX() ; ++i){
+	eff_hist->SetBinContent(i+1, eff_hist->GetBinContent(i+1) - eff->GetErrorYlow(i));
+      }
+    }
+    else if (varybin != 0 && varybin <= eff_hist->GetNbinsX()){
+      double err = varybin > 0 ? eff->GetErrorYhigh(abs(varybin-1)) : -1*eff->GetErrorYlow(abs(varybin-1));
+      //double errlo = eff->GetErrorYlow(varybin);
+      //double err = errhi > errlo ? errhi : -errlo;
+      eff_hist->SetBinContent(varybin, eff_hist->GetBinContent(varybin) + err);
+    }
+
+    //note y axis should be final variable and x should be in same bins as graph
+
+    for (int i = 0 ; i < data->GetXaxis()->GetNbins() ; ++i){
+	  vector<double> effs;
+	  effs.push_back(eff_hist->GetBinContent(i+1));
+	  eff_corr->SetBinContent(i+1, eff_corr->GetBinContent(i+1) / f->GetVal(effs));	  
+    }
+    TH1D* final_eff = (TH1D*)data->Clone(efftitle.str().c_str());
+    TH1D* denom     = (TH1D*)eff_corr->Clone("denom");
+    final_eff->Divide(denom);
+    
+    denom->Delete();
+    eff_hist->Delete();
+    eff_corr->Delete();
+    
+    return final_eff;
+    
+  }
+
+  pair< TH1D*, vector<TH1D*> > getEffVariations(string name, TH3F* data, TGraphAsymmErrors* eff, string form){
+    TH1D* central = geteff(name, data, eff, 0, form);
+    vector<TH1D*> errors;
+    
+    for (int i = 0 ; i < eff->GetN(); ++i){
+      ostringstream title;
+      title<<name<<"_"<<i;
+      errors.push_back(geteff(title.str(), data, eff, i+1, form));
+      errors.push_back(geteff(title.str(), data, eff, -1*(i+1), form));
+    }
+    return std::make_pair< TH1D*, vector<TH1D*> >(central, errors);
+  }
+
+  pair< TH1D*, vector<TH1D*> > getEffVariations(string name, TH2F* data, TGraphAsymmErrors* eff, string form){
+    TH1D* central = geteff(name, data, eff, 0, form);
+    vector<TH1D*> errors;
+    for (int i = 0 ; i < eff->GetN(); ++i){
+      ostringstream title;
+      title<<name<<"_"<<i;
+      errors.push_back(geteff(title.str(), data, eff, i+1, form));
+      errors.push_back(geteff(title.str(), data, eff, -1*(i+1), form));
+    }
+    return pair< TH1D*, vector<TH1D*> >(central, errors);
+  }
+
+  pair< TH1D*, vector<TH1D*> > getEffVariations(string name, TH1F* data, TGraphAsymmErrors* eff, string form){
+    TH1D* central = geteff(name, data, eff, 0, form);
+    vector<TH1D*> errors;
+    for (int i = 0 ; i < eff->GetN(); ++i){
+      ostringstream title;
+      title<<name<<"_"<<i;
+      errors.push_back(geteff(title.str(), data, eff, i+1, form));
+      errors.push_back(geteff(title.str(), data, eff, -1*(i+1), form));
+    }
+    return pair< TH1D*, vector<TH1D*> >(central, errors);
+  }
+
+  matrix getEffMatrix( pair < TH1D*, vector<TH1D* > > p ){
+    TH1D* central = p.first;
+    vector<TH1D*>::iterator ih;
+    int bins = central->GetNbinsX();
+    matrix errs;//(p.second.size(), vector<double>(bins, 0.0));
+    //vector<double> total(bins, 0.0);
+    for (int j = 0; j < (int)p.second.size()/2; ++j){
+      vector<double> a;
+      for (int i = 0 ; i < bins ; ++i){
+	double err = max(abs(p.second.at(j*2)->GetBinContent(i+1) - central->GetBinContent(i+1)),
+			 abs(p.second.at(j*2+1)->GetBinContent(i+1) - central->GetBinContent(i+1)))
+	  /central->GetBinContent(i + 1);
+	a.push_back(err);
+	//total.at(i) =total.at(i) + err*err;
+      }
+      errs.push_back(a);
+    }
+    //for (int k = 0 ; k < bins ; ++k){
+    //  total.at(k) = sqrt(total.at(k));
+    //}
+
+    //return make_pair<vector<double>, vector<vector<double> > >(total, errs);
+    return errs;
+    
+  }
+
+  void saveMatrix(string name, matrix A){
+    ofstream ofile;
+    ofile.open(name.c_str());
+    for ( unsigned int i = 0 ; i < A.size() ; ++i ){
+          for ( unsigned int j = 0 ; j < A[i].size() ; ++j ){
+	    if ( j != 0 ) ofile<<",";
+	    ofile<<A[i][j];
+	  }
+	  ofile<<"\n";
+    }
+    cout<<"wrote matrix to "<<name<<endl;
+  }
+
+  void saveTH1F(string name, TH1F* h){
+    ofstream ofile;
+    ofile.open(name.c_str());
+    for ( int i = 0 ; i < h->GetNbinsX() ; ++i ){
+      if ( i != 0 ) ofile<<",";
+      ofile<<h->GetBinContent(i+1);
+    }
+    ofile<<"\n";
+    cout<<"wrote th1f to "<<name<<endl;
+  }
+  void saveTGraph(string name, TGraph* g){
+    ofstream ofile;
+    ofile.open(name.c_str());
+    for ( int i = 0 ; i < g->GetN() ; ++i ){
+      if ( i != 0 ) ofile<<",";
+      double x, y;
+      g->GetPoint(i, x, y);
+      ofile<<y;
+    }
+    ofile<<"\n";
+    cout<<"wrote tgraph to "<<name<<endl;
+  }
+
+  
+
 
   vector<double> getCorrelatedRandoms(TRandom3* r3, vector< vector<double> > corrs ){
     vector< vector<double> > chol = cholesky(corrs);
@@ -439,6 +691,178 @@ namespace Utils{
   }
 
   #ifdef WITHPYTHON
+  PyObject* geteff_py(string name, PyObject* data, PyObject* eff){
+    TH3F* data3 = (TH3F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH2F* data2 = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH1F* data1 = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TGraphAsymmErrors* graph = (TGraphAsymmErrors*)(TPython::ObjectProxy_AsVoidPtr(eff));
+    PyObject* output = 0;
+
+    if (strcmp(data3->ClassName(), "TH3F") == 0) {
+      TH1D* eff = geteff(name, data3, graph);
+      output = TPython::ObjectProxy_FromVoidPtr(eff, eff->ClassName());
+    }
+    else if (strcmp(data2->ClassName(), "TH2F") == 0) {
+      TH1D* eff = geteff(name, data2, graph);
+      output = TPython::ObjectProxy_FromVoidPtr(eff, eff->ClassName());
+    }
+    else if (strcmp(data1->ClassName(), "TH1F") == 0) {
+      TH1D* eff = geteff(name, data1, graph);
+      output = TPython::ObjectProxy_FromVoidPtr(eff, eff->ClassName());
+    }
+    else{
+      cout<<"Can't process input of type :"<<data3->ClassName()<<endl;
+    }
+    return output;
+
+  }
+  PyObject* geteff2_py(string name, PyObject* data, PyObject* eff, int varybin){
+    TH3F* data3 = (TH3F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH2F* data2 = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH1F* data1 = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TGraphAsymmErrors* graph = (TGraphAsymmErrors*)(TPython::ObjectProxy_AsVoidPtr(eff));
+    PyObject* output = 0;
+
+    if (strcmp(data3->ClassName(), "TH3F") == 0) {
+      TH1D* eff = geteff(name, data3, graph, varybin);
+      output = TPython::ObjectProxy_FromVoidPtr(eff, eff->ClassName());
+    }
+    else if (strcmp(data2->ClassName(), "TH2F") == 0) {
+      TH1D* eff = geteff(name, data2, graph, varybin);
+      output = TPython::ObjectProxy_FromVoidPtr(eff, eff->ClassName());
+    }
+    else if (strcmp(data1->ClassName(), "TH1F") == 0) {
+      TH1D* eff = geteff(name, data1, graph, varybin);
+      output = TPython::ObjectProxy_FromVoidPtr(eff, eff->ClassName());
+    }
+    else{
+      cout<<"Can't process input of type :"<<data3->ClassName()<<endl;
+    }
+    return output;
+
+  }
+  PyObject* geteff3_py(string name, PyObject* data, PyObject* eff, int varybin, string form){
+    TH3F* data3 = (TH3F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH2F* data2 = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH1F* data1 = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TGraphAsymmErrors* graph = (TGraphAsymmErrors*)(TPython::ObjectProxy_AsVoidPtr(eff));
+    PyObject* output = 0;
+
+    if (strcmp(data3->ClassName(), "TH3F") == 0) {
+      TH1D* eff = geteff(name, data3, graph, varybin, form);
+      output = TPython::ObjectProxy_FromVoidPtr(eff, eff->ClassName());
+    }
+    else if (strcmp(data2->ClassName(), "TH2F") == 0) {
+      TH1D* eff = geteff(name, data2, graph, varybin, form);
+      output = TPython::ObjectProxy_FromVoidPtr(eff, eff->ClassName());
+    }
+    else if (strcmp(data1->ClassName(), "TH1F") == 0) {
+      TH1D* eff = geteff(name, data1, graph, varybin, form);
+      output = TPython::ObjectProxy_FromVoidPtr(eff, eff->ClassName());
+    }
+    else{
+      cout<<"Can't process input of type :"<<data3->ClassName()<<endl;
+    }
+    return output;
+    
+  }
+  boost::python::list getEffVariations_py(string name, PyObject* data, PyObject* eff){
+    TH3F* data3 = (TH3F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH2F* data2 = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH1F* data1 = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TGraphAsymmErrors* graph = (TGraphAsymmErrors*)(TPython::ObjectProxy_AsVoidPtr(eff));
+    pair< TH1D*, vector<TH1D*> > output;
+
+
+    if (strcmp(data3->ClassName(), "TH3F") == 0) {
+      output = getEffVariations(name, data3, graph);
+    }
+    else if (strcmp(data2->ClassName(), "TH2F") == 0) {
+      output = getEffVariations(name, data2, graph);
+    }
+    else if (strcmp(data1->ClassName(), "TH1F") == 0) {
+      output = getEffVariations(name, data1, graph);
+    }
+    else{
+      cout<<"Can't process input of type :"<<data3->ClassName()<<endl;
+    }
+   boost::python::list ns;
+   //having library trouble with boost::python::handle
+   /*
+   if (output.first) {
+     PyObject* py = TPython::ObjectProxy_FromVoidPtr(output.first, output.first->ClassName());
+     boost::python::object o(boost::python::handle<>(py));
+     ns.append(o);
+   }
+   for (unsigned int i = 0 ; i < output.second.size() ; ++i ){
+     ns.append(boost::python::object(boost::python::handle<>(TPython::ObjectProxy_FromVoidPtr(output.second.at(i), output.second.at(i)->ClassName()))));
+     }*/
+   
+   return ns;
+
+  }
+  boost::python::list getEffMatrix_py(string name, PyObject* data, PyObject* eff){
+    TH3F* data3 = (TH3F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH2F* data2 = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH1F* data1 = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TGraphAsymmErrors* graph = (TGraphAsymmErrors*)(TPython::ObjectProxy_AsVoidPtr(eff));
+    pair< TH1D*, vector<TH1D*> > output;
+
+
+    if (strcmp(data3->ClassName(), "TH3F") == 0) {
+      output = getEffVariations(name, data3, graph);
+    }
+    else if (strcmp(data2->ClassName(), "TH2F") == 0) {
+      output = getEffVariations(name, data2, graph);
+    }
+    else if (strcmp(data1->ClassName(), "TH1F") == 0) {
+      output = getEffVariations(name, data1, graph);
+    }
+    else{
+      cout<<"Can't process input of type :"<<data3->ClassName()<<endl;
+    }
+
+    matrix totMat = getEffMatrix(output);
+    
+    boost::python::list ns = mat2PyList<double>(totMat);
+    return ns;
+
+  }
+
+  boost::python::list getEffMatrix2_py(string name, PyObject* data, PyObject* eff, string f){
+    TH3F* data3 = (TH3F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH2F* data2 = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH1F* data1 = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TGraphAsymmErrors* graph = (TGraphAsymmErrors*)(TPython::ObjectProxy_AsVoidPtr(eff));
+    pair< TH1D*, vector<TH1D*> > output;
+
+
+    if (strcmp(data3->ClassName(), "TH3F") == 0) {
+      output = getEffVariations(name, data3, graph, f);
+    }
+    else if (strcmp(data2->ClassName(), "TH2F") == 0) {
+      output = getEffVariations(name, data2, graph, f);
+    }
+    else if (strcmp(data1->ClassName(), "TH1F") == 0) {
+      output = getEffVariations(name, data1, graph, f);
+    }
+    else{
+      cout<<"Can't process input of type :"<<data3->ClassName()<<endl;
+    }
+
+    matrix totMat = getEffMatrix(output);
+    
+    boost::python::list ns = mat2PyList<double>(totMat);
+    return ns;
+
+  }
+
+
+  PyObject* tgraph2hist_py(string name, PyObject* eff){
+    TGraphAsymmErrors* graph = (TGraphAsymmErrors*)(TPython::ObjectProxy_AsVoidPtr(eff));
+    TH1F* o = tgraph2hist(name, graph);
+    return TPython::ObjectProxy_FromVoidPtr(o, o->ClassName());
+  }
 
   double GetLumi_py(PyObject* pyf){
     TFile* f = (TFile*)(TPython::ObjectProxy_AsVoidPtr(pyf));
@@ -494,7 +918,69 @@ namespace Utils{
     return standard_deviation(vals);
   }
 
+  void saveMatrix_py(string name, boost::python::list& ns){
+    vector< vector<double> > m = pyList2Mat<double>(ns);
+    saveMatrix(name, m);
+  }
+  void saveTH1F_py(string name, PyObject* pyObj){
+    TH1F* h = Py2RootObj<TH1F>(pyObj);
+    saveTH1F(name, h);
+  }
+  void saveTGraph_py(string name, PyObject* pyObj){
+    TGraph* g = Py2RootObj<TGraph>(pyObj);
+    saveTGraph(name, g);
+  }
 
+  
+  template <typename T> boost::python::list vec2PyList(std::vector<T> vect){
+    boost::python::list ns3;
+    for (unsigned int j = 0 ; j < vect.size() ; ++j){
+      ns3.append(vect[j]);
+    }
+    return ns3;
+  }
+  template <typename T> boost::python::list mat2PyList(std::vector< std::vector<T> > mat){
+    boost::python::list ns2;
+    for (unsigned int i = 0 ; i < mat.size() ; ++i){
+      boost::python::list ns3;
+      for (unsigned int j = 0 ; j < mat[i].size() ; ++j){
+	ns3.append(mat[i][j]);
+      }
+      ns2.append(ns3);
+    }
+    return ns2;
+  }
+  template <typename T> vector<T> pyList2Vec(boost::python::list& ns){
+    vector<T> vals;
+    for (unsigned int i = 0; i < len(ns); ++i){
+      T d = boost::python::extract<T>(ns[i]);
+      vals.push_back(d);
+    }
+    return vals;
+  }
+  template <typename T> vector< vector<T> > pyList2Mat(boost::python::list& ns){
+    vector<vector<T> > vals;
+    for (unsigned int i = 0; i < len(ns); ++i){
+      boost::python::list ns2 = boost::python::extract<boost::python::list>(ns[i]);
+      //boost::python::list ns2 = ns[i];
+      vector<T> v;
+      for ( unsigned int j = 0 ; j < len(ns2); ++j){
+	T d = boost::python::extract<T>(ns2[j]);
+	v.push_back(d);
+      }
+      vals.push_back(v);
+    }
+    return vals;
+  }
+  template <typename T> T* Py2RootObj(PyObject* pyObj){
+    return (T*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  }
+  template <typename T> PyObject* Root2PyObj(T* cxxObj){
+    return TPython::ObjectProxy_FromVoidPtr(cxxObj, cxxObj->ClassName());
+  }
+
+  
+  
   #endif
   
 }

@@ -7,6 +7,7 @@
 #include <TGraphAsymmErrors.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TH3F.h>
 #include <THStack.h>
 #include <TColor.h>
 #include <TFractionFitter.h>
@@ -20,11 +21,28 @@
 #include <TRandom3.h>
 #include "Minuit2/Minuit2Minimizer.h"
 #include "Math/Functor.h"
+#include <iostream>
 
 using namespace std;
+typedef vector< vector< double > > matrix;
 
 namespace Utils{
 
+
+  enum VaryType{AllUp = 999, AllDown = -999, None = 0};
+  
+  void saveMatrix(string name, matrix A);
+  void saveTH1F(string name, TH1F* h);
+  void saveTGraph(string name, TGraph* g);
+  TH1D* geteff(string name, TH3F* data, TGraphAsymmErrors* eff, int varybin = 0, string form = "a*b");
+  TH1D* geteff(string name, TH2F* data, TGraphAsymmErrors* eff, int varybin = 0, string form = "a");
+  TH1D* geteff(string name, TH1F* data, TGraphAsymmErrors* eff, int varybin = 0, string form = "a");
+  pair< TH1D* , vector<TH1D*> >  getEffVariations(string name, TH3F* data, TGraphAsymmErrors* eff, string form = "a*b");
+  pair< TH1D* , vector<TH1D*> >  getEffVariations(string name, TH2F* data, TGraphAsymmErrors* eff, string form = "a");
+  pair< TH1D* , vector<TH1D*> >  getEffVariations(string name, TH1F* data, TGraphAsymmErrors* eff, string form = "a"); 
+  matrix getEffMatrix( pair < TH1D*, vector<TH1D* >  > p );
+
+  
   TH1F* tgraph2hist(string name, TGraphAsymmErrors* graph);
   void fillhist(TH1F* h , vector<double>& vals);
   double get_mean(vector<double>& vals);
@@ -36,15 +54,15 @@ namespace Utils{
   vector<double> getCorrelatedRandoms(TRandom3* r3, vector< vector<double> > corrs );
   vector<double> getRandoms(TRandom3* r3, int n );
 
-  vector< vector<double> > getCorrelationMatrix(vector<vector<double> > vals);
+  matrix getCorrelationMatrix(vector<vector<double> > vals);
   vector<double> getColumn(int n, vector< vector<double> > vals);
   double GetMean(vector<double> vals);
   double GetStdDev(vector<double> vals, double mean);
   std::vector<double> GetBinEdgesX(TH2F* hist);
   std::vector<double> GetBinEdgesY(TH2F* hist);
 
-  vector< vector< vector<double> > > getVals(Tree* tree, Expr* expr, Var2D* var, TCut cut="");
-  vector< vector<double> > getVals(Tree* tree, Expr* var, Var* binvar, TCut cut);
+  vector< matrix > getVals(Tree* tree, Expr* expr, Var2D* var, TCut cut="");
+  matrix getVals(Tree* tree, Expr* var, Var* binvar, TCut cut);
   vector<double> getVals(Tree* t, Expr* var, TCut cut);
   TH1F* GetWeightHist(string name, TH1F* histA, TH1F* histB);
   double GetSum(TTree* t, string leaf);
@@ -54,6 +72,15 @@ namespace Utils{
 
   double GetWeightSum(TTree* t, string w, string cut);
   #ifdef WITHPYTHON
+  PyObject* tgraph2hist_py(string name, PyObject* graph);
+  PyObject* geteff_py(string name, PyObject* data, PyObject* eff);
+  PyObject* geteff2_py(string name, PyObject* data, PyObject* eff, int varybin);
+  PyObject* geteff3_py(string name, PyObject* data, PyObject* eff, int varybin, string form);
+  boost::python::list getEffVariations_py(string name, PyObject* data, PyObject* eff);
+  //boost::python::list getEffVariations_py(PyObject* data, PyObject* eff, string form);
+  boost::python::list getEffMatrix_py(string name, PyObject* data, PyObject* eff);
+  boost::python::list getEffMatrix2_py(string name, PyObject* data, PyObject* eff, string s);
+
   double GetWeightSum_py(PyObject* py, string w, string cut);
   void RemoveErrors_py(PyObject* pyObj);
   double GetSum_py(PyObject* t, string leaf);
@@ -61,7 +88,16 @@ namespace Utils{
   double standard_deviation_py(boost::python::list& ns);
   boost::python::list GetStdDevs_py();
   boost::python::list cholesky_py(boost::python::list& ns);
+  void saveMatrix_py(string name, boost::python::list& ns);
+  void saveTH1F_py(string name, PyObject* pyObj);
+  void saveTGraph_py(string name, PyObject* pyObj);
 
+  template<typename T> boost::python::list vec2PyList(std::vector<T> vect);
+  template<typename T> boost::python::list mat2PyList(std::vector< std::vector<T> > mat);
+  template <typename T> vector<T> pyList2Vec(boost::python::list& ns);
+  template <typename T> vector< vector<T> > pyList2Mat(boost::python::list& ns);
+  template <typename T> T* Py2RootObj(PyObject* pyObj);
+  template <typename T> PyObject* Root2PyObj(T* cxxObj);  
   #endif
 
   

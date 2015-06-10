@@ -11,7 +11,7 @@ PYTHON_LIB = $(PYTHONHOME)/lib/
 #boost
 BOOST_INC = /usr/local/include
 BOOST_LIB = /usr/local/lib
-BOOSTLIBS = -lboost_python-mt
+BOOSTLIBS = -lboost_python
 PYTHONLIBS = -lpython$(PYTHON_VERSION)
 
 RM = rm -f # rm command
@@ -29,7 +29,7 @@ OBJS = $(SRCS:.cxx=.o)
 all	: ${TARGET_LIB}
 
 $(TARGET_LIB) : $(OBJS)
-	$(CC) $(LDFLAGS) $^ -L$(BOOST_LIB) $(BOOSTLIBS) -L$(ROOTSYS)/lib $(ROOTLIBS) -o lib/$@ 
+	$(CC) $(LDFLAGS) $^ $(BOOSTLIBS) -L$(ROOTSYS)/lib $(ROOTLIBS) -o lib/$@ 
 $(OBJS): %.o:src/%.cxx src/%.h
 	$(CC) $(CXXFLAGS) -Isrc/ -I/usr/include -I$(ROOTSYS)/include -I$(PYTHON_INCLUDE) -I$(BOOST_INC) $< -o lib/$@
 

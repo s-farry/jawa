@@ -61,6 +61,11 @@ class Var3D{
   int GetBins3();
   double GetVar3Lo();
   double GetVar3Hi();
+#ifdef WITHPYTHON
+  PyObject* GetHist_py();
+  PyObject* GetProfile_py();
+  PyObject* GetProfile2_py();
+#endif
 
 
  protected:
