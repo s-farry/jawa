@@ -15,12 +15,6 @@
 #include <TParameter.h>
 #include <TMinuit.h>
 #include <TFitter.h>
-//#include <RooRealVar.h>
-//#include <RooArgSet.h>
-//#include <RooDataHist.h>
-//#include <RooHistPdf.h>
-//#include <RooAddPdf.h>
-//#include <RooPlot.h>
 #include <boost/algorithm/string.hpp>
 
 using namespace std;

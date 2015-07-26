@@ -49,7 +49,7 @@ Template::Template(string name){
 
 Template::~Template(){
   for (unsigned int i = 0 ; i < m_selcuts.size(); ++i){
-    m_selcuts.at(i)->Delete();
+    if (m_selcuts.at(i)) m_selcuts.at(i)->Delete();
   }
 }
 
@@ -201,16 +201,20 @@ Tree* Template::GetTree(string name){
 
 void Template::AddTrees(vector<TTree*>& trees){
   for (std::vector<TTree*>::iterator it = trees.begin(); it != trees.end(); ++it){
-    m_trees.push_back(new Tree(m_name+"_tree", (*it), 1.0));
+    AddTree(*it);
+    //m_trees.push_back(new Tree(m_name+"_tree", (*it), 1.0));
   }
 }
 void Template::AddTrees(vector<TTree*>& trees, vector<TCut*>& cuts){
+  int ntrees = m_trees.size();
   if (trees.size() == cuts.size()){
     //for (std::vector<TTree*>::iterator it = trees.begin(); it != trees.end(); ++it){
     //m_trees.push_back(new Tree(m_name+"_tree", (*it), 1.0));
     for (unsigned int i = 0 ; i < m_trees.size() ; ++i){
+      stringstream s;
+      s<<"selcut_"<<ntrees+i;
       m_trees.push_back(new Tree(m_name+"_tree", trees.at(i), 1.0));
-      m_selcuts.push_back(cuts.at(i));
+      m_selcuts.push_back((TCut*)cuts.at(i)->Clone(s.str().c_str()));
     }
   }
   else{
@@ -220,37 +224,58 @@ void Template::AddTrees(vector<TTree*>& trees, vector<TCut*>& cuts){
 
 
 void Template::AddTree(TTree* t){
+  int ntrees = m_trees.size();
+  stringstream s;
+  s<<"selcut_"<<ntrees;
   m_trees.push_back(new Tree(m_name+"_tree", t, 1.0));
-  m_selcuts.push_back(m_selcut);
+  m_selcuts.push_back((TCut*)m_selcut->Clone(s.str().c_str()));
 
 }
 void Template::AddTree(TTree* t, TCut* cut){
+  int ntrees = m_trees.size();
+  stringstream s;
+  s<<"selcut_"<<ntrees;
   m_trees.push_back(new Tree(m_name+"_tree", t, 1.0));
-  m_selcuts.push_back(cut);
+  m_selcuts.push_back((TCut*)cut->Clone(s.str().c_str()));
 }
 void Template::AddTree(TTree* t, double w){  
   m_trees.push_back(new Tree(m_name+"_tree", t, w));
   m_selcuts.push_back(m_selcut);
 }
-void Template::AddTree(TTree* t, double w, TCut* cut){  
+void Template::AddTree(TTree* t, double w, TCut* cut){ 
+  int ntrees = m_trees.size();
+  stringstream s;
+  s<<"selcut_"<<ntrees;
   m_trees.push_back(new Tree(m_name+"_tree", t, w));
-  m_selcuts.push_back(cut);
+  m_selcuts.push_back((TCut*)cut->Clone(s.str().c_str()));
 }
 void Template::AddTree(string name, TTree* t){
-  m_trees.push_back(new Tree(name, t));
-  m_selcuts.push_back(m_selcut);
+  int ntrees = m_trees.size();
+  stringstream s;
+  s<<"selcut_"<<ntrees;
+  m_trees.push_back(new Tree(name+"_tree", t, 1.0));
+  m_selcuts.push_back((TCut*)m_selcut->Clone(s.str().c_str()));
 }
 void Template::AddTree(string name, TTree* t, double w){
-  m_trees.push_back(new Tree(name, t, w));
-  m_selcuts.push_back(m_selcut);
+  int ntrees = m_trees.size();
+  stringstream s;
+  s<<"selcut_"<<ntrees;
+  m_trees.push_back(new Tree(name+"_tree", t, w));
+  m_selcuts.push_back((TCut*)m_selcut->Clone(s.str().c_str()));
 }
 void Template::AddTree(string name, TTree* t, TCut* cut){
-  m_trees.push_back(new Tree(name, t));
-  m_selcuts.push_back(cut);
+  int ntrees = m_trees.size();
+  stringstream s;
+  s<<"selcut_"<<ntrees;
+  m_trees.push_back(new Tree(name+"_tree", t, 1.0));
+  m_selcuts.push_back((TCut*)cut->Clone(s.str().c_str()));
 }
 void Template::AddTree(string name, TTree* t, double w, TCut* cut){
-  m_trees.push_back(new Tree(name, t, w));
-  m_selcuts.push_back(cut);
+  int ntrees = m_trees.size();
+  stringstream s;
+  s<<"selcut_"<<ntrees;
+  m_trees.push_back(new Tree(name+"_tree", t, w));
+  m_selcuts.push_back((TCut*)cut->Clone(s.str().c_str()));
 }
 
 

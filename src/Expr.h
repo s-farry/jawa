@@ -39,8 +39,6 @@ class Expr{
   static bool is_number(const std::string& s);
   bool isInExpr(string var);
   int VarIdx(string var);
-  string FindFunc(string name);
-  size_t FindNextBracket(size_t pos);
   //
   // Print iterators in a generic way  
   bool isParenthesis( const std::string& token)   ;

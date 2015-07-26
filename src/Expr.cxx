@@ -8,8 +8,8 @@
 using namespace std;
 
 
-const int LEFT_ASSOC  = 0;      
-const int RIGHT_ASSOC = 1;   
+int LEFT_ASSOC  = 0;      
+int RIGHT_ASSOC = 1;   
 
 // Map the different operators: +, -, *, / etc
 typedef std::map< std::string, std::pair< int,int > > OpMap;
@@ -20,7 +20,9 @@ const OpMap::value_type assocs[] =
   {  OpMap::value_type( "+", std::make_pair<int,int>( 0, LEFT_ASSOC ) ),      
      OpMap::value_type( "-", std::make_pair<int,int>( 0, LEFT_ASSOC ) ),
      OpMap::value_type( ">", std::make_pair<int,int>( 2, LEFT_ASSOC ) ),      
-     OpMap::value_type( "<", std::make_pair<int,int>( 2, LEFT_ASSOC ) ),      
+     OpMap::value_type( "<", std::make_pair<int,int>( 2, LEFT_ASSOC ) ),   
+     OpMap::value_type( ">=", std::make_pair<int,int>( 2, LEFT_ASSOC ) ),      
+     OpMap::value_type( "<=", std::make_pair<int,int>( 2, LEFT_ASSOC ) ),     
      OpMap::value_type( "==", std::make_pair<int,int>( 2, LEFT_ASSOC ) ),     
      OpMap::value_type( "!=", std::make_pair<int,int>( 2, LEFT_ASSOC ) ),
      OpMap::value_type( "*", std::make_pair<int,int>( 5, LEFT_ASSOC ) ),        
@@ -123,45 +125,6 @@ bool Expr::is_number(const std::string& s){
 
 }
 
-string Expr::FindFunc(string name){
-  size_t pos = m_varexp.find(name);
-  //brpos_left  = varexp.find( "(" , pos+1 , 1 );
-  //brpos_right = varexp.find( ")" , pos+1 , 1 );
-
-  if (pos != std::string::npos){
-    cout<<m_varexp[pos + name.size()]<<endl;
-  }
-  return name;
-
-}
-
-size_t Expr::FindNextBracket(size_t pos){
-  size_t brpos_left  = m_varexp.find( "(" , pos+1 , 1 );
-  size_t brpos_right = m_varexp.find( ")" , pos+1 , 1 );
-  
-  int nleft = 1;
-  int nright = 0;
-
-  while ((brpos_left != std::string::npos || brpos_right != std::string::npos) && nleft > nright){
-    if (brpos_left < brpos_right){
-      nleft ++;
-      pos = brpos_left;
-    }
-    else {
-      nright++;
-      pos = brpos_right;
-    }
-    brpos_left  = m_varexp.find( "(" , pos+1 , 1 );
-    brpos_right = m_varexp.find( ")" , pos+1 , 1 );
-  }
-  if (nleft != nright) {
-    cout<<"Problem with brackets"<<endl;
-    return std::string::npos;
-  }
-  else return pos;
-
-}
-
 // Test if token is an pathensesis    
 bool Expr::isParenthesis( const std::string& token)          
 {          
@@ -174,12 +137,13 @@ bool Expr::isOperator( const std::string& token)
   return token == "+" || token == "-" ||        
   token == "*" || token == "/" || token == "^"||
   token == ">" || token == "<" || token == "&&"||
+  token == ">=" || token == "<=" ||
   token == "|"  || token == "==" || token == "!=";
 }        
 
 bool Expr::isFunction( const std::string& token)          
 {
-  return token == "sqrt" || token == "abs" ||     
+  return token == "sqrt" || token == "abs" || token == "fabs" ||     
     token == "sin" || token == "cos" ||
     token == "tan" || token == "log" || token == "log10" ||
     token == "min" || token == "max";
@@ -415,6 +379,8 @@ double Expr::RPNtoDouble( std::vector<double>& input )
 		token == "||" ? max(1.0, d1 + d2) :
 		token == ">" ? d1 > d2 :
 		token == "<" ? d1 < d2 :
+		token == ">=" ? d1 >= d2 :
+		token == "<=" ? d1 <= d2 :
 		token == "==" ? d1 == d2 :
 		token == "!=" ? d1 != d2 :
 		d1 / d2;
@@ -440,7 +406,7 @@ double Expr::RPNtoDouble( std::vector<double>& input )
 	  //const double d = strtod( val.c_str(), NULL);
 	  if (token == "sqrt") result = sqrt(d);
 	  else if (token == "abs") result = abs(d);
-	  else if (token == "abs") result =  abs(d); 
+	  else if (token == "fabs") result =  fabs(d); 
 	  else if (token == "sin") result =  sin(d);
 	  else if (token == "cos") result =  cos(d);
 	  else if (token == "tan") result =  tan(d);

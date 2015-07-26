@@ -1,6 +1,26 @@
 from os import sys
-from ROOT import TFile, TTree, TH1, TCut, kRed, kYellow, kBlue, kOrange, kGreen, TF1, kMagenta, TMath, TH1F, TGraphAsymmErrors, Double
+from ROOT import TFile, TTree, TH1, TCut, kRed, kYellow, kBlue, kOrange, kGreen, TF1, kMagenta, TMath, TH1F, TGraphAsymmErrors, Double, TCanvas
 from math import sqrt
+
+
+def getpdfuncertainty(central, pdfsets):
+    sumsq = 0
+    for pdf in pdfsets:
+        sumsq = sumsq + pow(central - pdf,2)
+    return sqrt(sumsq / (len(pdfsets) - 1))
+
+
+def normalise_to_bins(name, histA, histB, bins = [0, -1]):
+    histAA = histA.Clone(name+"A")
+    histBB = histB.Clone(name+"B")
+    histAA.Scale(1 / histAA.Integral(bins[0], bins[1]))
+    histBB.Scale(1 / histBB.Integral(bins[0], bins[1]))
+    c = TCanvas(name)
+    histAA.SetLineColor(kBlue)
+    histAA.Draw()
+    histBB.SetLineColor(kRed)
+    histBB.Draw("same")
+    return [histAA, histBB, c]
 
 
 
@@ -221,7 +241,7 @@ def GetWeightHist2D(name, histA, histB):
         for j in range(hist_norm.GetYaxis().GetNbins()):
             a = histA.GetBinContent(i+1, j+1)
             b = histB.GetBinContent(i+1, j+1)
-            if a == 0 or b == 0 :
+            if b == 0 :
                 hist_norm.SetBinContent(i+1, j+1, 1)
             else:
                 hist_norm.SetBinContent(i+1, j+1, a/b)
@@ -241,3 +261,97 @@ def GetVPT(hist, step = 5):
         normhists += [binned]
     return normhists
             
+
+#classes for dealing with scale and pdf uncertainties
+
+class asymm_details:
+    def __init__(self, name, c1, scales1, c2, scales2, pdfs1 = None, pdfs2 = None):
+        self.name = name
+        self.tot_asymm        = (c1.Integral() - c2.Integral()) / (c1.Integral() + c2.Integral())
+        self.tot_asymm_scales = [(p.Integral() - m.Integral()) / (p.Integral() + m.Integral()) for p, m in zip(scales1, scales2)]
+        self.tot_asymm_scale_errhi = max(self.tot_asymm_scales) - self.tot_asymm
+        self.tot_asymm_scale_errlo = self.tot_asymm - min(self.tot_asymm_scales)
+        #differential plot with scale errors
+        self.asymm = c1.GetAsymmetry(c2)
+        self.asymm_scales = [p.GetAsymmetry(m) for p, m in zip(scales1, scales2)]
+        self.asymm_scaleerrs        = GetSpreadGraph(name+"_scaleerrs", [self.asymm] + self.asymm_scales, addErr = True)  
+        self.asymm_scaleerrs_nostat = GetSpreadGraph(name+"_scaleerrs_nostat", [self.asymm] + self.asymm_scales, addErr = False) 
+        if pdfs1 != None and pdfs2 != None:
+            self.tot_asymm_pdfs = [(p.Integral() - m.Integral())/(p.Integral() + m.Integral()) for p,m in zip(pdfs1, pdfs2)]
+            self.tot_asymm_pdf_err = getpdfuncertainty(self.tot_asymm, self.tot_asymm_pdfs)
+            self.asymm_pdfs = [p.GetAsymmetry(m) for p, m in zip(pdfs1, pdfs2)]
+            self.asymm_pdferrs        = GetPDFGraph(name+"_pdferrs", [self.asymm] + self.asymm_pdfs, addErr = True)  
+            self.asymm_pdferrs_nostat = GetPDFGraph(name+"_pdferrs_nostat", [self.asymm] + self.asymm_pdfs, addErr = False) 
+        else:
+            self.asymm_pdferrs = None
+            self.asymm_pdferrs_nostat = None
+            self.tot_asymm_pdf_err = 0
+            
+
+def get_ratio(name, c1, c2):
+    r = c1.Clone(name+"_ratio")
+    r.Sumw2()
+    r.Divide(c2)
+    return r
+
+class ratio_details:
+    def __init__(self, name, c1, scales1, c2, scales2, pdfs1 = None, pdfs2 = None):
+        self.name = name
+        self.tot_ratio        = c1.Integral()/ c2.Integral()
+        self.tot_ratio_scales = [p.Integral() / m.Integral() for p, m in zip(scales1, scales2)]
+        self.tot_ratio_scale_errhi = max(self.tot_ratio_scales) - self.tot_ratio
+        self.tot_ratio_scale_errlo = self.tot_ratio - min(self.tot_ratio_scales)
+        #differential plot with scale errors
+        self.ratio = get_ratio(name, c1, c2)
+        self.ratio_scales = [get_ratio(name+'_scale'+str(i), p, m) for p, m, i in zip(scales1, scales2, range(len(scales1)))]
+        self.ratio_scaleerrs        = GetSpreadGraph(name+"_scaleerrs", [self.ratio] + self.ratio_scales, addErr = True)  
+        self.ratio_scaleerrs_nostat = GetSpreadGraph(name+"_scaleerrs_nostat", [self.ratio] + self.ratio_scales, addErr = False) 
+        if pdfs1 != None and pdfs2 != None:
+            self.tot_ratio_pdfs = [p.Integral()/m.Integral() for p,m in zip(pdfs1, pdfs2)]
+            self.tot_ratio_pdf_err = getpdfuncertainty(self.tot_ratio, self.tot_ratio_pdfs)
+            self.ratio_pdfs = [get_ratio(name+'_pdfs'+str(i), p, m) for p, m, i in zip(pdfs1, pdfs2, range(len(pdfs1)))]
+            self.ratio_pdferrs        = GetPDFGraph(name+"_pdferrs", [self.ratio] + self.ratio_pdfs, addErr = True)  
+            self.ratio_pdferrs_nostat = GetPDFGraph(name+"_pdferrs_nostat", [self.ratio] + self.ratio_pdfs, addErr = False) 
+        else:
+            self.ratio_pdferrs = None
+            self.ratio_pdferrs_nostat = None
+            self.tot_ratio_pdf_err = 0
+
+class details:
+    def __init__(self, name, c, scales, pdfs = None):
+        self.name = name
+        self.tot_xsec  = c.Integral()
+        self.tot_xsec_scales = [m.Integral() for m in scales]
+        self.tot_xsec_scale_errhi = max(self.tot_xsec_scales) - self.tot_xsec
+        self.tot_xsec_scale_errlo = self.tot_xsec - min(self.tot_xsec_scales)
+        #declare normalised cross-sections
+        self.norm_xsec = c.Clone(name+"_diff_norm")
+        #declare norm cross-section for scale sets
+        self.norm_xsec_scales = [h.Clone(h.GetName()+"_norm") for h in scales]
+        #normalise
+        for h in ([self.norm_xsec] + self.norm_xsec_scales):
+            h.Scale(1/h.Integral())
+        #differential plot with scale errors
+        self.xsec_scaleerrs        = GetSpreadGraph(name+"_scaleerrs", [c] + scales, addErr = True)  
+        self.xsec_scaleerrs_nostat = GetSpreadGraph(name+"_scaleerrs_nostat", [c] + scales, addErr = False) 
+        #normalised differential plot with scale errors
+        self.norm_xsec_scaleerrs        = GetSpreadGraph(name+"_norm_scaleerrs", [self.norm_xsec] + self.norm_xsec_scales, addErr = True)  
+        self.norm_xsec_scaleerrs_nostat = GetSpreadGraph(name+"_norm_scaleerrs_nostat", [self.norm_xsec] + self.norm_xsec_scales, addErr = False) 
+        if pdfs != None:
+            self.tot_xsec_pdfs = [m.Integral() for m in pdfs]
+            self.tot_xsec_pdf_err   = getpdfuncertainty(self.tot_xsec, self.tot_xsec_pdfs)
+            self.xsec_pdferrs        = GetPDFGraph(name+"_pdferrs", [c] +  pdfs, addErr = True)  
+            self.xsec_pdferrs_nostat = GetPDFGraph(name+"_pdferrs_nostat", [c] + pdfs, addErr = False) 
+            #declare norm cross-section for pdf sets
+            self.norm_xsec_pdfs = [h.Clone(h.GetName()+"_norm") for h in pdfs]
+            #normalise
+            for h in (self.norm_xsec_pdfs):
+                h.Scale(1/h.Integral())
+            self.xsec_pdferrs        = GetPDFGraph(name+"_pdferrs", [c] +  pdfs, addErr = True)  
+            self.xsec_pdferrs_nostat = GetPDFGraph(name+"_pdferrs_nostat", [c] + pdfs, addErr = False) 
+        else:
+            self.tot_xsec_pdf_err = 0
+            self.xsec_pdferrs = None
+            self.xsec_pdferrs_nostat = None
+
+

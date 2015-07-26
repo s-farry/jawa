@@ -11,14 +11,17 @@ BOOST_PYTHON_MODULE(Jawa)
     def("GetWeightSum",  &Utils::GetWeightSum_py );
     def("geteff"      ,  &Utils::geteff_py       );
     def("geteff"      ,  &Utils::geteff2_py      );
-    def("geteff"      ,  &Utils::geteff3_py      );
-    def("getEffVariations"  ,  &Utils::getEffVariations_py  );
-    def("getEffMatrix"      ,  &Utils::getEffMatrix_py      );
-    def("getEffMatrix"      ,  &Utils::getEffMatrix2_py     );
-    def("saveMatrix"        ,  &Utils::saveMatrix_py        );
-    def("saveTH1F"          ,  &Utils::saveTH1F_py          );
-    def("saveTGraph"        ,  &Utils::saveTGraph_py        );
-    def("tgraph2hist"       ,  &Utils::tgraph2hist_py       );
+    def("geteff"      ,  &Utils::geteff3_py                   );
+    def("getEffVariations"  ,  &Utils::getEffVariations_py    );
+    def("getEffErrMatrix"   ,  &Utils::getEffErrMatrix_py     );
+    def("getEffErrMatrix"   ,  &Utils::getEffErrMatrix2_py    );
+    def("getEffErrMatrix"   ,  &Utils::getEffErrMatrix3_py    );
+    def("saveMatrix"        ,  &Utils::saveMatrix_py          );
+    def("saveTH1F"          ,  &Utils::saveTH1F_py            );
+    def("saveTGraph"        ,  &Utils::saveTGraph_py          );
+    def("saveTGraphErrs"    ,  &Utils::saveTGraphErrs_py      );
+    def("tgraph2hist"       ,  &Utils::tgraph2hist_py         );
+    def("saveAsTree"        ,  &Utils::saveAsTree_py          );
 
 
     class_<std::vector<double> >("vect")
@@ -62,7 +65,7 @@ BOOST_PYTHON_MODULE(Jawa)
       .def(self * self)
       .def(self | self)
       .def("GetExpr" ,      &Expr::GetExpr_py)
-      .def("FindFunc",      &Expr::FindFunc)
+      //.def("FindFunc",      &Expr::FindFunc)
       //.def("GetBracketExp", &Expr::GetBracketExp_py)
       .def("GetVarNames",   &Expr::GetVarNames_py)
       .def("GetVal",        &Expr::GetVal_py)
@@ -72,7 +75,7 @@ BOOST_PYTHON_MODULE(Jawa)
       //.def("GetVal2",        &Expr::GetVal2_py)
       //.def("SetTree",       &Expr::SetTree_py)
       //.def("GetExpressions" ,&Expr::GetExpressions_py)
-      .def("FindNextBracket",&Expr::FindNextBracket)
+      //.def("FindNextBracket",&Expr::FindNextBracket)
       .def("GetVal",&Expr::GetVal_py)
       .def("Tokenize", &Expr::Tokenize_py)
       .def("getTokens", &Expr::getTokens_py)
@@ -218,6 +221,7 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("AddVars",          &AnalysisClass::AddVars_py)
       .def("Add2DVar",         &AnalysisClass::Add2DVar)
       .def("Add2DVars",        &AnalysisClass::Add2DVars_py)
+      .def("Add3DVars",        &AnalysisClass::Add3DVars_py)
       .def("ApplyCuts",        &AnalysisClass::ApplyCuts)
       .def("FillVars",         &AnalysisClass::FillVars)
       .def("GetTemplate",      &AnalysisClass::GetTemplate, return_internal_reference<>())
@@ -273,11 +277,12 @@ BOOST_PYTHON_MODULE(Jawa)
       .def(init<string, PyObject*, string>())
       .def(init<string, PyObject*>())
       //.def("GetBins",         &EffVar::GetBins)
-      .def("GetLo",       &EffVar::GetLo)
-      .def("GetHi",      &EffVar::GetHi)
+      .def("GetLo",           &EffVar::GetLo)
+      .def("GetHi",           &EffVar::GetHi)
       .def("GetVar",          &EffVar::GetVar)
       .def("GetName",         &EffVar::GetName)
       .def("GetTotHist",      &EffVar::GetTotHist_py)
+      .def("GetPassHist",     &EffVar::GetPassHist_py)
       .def("MakeTGraph",      &EffVar::MakeTGraph)
       .def("MakeEffHist",     &EffVar::MakeEffHist)
       .def("MakeHists",       &EffVar::MakeHists)
@@ -350,6 +355,9 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("GetCorrectedEfficiency", &EfficiencyClass::GetCorrectedEfficiency1_py)
       .def("GetCorrectedEfficiency", &EfficiencyClass::GetCorrectedEfficiency2_py)
       .def("GetCorrectedEfficiency", &EfficiencyClass::GetCorrectedEfficiency3_py)
+      .def("GetTotEff", &EfficiencyClass::GetTotEff_py)
+      .def("GetTotHist", &EfficiencyClass::GetTotHist_py)
+      .def("GetPassHist", &EfficiencyClass::GetPassHist_py)
       .def("Reweight",   &EfficiencyClass::Reweight1_py)
       .def("RemoveErrors", &EfficiencyClass::RemoveErrors)
       .add_property("Verbose",  &EfficiencyClass::GetVerbose, &EfficiencyClass::SetVerbose)

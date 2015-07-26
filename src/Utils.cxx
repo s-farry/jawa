@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <iomanip>
 #include <TTree.h>
 #include <TCut.h>
@@ -66,7 +67,7 @@ namespace Utils{
       double err = varybin > 0 ? eff->GetErrorYhigh(abs(varybin-1)) : -1*eff->GetErrorYlow(abs(varybin-1));
       //double errlo = eff->GetErrorYlow(varybin);
       //double err = errhi > errlo ? errhi : -errlo;
-      eff_hist->SetBinContent(varybin, eff_hist->GetBinContent(varybin) + err);
+      eff_hist->SetBinContent(abs(varybin), eff_hist->GetBinContent(abs(varybin)) + err);
     }
 
 
@@ -152,11 +153,14 @@ namespace Utils{
     efftitle<<data->GetTitle()<<"_"<<name<<"_eff_"<<varybin;
     TH2F* eff_corr = (TH2F*)data->Clone(title.str().c_str());
     
+
+    //correlated uncertainty - increase all efficiencies up by their uncertainties
     if (varybin == 999 ){
       for (int i = 0  ; i < eff_hist->GetNbinsX() ; ++i){
 	eff_hist->SetBinContent(i+1, eff_hist->GetBinContent(i+1) + eff->GetErrorYhigh(i));
       }
     }
+    //correlated uncertainty - decrease all efficiencies by their uncertainties
     else if (varybin == -999){
       for (int i = 0  ; i < eff_hist->GetNbinsX() ; ++i){
 	eff_hist->SetBinContent(i+1, eff_hist->GetBinContent(i+1) - eff->GetErrorYlow(i));
@@ -188,44 +192,69 @@ namespace Utils{
     
   }
 
-  pair< TH1D*, vector<TH1D*> > getEffVariations(string name, TH3F* data, TGraphAsymmErrors* eff, string form){
+  pair< TH1D*, vector<TH1D*> > getEffVariations(string name, TH3F* data, TGraphAsymmErrors* eff, string form, bool correlated){
     TH1D* central = geteff(name, data, eff, 0, form);
     vector<TH1D*> errors;
-    
-    for (int i = 0 ; i < eff->GetN(); ++i){
+
+    if (correlated) {
       ostringstream title;
-      title<<name<<"_"<<i;
-      errors.push_back(geteff(title.str(), data, eff, i+1, form));
-      errors.push_back(geteff(title.str(), data, eff, -1*(i+1), form));
+      title<<name<<"_"<<999;
+      errors.push_back(geteff(title.str(), data, eff, 999, form));
+      errors.push_back(geteff(title.str(), data, eff, -999, form));
+    }
+    else{
+      for (int i = 0 ; i < eff->GetN(); ++i){
+	ostringstream title;
+	title<<name<<"_"<<i;
+	errors.push_back(geteff(title.str(), data, eff, i+1, form));
+	errors.push_back(geteff(title.str(), data, eff, -1*(i+1), form));
+      }
     }
     return std::make_pair< TH1D*, vector<TH1D*> >(central, errors);
   }
 
-  pair< TH1D*, vector<TH1D*> > getEffVariations(string name, TH2F* data, TGraphAsymmErrors* eff, string form){
+  pair< TH1D*, vector<TH1D*> > getEffVariations(string name, TH2F* data, TGraphAsymmErrors* eff, string form, bool correlated){
     TH1D* central = geteff(name, data, eff, 0, form);
     vector<TH1D*> errors;
-    for (int i = 0 ; i < eff->GetN(); ++i){
+    if (correlated) {
       ostringstream title;
-      title<<name<<"_"<<i;
-      errors.push_back(geteff(title.str(), data, eff, i+1, form));
-      errors.push_back(geteff(title.str(), data, eff, -1*(i+1), form));
+      title<<name<<"_"<<999;
+      errors.push_back(geteff(title.str(), data, eff, 999, form));
+      errors.push_back(geteff(title.str(), data, eff, -999, form));
+    }
+    else{
+      for (int i = 0 ; i < eff->GetN(); ++i){
+	ostringstream title;
+	title<<name<<"_"<<i;
+	errors.push_back(geteff(title.str(), data, eff, i+1, form));
+	errors.push_back(geteff(title.str(), data, eff, -1*(i+1), form));
+      }
     }
     return pair< TH1D*, vector<TH1D*> >(central, errors);
   }
 
-  pair< TH1D*, vector<TH1D*> > getEffVariations(string name, TH1F* data, TGraphAsymmErrors* eff, string form){
+  pair< TH1D*, vector<TH1D*> > getEffVariations(string name, TH1F* data, TGraphAsymmErrors* eff, string form, bool correlated){
     TH1D* central = geteff(name, data, eff, 0, form);
     vector<TH1D*> errors;
-    for (int i = 0 ; i < eff->GetN(); ++i){
+    if (correlated) {
       ostringstream title;
-      title<<name<<"_"<<i;
-      errors.push_back(geteff(title.str(), data, eff, i+1, form));
-      errors.push_back(geteff(title.str(), data, eff, -1*(i+1), form));
+      title<<name<<"_"<<999;
+      errors.push_back(geteff(title.str(), data, eff, 999, form));
+      errors.push_back(geteff(title.str(), data, eff, -999, form));
+    }
+    else{
+      for (int i = 0 ; i < eff->GetN(); ++i){
+	ostringstream title;
+	title<<name<<"_"<<i;
+	errors.push_back(geteff(title.str(), data, eff, i+1, form));
+	errors.push_back(geteff(title.str(), data, eff, -1*(i+1), form));
+      }
     }
     return pair< TH1D*, vector<TH1D*> >(central, errors);
   }
 
-  matrix getEffMatrix( pair < TH1D*, vector<TH1D* > > p ){
+  matrix getEffErrMatrix( pair < TH1D*, vector<TH1D* > > p ){
+    //Get matrix of % deviations by varying each bin
     TH1D* central = p.first;
     vector<TH1D*>::iterator ih;
     int bins = central->GetNbinsX();
@@ -282,6 +311,21 @@ namespace Utils{
       double x, y;
       g->GetPoint(i, x, y);
       ofile<<y;
+    }
+    ofile<<"\n";
+    cout<<"wrote tgraph to "<<name<<endl;
+  }
+  void saveTGraphErrs(string name, TGraph* g){
+    ofstream ofile;
+    ofile.open(name.c_str());
+    for ( int i = 0 ; i < g->GetN() ; ++i ){
+      if ( i != 0 ) ofile<<",";
+      ofile<<g->GetErrorYhigh(i);
+    }
+    ofile<<"\n";
+    for ( int i = 0 ; i < g->GetN() ; ++i ){
+      if ( i != 0 ) ofile<<",";
+      ofile<<g->GetErrorYlow(i);
     }
     ofile<<"\n";
     cout<<"wrote tgraph to "<<name<<endl;
@@ -629,6 +673,7 @@ namespace Utils{
       t->GetEntry(entry);
       sum += val;
     }
+    t->SetBranchStatus("*",1);
     return sum;
 
   }
@@ -689,6 +734,34 @@ namespace Utils{
       hasPoint = graph->GetPoint(i,x,y);
     }
   }
+
+  void saveAsTree(string fileName, vector<string> varNames, string output){
+    std::ifstream f(fileName.c_str());
+    std::string line;
+    std::vector<string> outputsS(varNames.size(), "");
+    std::vector<double> outputsD(varNames.size(), 0.0);
+    TFile* outputFile = new TFile(output.c_str(), "RECREATE");
+    TTree* t = new TTree("tree", "tree");
+    for (unsigned int i = 0 ; i < varNames.size() ; ++i){
+      //t->Branch(varNames.at(i).c_str());
+      t->Branch(varNames.at(i).c_str(), &outputsD.at(i));
+    }
+
+
+    while(std::getline(f, line)){
+      std::stringstream ss(line);
+      for (unsigned int i = 0 ; i < outputsS.size() ; ++i){
+	ss >> outputsS.at(i);
+	outputsD.at(i) = atof(outputsS.at(i).c_str());
+	//cout<<outputsD.at(i)<<endl;
+      }
+      t->Fill();
+    }
+    t->Write();
+    outputFile->Close();
+
+  }
+
 
   #ifdef WITHPYTHON
   PyObject* geteff_py(string name, PyObject* data, PyObject* eff){
@@ -801,7 +874,7 @@ namespace Utils{
    return ns;
 
   }
-  boost::python::list getEffMatrix_py(string name, PyObject* data, PyObject* eff){
+  boost::python::list getEffErrMatrix_py(string name, PyObject* data, PyObject* eff){
     TH3F* data3 = (TH3F*)(TPython::ObjectProxy_AsVoidPtr(data));
     TH2F* data2 = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(data));
     TH1F* data1 = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(data));
@@ -822,14 +895,14 @@ namespace Utils{
       cout<<"Can't process input of type :"<<data3->ClassName()<<endl;
     }
 
-    matrix totMat = getEffMatrix(output);
+    matrix totMat = getEffErrMatrix(output);
     
     boost::python::list ns = mat2PyList<double>(totMat);
     return ns;
 
   }
 
-  boost::python::list getEffMatrix2_py(string name, PyObject* data, PyObject* eff, string f){
+  boost::python::list getEffErrMatrix2_py(string name, PyObject* data, PyObject* eff, string f){
     TH3F* data3 = (TH3F*)(TPython::ObjectProxy_AsVoidPtr(data));
     TH2F* data2 = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(data));
     TH1F* data1 = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(data));
@@ -850,13 +923,41 @@ namespace Utils{
       cout<<"Can't process input of type :"<<data3->ClassName()<<endl;
     }
 
-    matrix totMat = getEffMatrix(output);
+    matrix totMat = getEffErrMatrix(output);
+    
+    boost::python::list ns = mat2PyList<double>(totMat);
+    return ns;
+
+  }
+  boost::python::list getEffErrMatrix3_py(string name, PyObject* data, PyObject* eff, string f, bool correlated){
+    TH3F* data3 = (TH3F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH2F* data2 = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TH1F* data1 = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(data));
+    TGraphAsymmErrors* graph = (TGraphAsymmErrors*)(TPython::ObjectProxy_AsVoidPtr(eff));
+    pair< TH1D*, vector<TH1D*> > output;
+
+
+    if (strcmp(data3->ClassName(), "TH3F") == 0) {
+      output = getEffVariations(name, data3, graph, f, correlated);
+    }
+    else if (strcmp(data2->ClassName(), "TH2F") == 0) {
+      output = getEffVariations(name, data2, graph, f, correlated);
+    }
+    else if (strcmp(data1->ClassName(), "TH1F") == 0) {
+      output = getEffVariations(name, data1, graph, f, correlated);
+    }
+    else{
+      cout<<"Can't process input of type :"<<data3->ClassName()<<endl;
+    }
+
+    matrix totMat = getEffErrMatrix(output);
     
     boost::python::list ns = mat2PyList<double>(totMat);
     return ns;
 
   }
 
+  
 
   PyObject* tgraph2hist_py(string name, PyObject* eff){
     TGraphAsymmErrors* graph = (TGraphAsymmErrors*)(TPython::ObjectProxy_AsVoidPtr(eff));
@@ -929,6 +1030,16 @@ namespace Utils{
   void saveTGraph_py(string name, PyObject* pyObj){
     TGraph* g = Py2RootObj<TGraph>(pyObj);
     saveTGraph(name, g);
+  }
+  void saveTGraphErrs_py(string name, PyObject* pyObj){
+    TGraph* g = Py2RootObj<TGraph>(pyObj);
+    saveTGraphErrs(name, g);
+  }
+
+  void saveAsTree_py(string fileName, boost::python::list& varNames, string output){
+    vector<string> varNamesS = pyList2Vec<string>(varNames);
+    saveAsTree(fileName, varNamesS, output);
+
   }
 
   

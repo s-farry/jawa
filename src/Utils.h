@@ -34,14 +34,14 @@ namespace Utils{
   void saveMatrix(string name, matrix A);
   void saveTH1F(string name, TH1F* h);
   void saveTGraph(string name, TGraph* g);
+  void saveTGraphErrs(string name, TGraph* g);
   TH1D* geteff(string name, TH3F* data, TGraphAsymmErrors* eff, int varybin = 0, string form = "a*b");
   TH1D* geteff(string name, TH2F* data, TGraphAsymmErrors* eff, int varybin = 0, string form = "a");
   TH1D* geteff(string name, TH1F* data, TGraphAsymmErrors* eff, int varybin = 0, string form = "a");
-  pair< TH1D* , vector<TH1D*> >  getEffVariations(string name, TH3F* data, TGraphAsymmErrors* eff, string form = "a*b");
-  pair< TH1D* , vector<TH1D*> >  getEffVariations(string name, TH2F* data, TGraphAsymmErrors* eff, string form = "a");
-  pair< TH1D* , vector<TH1D*> >  getEffVariations(string name, TH1F* data, TGraphAsymmErrors* eff, string form = "a"); 
-  matrix getEffMatrix( pair < TH1D*, vector<TH1D* >  > p );
-
+  pair< TH1D* , vector<TH1D*> >  getEffVariations(string name, TH3F* data, TGraphAsymmErrors* eff, string form = "a*b", bool correlated = false);
+  pair< TH1D* , vector<TH1D*> >  getEffVariations(string name, TH2F* data, TGraphAsymmErrors* eff, string form = "a", bool correlated = false);
+  pair< TH1D* , vector<TH1D*> >  getEffVariations(string name, TH1F* data, TGraphAsymmErrors* eff, string form = "a", bool correlated = false); 
+  matrix getEffErrMatrix( pair < TH1D*, vector<TH1D* >  > p );
   
   TH1F* tgraph2hist(string name, TGraphAsymmErrors* graph);
   void fillhist(TH1F* h , vector<double>& vals);
@@ -71,6 +71,9 @@ namespace Utils{
   //void FCN_func(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag);
 
   double GetWeightSum(TTree* t, string w, string cut);
+  void saveAsTree(string fileName, vector<string> varNames, string output);
+
+
   #ifdef WITHPYTHON
   PyObject* tgraph2hist_py(string name, PyObject* graph);
   PyObject* geteff_py(string name, PyObject* data, PyObject* eff);
@@ -78,8 +81,9 @@ namespace Utils{
   PyObject* geteff3_py(string name, PyObject* data, PyObject* eff, int varybin, string form);
   boost::python::list getEffVariations_py(string name, PyObject* data, PyObject* eff);
   //boost::python::list getEffVariations_py(PyObject* data, PyObject* eff, string form);
-  boost::python::list getEffMatrix_py(string name, PyObject* data, PyObject* eff);
-  boost::python::list getEffMatrix2_py(string name, PyObject* data, PyObject* eff, string s);
+  boost::python::list getEffErrMatrix_py(string name, PyObject* data, PyObject* eff);
+  boost::python::list getEffErrMatrix2_py(string name, PyObject* data, PyObject* eff, string s);
+  boost::python::list getEffErrMatrix3_py(string name, PyObject* data, PyObject* eff, string s, bool correlated);
 
   double GetWeightSum_py(PyObject* py, string w, string cut);
   void RemoveErrors_py(PyObject* pyObj);
@@ -91,6 +95,7 @@ namespace Utils{
   void saveMatrix_py(string name, boost::python::list& ns);
   void saveTH1F_py(string name, PyObject* pyObj);
   void saveTGraph_py(string name, PyObject* pyObj);
+  void saveTGraphErrs_py(string name, PyObject* pyObj);
 
   template<typename T> boost::python::list vec2PyList(std::vector<T> vect);
   template<typename T> boost::python::list mat2PyList(std::vector< std::vector<T> > mat);
@@ -98,6 +103,7 @@ namespace Utils{
   template <typename T> vector< vector<T> > pyList2Mat(boost::python::list& ns);
   template <typename T> T* Py2RootObj(PyObject* pyObj);
   template <typename T> PyObject* Root2PyObj(T* cxxObj);  
+  void saveAsTree_py(string fileName, boost::python::list& varNames, string output);
   #endif
 
   

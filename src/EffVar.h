@@ -32,6 +32,7 @@ class EffVar : public Var {
   TH1F* GetMeanPassHist();
 
   PyObject* GetTotHist_py();
+  PyObject* GetPassHist_py();
   
   void MakeTGraph();
   void MakeEffHist(bool ClopperPearsonError = true);

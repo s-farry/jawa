@@ -283,6 +283,11 @@ PyObject* EffVar::GetTotHist_py(){
   return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
 }
 
+PyObject* EffVar::GetPassHist_py(){
+  TH1F* newCxxObj = new TH1F(*m_passhist);
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
+
 void EffVar::FillBkgHists(double lo, double hi){
   for (int i = 0 ; i<m_tothists->GetEntries(); ++i){
     TList* funcs_tot  = (TList*)(((TH1F*)m_tothists->At(i))->GetListOfFunctions());

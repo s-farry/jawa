@@ -310,8 +310,9 @@ class Plot:
                          "normerrlims" : None, 
                          "mplcolors" : [], "mpllabels" : [], "mplxlabel" : "", "mplylabel" : "",
                          'mpltitle' : "", 'normalised' : False,
-                         "location" : "/Users/sfarry/WTau/Graphics/PDF", "extraObjs" : [],
-                         "drawOpts" : 'e1', "drawOpts2" : None, "yoffset" : 0.0
+                         "location" : ".", "extraObjs" : [],
+                         "drawOpts" : 'e1', "drawOpts2" : None, "yoffset" : 0.0,
+                         "forcestyle" : False
                          }
 
    def getPlotObjs(self, hide_label = False):
@@ -459,6 +460,10 @@ class Plot:
       includeNormErr = self.properties['includeNormErr']
 
       c = ROOT.TCanvas()
+      if self.properties['forcestyle'] : 
+          ROOT.gROOT.ForceStyle(True)
+          c.UseCurrentStyle()
+          
       if includeNormErr:
          x1 = 0.005
          x2 = 0.995
@@ -616,6 +621,10 @@ class Plot:
          upperPad.Update()
          c.Update()
       c.RedrawAxis()
+      if self.properties['forcestyle'] : 
+          ROOT.gROOT.ForceStyle(True)
+          c.UseCurrentStyle()
+
       for fname in filenames:
           c.Print(location + '/' + fname) ## Include this line to save image
       return c

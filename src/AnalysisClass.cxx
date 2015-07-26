@@ -509,6 +509,16 @@ void AnalysisClass::Add2DVar(string var1, string var2){
     temp->Add2DVar( name, var1, var2, m_name+"_"+temp->GetName());
   }
 }
+void AnalysisClass::Add3DVar(string var1, string var2, string var3){
+  string name = var1+"_"+var2+"_"+var3;
+  m_3Dvars.push_back(name);
+  if (m_templates.size() == 0) cout<<"No templates to add variables to"<<endl;
+  if (m_data) m_data->Add3DVar(name , var1, var2 , var3, m_name+"_"+m_data->GetName() );
+  for (std::map<string,Template*>::iterator it = m_templates.begin() ; it != m_templates.end() ; ++it ){
+    Template* temp = (*it).second;
+    temp->Add3DVar( name, var1, var2, var3, m_name+"_"+temp->GetName());
+  }
+}
 
 
 void AnalysisClass::StyleTemplates(){
@@ -868,6 +878,21 @@ void AnalysisClass::Add2DVars_py(boost::python::list& ns){
     }
     else{
       cout<<"Cannot Add 2D Variable - Wrong Dimensions"<<endl;
+    }
+  }
+}
+
+void AnalysisClass::Add3DVars_py(boost::python::list& ns){
+  for (int i = 0; i < len(ns); ++i){
+    boost::python::list var = (boost::python::list)ns[i];
+    if (len(var) == 3){
+      string var1 = boost::python::extract<string>(var[0]);
+      string var2 = boost::python::extract<string>(var[1]);
+      string var3 = boost::python::extract<string>(var[2]);
+      Add3DVar(var1, var2, var3);
+    }
+    else{
+      cout<<"Cannot Add 3D Variable - Wrong Dimensions"<<endl;
     }
   }
 }

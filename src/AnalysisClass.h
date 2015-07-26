@@ -40,6 +40,7 @@ class AnalysisClass{
   //void AddAlgVar(string name, string varexp, int bins, double lo, double hi);
   //void AddAlgVar(string name, string varexp, std::vector<double> edges);
   void Add2DVar(string var1, string var2);
+  void Add3DVar(string var1, string var2, string var3);
   void SaveToFile(string output = "");
   Template* GetTemplate(string name);
   Template* GetData();
@@ -99,6 +100,7 @@ class AnalysisClass{
   void AddVar3_py(string name, string var, boost::python::list& ns);
   void AddVars_py(boost::python::list& ns);
   void Add2DVars_py(boost::python::list& ns);
+  void Add3DVars_py(boost::python::list& ns);
   void SaveToFile1_py();
   void SaveToFile2_py(string output);
   double GetLumi_py(PyObject* f);
@@ -129,6 +131,7 @@ class AnalysisClass{
   std::map<string, THStack*> m_stacks;
   std::vector<string> m_vars;
   std::vector<string> m_2Dvars;
+  std::vector<string> m_3Dvars;
   TH1F* m_fit;
   Fitter* m_fitter;
   double m_fitchi2;

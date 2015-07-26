@@ -1,4 +1,4 @@
-CC = g++ # c compiler
+CC = @CXX@ # c compiler
 CXXFLAGS = -O2 -ansi -W -Wall -fPIC -c # c flags
 LDFLAGS = -shared
 ROOTLIBS = -lRIO -lNet -lHist -lTree -lMatrix -lMathCore -lThread -lPhysics -lPyROOT -lMinuit -lMinuit2 -lGpad -lRooFit # root libraries
@@ -11,9 +11,9 @@ BOOSTLIBS = -lboost_python
 RM = rm -f # rm command
 TARGET_LIB = libJawa.so # target lib
 
-ROOTLIBDIR = /batchsoft/root/root53407-x86_64-slc6-46/lib
-ROOTINCDIR = /batchsoft/root/root53407-x86_64-slc6-46/include
-PYTHON_INCLUDE_DIR = /usr/include/python2.6
+ROOTLIBDIR = @ROOTLIBDIR@
+ROOTINCDIR = @ROOTINCDIR@
+PYTHON_INCLUDE_DIR = @PYTHON_INCLUDE_DIR@
 
 SRCS = Expr.cxx Var.cxx Var2D.cxx Var3D.cxx EffVar.cxx EffVar2D.cxx ReweightVar.cxx Template.cxx MWTemplate.cxx Fitter.cxx Tree.cxx EntryList.cxx Eff.cxx EfficiencyClass.cxx AnalysisClass.cxx Tune.cxx Tune2D.cxx Utils.cxx
 

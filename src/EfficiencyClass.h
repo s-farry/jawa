@@ -103,6 +103,8 @@ class EfficiencyClass: public EfficiencyBaseClass {
   void LoadFromFile(const char* file="");
   void LoadFromFile_py();
   void SaveToFile_py();
+  PyObject* GetTotHist_py();
+  PyObject* GetPassHist_py();
   void SaveToFile(const char* file="");
   void PrintEfficiencies(string name);
   void PrintTwikiEfficiencies(string name);
@@ -179,6 +181,7 @@ class EfficiencyClass: public EfficiencyBaseClass {
   double GetCorrectedEfficiency(string var, TH1F* h);
   double GetCorrectedEfficiency(string var, TTree* t, string name);
   std::vector<double> GetCorrectedEfficiency(string var, std::vector<TH1F*> hists, bool smear = false);
+  double GetTotEff_py();
 
 
 };

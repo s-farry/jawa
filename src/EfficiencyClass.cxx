@@ -12,6 +12,7 @@
 #include <TF1.h>
 #include <TEntryList.h>
 #include <TParameter.h>
+#include <Utils.h>
 
 using namespace std;
 
@@ -365,6 +366,7 @@ void EfficiencyClass::SaveToFile(const char* file){
   //gROOT->cd();
   if ( m_verbose ) cout<<"Writing - opened file"<<endl;
   for (std::map<string, EffVar*>::iterator ei = m_variables.begin(); ei != m_variables.end(); ++ei){
+    cout<<"in loop"<<endl;
     if (m_verbose) cout<<"Writing - "<<ei->first<<endl;
     EffVar* evar = ei->second;
     f->cd();
@@ -1464,6 +1466,23 @@ TGraphAsymmErrors* EfficiencyClass::CombineTGraphs(std::vector<TGraphAsymmErrors
     
   }
   return graph;
+}
+
+double EfficiencyClass::GetTotEff_py(){
+  double eff = 0.0;
+  eff = m_toteff.GetEff();
+  return eff;
+}
+PyObject* EfficiencyClass::GetTotHist_py(){
+  //PyObject* pyObj = Utils::Root2PyObj<TH1F>(m_tot);
+  //return pyObj;
+  return TPython::ObjectProxy_FromVoidPtr(m_tot, m_tot->ClassName());
+}
+
+PyObject* EfficiencyClass::GetPassHist_py(){
+  //PyObject* pyObj = Utils::Root2PyObj<TH1F>(m_pass);
+  //return pyObj;
+  return TPython::ObjectProxy_FromVoidPtr(m_pass, m_pass->ClassName());
 }
 //For python boost - deal with overloaded functions
 void EfficiencyClass::AddVar1_py(string name, string var, int bins, double lo, double hi){
