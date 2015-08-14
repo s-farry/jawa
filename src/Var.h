@@ -19,7 +19,7 @@
 
 using namespace std;
 
-class Var{
+class Var: public JawaObj {
  public:
   Var(string name , string var , int bins , double lo , double hi , string prefix="");
   Var(string name, string var, std::vector<double>& edges, string prefix="");
@@ -30,7 +30,6 @@ class Var{
   void FillHist(double val);
   void FillHist(double val, double w);
   void FillAsymmetry(double val, double eta1, double eta2, double w);
-  string GetName();
   string GetVar();
   void SetVarName(string var);
   void SmearHist();
@@ -77,7 +76,6 @@ class Var{
   #endif
   
  protected:
-  string m_name;
   //string m_var;
   //string m_var2;
   Expr* m_expr;

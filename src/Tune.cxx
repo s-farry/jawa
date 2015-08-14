@@ -22,11 +22,9 @@
 
 using namespace std;
 
-Tune::Tune() : m_r3(0){
+Tune::Tune() : JawaObj ("Tune"), m_r3(0) {
 }
-Tune::Tune(string name): m_r3(0){
-  m_name = name;
-
+Tune::Tune(string name): JawaObj("Tune", name), m_r3(0){
   m_mean_init       =  0.00  ;
   m_mean_step       =  0.00001;
   m_mean_lolimit    = -0.1   ;
@@ -41,8 +39,7 @@ Tune::Tune(string name): m_r3(0){
   m_tolerance = 0.0001;
 }
 
-Tune::Tune(string name, Tree* data, Tree* mc, Expr* tuneVar, Var* fVar, string cut) : m_r3(0){
-  m_name = name;
+Tune::Tune(string name, Tree* data, Tree* mc, Expr* tuneVar, Var* fVar, string cut) : JawaObj("Tune",name), m_r3(0) {
   m_data = data;
   m_mc = mc;
   m_tuneVar = tuneVar;
@@ -291,7 +288,7 @@ vector< pair<double, double> > Tune::getVals(Tree* t, Expr* var, TCut cut){
   Long64_t nentries = list->GetN();
 
   for (Long64_t jentry = 0 ; jentry < nentries ; jentry++) {
-      if (jentry%10000==0) cout<<"Entry "<<jentry<<" of "<<nentries<<endl;
+    if (jentry%10000==0) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
       int entry = list->GetEntry(jentry);
       t->GetEntry(entry);
       double w = 1.0;
@@ -322,7 +319,7 @@ vector< vector< pair<double, double> > > Tune::getVals(Tree* tree, Expr* var, Va
   vector< vector< pair<double, double> > > vals (bin_edges.size() - 1, vector< pair<double, double> >(0)); 
   
   for (Long64_t jentry = 0 ; jentry < nentries ; jentry++) {
-    if (jentry%10000==0) cout<<"Entry "<<jentry<<" of "<<nentries<<endl;
+    if (jentry%10000==0) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
     int entry = list->GetEntry(jentry);
     tree->GetEntry(entry);
     double binval = tree->GetVal(binvar->GetExpr());

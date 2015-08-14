@@ -66,7 +66,7 @@ void Tune2D::fill2DVals(){
 vector< vector< vector< pair<double, double> > > > Tune2D::getVals(Tree* tree, Expr* var, Var2D* binvar, TCut cut, vector<ReweightVar*> rwvars){
   TTree* t = tree->GetTTree();
   if (!t) {
-    cout<<"Tree passed is null"<<endl;
+    info()<<"Tree passed is null"<<endl;
   }
   t->Draw(">>myList", cut , "entrylist");
   TEntryList* list = (TEntryList*)gDirectory->Get("myList");
@@ -92,7 +92,7 @@ vector< vector< vector< pair<double, double> > > > Tune2D::getVals(Tree* tree, E
   vector< vector< vector< pair<double, double> > > > vals (xbins, vector< vector< pair<double, double> > >(ybins, vector< pair<double, double> >(0))); 
   
   for (Long64_t jentry = 0 ; jentry < nentries ; jentry++) {
-    if (jentry%10000==0) cout<<"Entry "<<jentry<<" of "<<nentries<<endl;
+    if (jentry%10000==0) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
     int entry = list->GetEntry(jentry);
     tree->GetEntry(entry);
     double xval = tree->GetVal(binvar->GetVar1()->GetExpr());

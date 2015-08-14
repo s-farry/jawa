@@ -17,11 +17,9 @@
 
 using namespace std;
 
-Var3D::Var3D(string name){
-  m_name = name;
-}
+Var3D::Var3D(string name) : JawaObj("Var3D", name){}
 
-Var3D::Var3D(string name , string var1 , int bins1 , double lo1 , double hi1 ,  string var2 , int bins2 , double lo2 , double hi2, string var3, int bins3, double lo3, double hi3, string prefix){
+Var3D::Var3D(string name , string var1 , int bins1 , double lo1 , double hi1 ,  string var2 , int bins2 , double lo2 , double hi2, string var3, int bins3, double lo3, double hi3, string prefix) : JawaObj("Var3D", name){
   Var* fVar1 = new Var(var1, var1, bins1, lo1, hi1, prefix);
   Var* fVar2 = new Var(var2, var2, bins2, lo2, hi2, prefix);
   Var* fVar3 = new Var(var3, var3, bins3, lo3, hi3, prefix);
@@ -34,8 +32,7 @@ Var3D::Var3D(string name , string var1 , int bins1 , double lo1 , double hi1 ,  
   m_hist_bwd->Delete();
   }*/
 
-Var3D::Var3D(string name , Var* var1 , Var* var2, Var* var3, string prefix){
-  m_name   = name;
+Var3D::Var3D(string name , Var* var1 , Var* var2, Var* var3, string prefix) : JawaObj("Var3D",name) {
   m_name1   = var1->GetName();
   m_name2   = var2->GetName();
   m_name3   = var3->GetName();
@@ -86,7 +83,7 @@ Var3D::Var3D(string name , Var* var1 , Var* var2, Var* var3, string prefix){
   m_hist_comb = new TH1F((prefix+name+"_comb").c_str(), name.c_str() , m_nbins1 + m_nbins2, &histbinedges_comb.second[0]);
 
 }
-Var3D::Var3D(string name , Var3D* varA , Var3D* varB, string prefix){
+Var3D::Var3D(string name , Var3D* varA , Var3D* varB, string prefix) : JawaObj("Var3D",name){
   if ( varA->GetName() == varB->GetName() && 
        varA->GetName1() == varB->GetName1() && 
        varA->GetName2() == varB->GetName2() && 
@@ -100,7 +97,6 @@ Var3D::Var3D(string name , Var3D* varA , Var3D* varB, string prefix){
        varA->GetBins2() == varB->GetBins2() &&
        varA->GetBins3() == varB->GetBins3() )
     {
-      m_name   = name;
       m_name1   = varA->GetName1();
       m_name2   = varA->GetName2();
       m_name3   = varA->GetName3();

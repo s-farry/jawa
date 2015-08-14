@@ -19,7 +19,7 @@
 
 using namespace std;
 
-class AnalysisClass{
+class AnalysisClass : public JawaObj{
  public:
   AnalysisClass(string name);
   //~AnalysisClass();
@@ -122,7 +122,6 @@ class AnalysisClass{
 
 
  private:
-  string m_name;
   TCut*  m_selcut;
   std::vector<string> m_stackorder;
   std::vector<string> m_fitorder;

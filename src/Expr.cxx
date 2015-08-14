@@ -34,13 +34,12 @@ const OpMap::value_type assocs[] =
 const OpMap opmap( assocs, assocs + sizeof( assocs ) / sizeof( assocs[ 0 ] ) );    
 
 
-Expr::Expr(string varexp){
+Expr::Expr(string varexp) : JawaObj("Expr"){
   m_varexp = varexp;
   m_tokens = Tokenize(varexp);
-
   bool c = infixToRPN(m_tokens, m_rpn);
   if (!c) {
-    cout << "Parse Error in " << varexp << endl;
+    info() << "Parse Error in " << varexp << endl;
   }
 }
 
@@ -71,11 +70,11 @@ double Expr::GetVal(){
     return RPNtoDouble();
   }
   else{
-    cout<<"Parse Error : Value(s) ";
+    info()<<"Parse Error : Value(s) ";
     for (unsigned int i = 0 ; i < m_varnames.size(); ++i){
-      cout<<m_varnames.at(i);
+      info()<<m_varnames.at(i);
     }
-    cout<<" not found"<<endl;
+    info()<<" not found"<<endl;
     return -1.0;
   }
 }
@@ -354,7 +353,7 @@ double Expr::RPNtoDouble( std::vector<double>& input )
 	    if (idx > -1){
 	      d = input.at(idx);
 	    }
-	    else cout<<"Parsing Error with "<<token<<endl;
+	    else info()<<"Parsing Error with "<<token<<endl;
 	  }
 	  else d = strtod( token.c_str() , NULL ) ;
 	  st.push(d);

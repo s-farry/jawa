@@ -16,11 +16,10 @@
 
 using namespace std;
 
-Var::Var(string name){
-  m_name = name;
-}
-Var::Var(string name, Var* varA, Var* varB, string prefix){
-  if ( varA->GetName() == varB->GetName() && 
+Var::Var(string name) : JawaObj("Var", name){}
+
+Var::Var(string name, Var* varA, Var* varB, string prefix) : JawaObj("Var", name) {
+  if ( varA && varB && varA->GetName() == varB->GetName() && 
        varA->GetHi() == varB->GetHi() && varA->GetLo() == varB->GetLo() &&
        varA->GetBins() == varB->GetBins() )
     {
@@ -53,23 +52,22 @@ Var::Var(string name, Var* varA, Var* varB, string prefix){
       //m_hist->Add(varB->GetHist());
     }
 }
-Var::Var(string name, Var* v, string prefix){
-      m_name               = v->GetName();
-      m_lo                 = v->GetLo();
-      m_hi                 = v->GetHi();
-      m_nbins              = v->GetBins();
-      m_edges              = v->GetEdges();
-      m_expr   = new Expr(v->GetExpr()->GetExpr());
-      m_scale  = false;
-      //No extra variables
-      m_multivar = false;
-      m_prefix = prefix;
-      
-      TH1F* hist = v->GetHist();
-
-      if (prefix != "") prefix = prefix+"/";
-      m_hist       = ((TH1F*)hist->Clone((prefix+name).c_str()));
-      m_hist->Sumw2();
+Var::Var(string name, Var* v, string prefix) : JawaObj("Var", name){
+  m_lo                 = v->GetLo();
+  m_hi                 = v->GetHi();
+  m_nbins              = v->GetBins();
+  m_edges              = v->GetEdges();
+  m_expr   = new Expr(v->GetExpr()->GetExpr());
+  m_scale  = false;
+  //No extra variables
+  m_multivar = false;
+  m_prefix = prefix;
+  
+  TH1F* hist = v->GetHist();
+  
+  if (prefix != "") prefix = prefix+"/";
+  m_hist       = ((TH1F*)hist->Clone((prefix+name).c_str()));
+  m_hist->Sumw2();
 }
 
 void Var::Add2ndVar(string name){
@@ -119,9 +117,6 @@ void Var::FillAsymmetry(double val, double eta1, double eta2, double w){
   else m_hist_bwd->Fill(val,w);
 }
 
-string Var::GetName(){
-  return m_name;
-}
 string Var::GetVar(){
   string output = m_expr ? m_expr->GetExpr() : "";
   return output;
@@ -174,7 +169,7 @@ void Var::ResetHist(){
     }
   }
   else{
-    cout<<"Values not backed up: Shouldn't need to be reset"<<endl;
+    info("Values not backed up: Shouldn't need to be reset");
   }
 
 
@@ -233,8 +228,7 @@ std::pair< std::vector<string>, std::vector<double> > CombineBinEdges(std::vecto
   return std::pair< std::vector<string> , std::vector<double> > ( combLabels, combEdges);
 }
 
-Var::Var(string name , string varexp , int bins , double lo , double hi , string prefix){
-  m_name   = name;
+Var::Var(string name , string varexp , int bins , double lo , double hi , string prefix) : JawaObj("Var", name){
   m_expr   = new Expr(varexp);
   m_nbins  = bins;
   m_lo     = lo;
@@ -257,8 +251,7 @@ Var::Var(string name , string varexp , int bins , double lo , double hi , string
 
 }
 
-Var::Var(string name , string varexp , std::vector<double>& edges , string prefix){
-  m_name   = name;
+Var::Var(string name , string varexp , std::vector<double>& edges , string prefix) : JawaObj("Var", name){
   m_expr    = new Expr(varexp);
   m_nbins  = edges.size() - 1;
   m_lo     = edges[0];

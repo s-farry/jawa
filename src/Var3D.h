@@ -16,7 +16,7 @@
 
 using namespace std;
 
-class Var3D{
+class Var3D : public JawaObj {
  public:
   Var3D(string name);
   Var3D(string name , string var1 , int bins1 , double lo1 , double hi1 , string var2 , int bins2 , double lo2 , double hi2 , string var3, int bins3, double lo3, double hi3, string prefix="");
@@ -69,7 +69,6 @@ class Var3D{
 
 
  protected:
-  string m_name;
   string m_varname1;
   string m_varname2;
   string m_varname3;

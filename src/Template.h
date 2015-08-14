@@ -22,7 +22,7 @@
 using namespace std;
 
 
-class Template{
+class Template : public JawaObj {
  public:
   Template(string name);
   Template(string name, TTree* t, TCut* cut);
@@ -31,7 +31,7 @@ class Template{
   Template(string name, vector<TTree*> trees, TCut* cut, enum EColor color);
   Template(string name, Template* t); // essentially a clone
   Template(string name, Template* A, Template* B);
-  Template operator+(const Template& rhs);
+  //Template operator+(const Template& rhs);
 
   ~Template();
   void Init();
@@ -55,8 +55,6 @@ class Template{
   void SaveToFile();
   virtual void SaveToCurrentFile();
   bool IsFixed();
-  void SetName(string name);
-  string GetName() const;
   Var* GetVar(string name);
   map<string, Var*> GetVariables();
   map<string, Var2D*> Get2DVariables();
@@ -154,7 +152,6 @@ class Template{
   //TTree* m_tree;
   std::vector<Tree*> m_trees;
   std::vector<TEntryList*> m_entryLists;
-  string m_name;
   std::map<string, Var*> m_variables;
   //std::map<string, AlgVar*> m_algvariables;
   std::map<string, Var2D*> m_2Dvariables;

@@ -16,7 +16,7 @@
 
 using namespace std;
 
-class Var2D{
+class Var2D : public JawaObj{
  public:
   Var2D(string name);
   Var2D(string name , string var1 , int bins1 , double lo1 , double hi1 , string var2 , int bins2 , double lo2 , double hi2 , string prefix="");
@@ -26,7 +26,6 @@ class Var2D{
   //~Var2D();
   void FillHist(double val1, double val2);
   void FillHist(double val1, double val2, double w);
-  string GetName();
   string GetVarName1();
   string GetVarName2();
   string GetName1();
@@ -63,7 +62,6 @@ class Var2D{
 #endif
   
  protected:
-  string m_name;
   string m_varname1;
   string m_varname2;
   string m_name1;

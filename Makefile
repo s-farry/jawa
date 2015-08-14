@@ -13,12 +13,14 @@ TARGET_LIB = libJawa.so # target lib
 
 ROOTLIBDIR = /batchsoft/root/root53407-x86_64-slc6-46/lib
 ROOTINCDIR = /batchsoft/root/root53407-x86_64-slc6-46/include
-PYTHON_INCLUDE_DIR = /usr/include/python2.6
+PYTHON_INCLUDE_DIR = 
+PYTHON_CPP_FLAGS   = -I/batchsoft/python/python-2.7.7-x86_64-sl6-46/include/python2.7
 
-SRCS = Expr.cxx Var.cxx Var2D.cxx Var3D.cxx EffVar.cxx EffVar2D.cxx ReweightVar.cxx Template.cxx MWTemplate.cxx Fitter.cxx Tree.cxx EntryList.cxx Eff.cxx EfficiencyClass.cxx AnalysisClass.cxx Tune.cxx Tune2D.cxx Utils.cxx
+SRCS = JawaObj.cxx Expr.cxx Var.cxx Var2D.cxx Var3D.cxx EffVar.cxx EffVar2D.cxx ReweightVar.cxx Template.cxx MWTemplate.cxx Fitter.cxx Tree.cxx EntryList.cxx Eff.cxx EfficiencyClass.cxx AnalysisClass.cxx Tune.cxx Tune2D.cxx Utils.cxx
 
 SRCS += pyboost.cxx
 CXXFLAGS += -DWITHPYTHON
+PREFIX = /usr/local
 
 vpath %.o lib/
 
@@ -29,7 +31,7 @@ all	: ${TARGET_LIB}
 $(TARGET_LIB) : $(OBJS)
 	$(CC) $(LDFLAGS) $^ $(BOOSTLIBS) -L$(ROOTLIBDIR) $(ROOTLIBS) -o lib/$@ 
 $(OBJS): %.o:src/%.cxx src/%.h
-	$(CC) $(CXXFLAGS) -Isrc/ -I/usr/include -I$(ROOTINCDIR) -I$(PYTHON_INCLUDE_DIR) -I$(BOOST_INC) $< -o lib/$@
+	$(CC) $(CXXFLAGS) -Isrc/ -I/usr/include -I$(ROOTINCDIR) $(PYTHON_CPP_FLAGS) -I$(BOOST_INC) $< -o lib/$@
 
 clean	: 
 	-${RM} lib/${TARGET_LIB} ${OBJS}

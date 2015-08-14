@@ -10,14 +10,14 @@
 #include <vector>  
 #include <iterator>  
 #include <stdlib.h>
+#include <JawaObj.h>
 #ifdef WITHPYTHON 
 #include <boost/python.hpp>
 #endif
 
 using namespace std;
 
-
-class Expr{
+class Expr : public JawaObj {
  public:
   Expr(string varexp);
   Expr operator+(const Expr& rhs);

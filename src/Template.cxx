@@ -36,8 +36,7 @@ void Template::OutputEvts(bool output){
   m_outputevts = output;
 }
 
-Template::Template(string name){
-  m_name = name;
+Template::Template(string name) : JawaObj("Template", name){
   Init();
 
 }
@@ -54,10 +53,8 @@ Template::~Template(){
 }
 
 
-Template::Template(string name, TTree* t, TCut* cut){
+Template::Template(string name, TTree* t, TCut* cut) : JawaObj("Template", name){
   Init();
-  if (m_verbose) cout<<"Initialising as "<<name<<endl;
-  m_name = name;
   m_selcut->Delete();
   m_selcut = (TCut*)cut->Clone("selcut");
 
@@ -66,17 +63,15 @@ Template::Template(string name, TTree* t, TCut* cut){
     m_selcuts.push_back((TCut*)cut->Clone("cut"));
   }
   else{
-    cout<<"Tree "<<name<<" passed is null - not adding"<<endl;
+    info()<<"Tree "<<name<<" passed is null - not adding"<<endl;
   }
-  if (m_verbose) cout<<"Name is "<<m_name<<endl;
+  verbose()<<"Name is "<<m_name<<endl;
 }
-Template::Template(string name, vector<TTree*> trees, TCut* cut){
+Template::Template(string name, vector<TTree*> trees, TCut* cut) : JawaObj("Template",name){
   Init();
-  if (m_verbose) cout<<"Initialising as "<<name<<endl;
-  cout<<"Initialising as "<<name<<endl;
+  verbose()<<"Initialising as "<<name<<endl;
   m_selcut->Delete();
   m_selcut = (TCut*)cut->Clone("selcut");
-  m_name = name;
   for (unsigned int i = 0; i < trees.size(); ++i){
     if (trees.at(i)){
       m_trees.push_back(new Tree(name+"_tree", trees.at(i), 1.0));
@@ -84,15 +79,14 @@ Template::Template(string name, vector<TTree*> trees, TCut* cut){
       //cout<<"added "<<cut->GetTitle()<<endl<<endl;
     }
     else{
-      cout<<"Tree "<<name<<" passed is null - not adding"<<endl;
+      info()<<"Tree "<<name<<" passed is null - not adding"<<endl;
     }
   }
-  if (m_verbose) cout<<"Name is "<<m_name<<endl;
+  verbose()<<"Name is "<<m_name<<endl;
 }
 
 
-Template::Template(string name, TTree* t, TCut* cut, enum EColor color){
-  m_name = name;
+Template::Template(string name, TTree* t, TCut* cut, enum EColor color) : JawaObj("Template",name){
   Init();
   m_selcut->Delete();
   m_selcut = (TCut*)cut->Clone("selcut");
@@ -101,7 +95,7 @@ Template::Template(string name, TTree* t, TCut* cut, enum EColor color){
     m_selcuts.push_back((TCut*)cut->Clone("cut"));
   }
   else{
-    cout<<"Tree "<<name<<" passed is null - not adding"<<endl;
+    info()<<"Tree "<<name<<" passed is null - not adding"<<endl;
   }
   SetStyle(color);
 }
@@ -116,7 +110,7 @@ Template::Template(string name, vector<TTree*> trees, TCut* cut, enum EColor col
       m_selcuts.push_back((TCut*)cut->Clone("cut"));
     }
     else{
-      cout<<"Tree "<<name<<" passed is null - not adding"<<endl;
+      info()<<"Tree "<<name<<" passed is null - not adding"<<endl;
     }
   }
   //m_selcuts.push_back(cut);
@@ -125,18 +119,17 @@ Template::Template(string name, vector<TTree*> trees, TCut* cut, enum EColor col
 }
 
 
-Template Template::operator+(const Template& rhs){
+//Template Template::operator+(const Template& rhs){
   //Incomplete to say the least - don't use yet
-  return Template(m_name+"_"+rhs.GetName());
-}
+  //return Template(m_name+"_"+rhs.GetName());
+//}
 
 map<string, Var*>   Template::GetVariables(){return m_variables;}
 map<string, Var2D*> Template::Get2DVariables(){return m_2Dvariables;}
 map<string, Var3D*> Template::Get3DVariables(){return m_3Dvariables;}
 
-Template::Template(string name, Template* t){
+Template::Template(string name, Template* t) : JawaObj("Template", name){
   Init();
-  m_name = name;
   map<string, Var*> variables = t->GetVariables();
   map<string, Var2D*> variables2D = t->Get2DVariables();
   for (map<string, Var*>::iterator iv = variables.begin(); iv != variables.end(); ++iv){
@@ -150,9 +143,8 @@ Template::Template(string name, Template* t){
 }
 
 
-Template::Template(string name, Template* A, Template* B){
+Template::Template(string name, Template* A, Template* B) : JawaObj("Template", name) {
   Init();
-  m_name = name;
   map<string, Var*> variablesA = A->GetVariables();
   map<string, Var*> variablesB = B->GetVariables();
   map<string, Var2D*> variables2DA = A->Get2DVariables();
@@ -193,7 +185,7 @@ Tree* Template::GetTree(string name){
       tree = m_trees.at(i);
     } 
   }
-  if (tree == 0) cout<<"Tree "<<name<<" not found in template "<<m_name<<endl;
+  if (tree == 0) info()<<"Tree "<<name<<" not found in template "<<m_name<<endl;
   return tree;
 
 }
@@ -218,7 +210,7 @@ void Template::AddTrees(vector<TTree*>& trees, vector<TCut*>& cuts){
     }
   }
   else{
-    cout<<"Mismatch between trees and cuts - not adding trees"<<endl;
+    info()<<"Mismatch between trees and cuts - not adding trees"<<endl;
   }
 }
 
@@ -339,14 +331,14 @@ void Template::IsVerbose(){
 
 void Template::SetSelCut(TCut* cut){
   m_selcut = (TCut*)cut->Clone("cut");
-  if (m_trees.size() > 0) cout<<"Note the "<<m_trees.size()<<" trees already present will not have sel cut applied!"<<endl;
+  if (m_trees.size() > 0) info()<<"Note the "<<m_trees.size()<<" trees already present will not have sel cut applied!"<<endl;
 }
 
 
 void Template::ApplyCut(){
   m_evts = 0;
   if ((m_trees.size()  != m_selcuts.size()) && m_selcuts.size() != 1) {
-    cout<<"Error - mismatch between number of trees and cuts ("<<m_trees.size()<<" , "<<m_selcuts.size()<<")"<<endl;
+    info()<<"Error - mismatch between number of trees and cuts ("<<m_trees.size()<<" , "<<m_selcuts.size()<<")"<<endl;
     return;
   }
 
@@ -414,7 +406,7 @@ void Template::Add3DVar(string var1, string var2, string var3){
 void Template::Add2DVar(string name, string var1, string var2, string prefix){
   if (m_variables.find(var1) == m_variables.end() ||
       m_variables.find(var2) == m_variables.end()){
-    std::cout<<"Can't add 2D variable - "<<var1<<" - "<<var2<<std::endl;
+    info()<<"Can't add 2D variable - "<<var1<<" - "<<var2<<std::endl;
     return;
   }
   Var* varn1 = m_variables.at(var1);
@@ -428,7 +420,7 @@ void Template::Add3DVar(string name, string var1, string var2, string var3, stri
   if (m_variables.find(var1) == m_variables.end() ||
       m_variables.find(var2) == m_variables.end() ||
       m_variables.find(var3) == m_variables.end() ){
-    std::cout<<"Can't add 2D variable - "<<var1<<" - "<<var2<<std::endl;
+    info()<<"Can't add 2D variable - "<<var1<<" - "<<var2<<std::endl;
     return;
   }
   Var* varn1 = m_variables.at(var1);
@@ -436,20 +428,12 @@ void Template::Add3DVar(string name, string var1, string var2, string var3, stri
   Var* varn3 = m_variables.at(var3);
 
   if (prefix == "") prefix = m_name;
-
   m_3Dvariables.insert(std::pair<string,Var3D*>(name, new Var3D(name, varn1, varn2, varn3, prefix)));
 }
 
 
 
 
-void Template::SetName(string name){
-  m_name = name;
-}
-
-string Template::GetName() const{
-  return m_name;
-}
 
 int Template::GetEvents(){
   return m_evts;
@@ -484,7 +468,7 @@ void Template::FillVars(){
   vector<double> output_idx;
   map<string, int> tree_idx;
   if (m_fillTree){
-    cout<<"Filling tree"<<endl;
+    info()<<"Filling tree"<<endl;
     m_tree = new TTree((m_name+"_tree").c_str(),"tree");
     output_idx = vector<double>( m_variables.size() + 1, 0.0);
     tree_idx = SetBranches(output_idx);
@@ -501,7 +485,7 @@ void Template::FillVars(){
       std::vector<string> varnames = (*iv).second->GetVarNames();
       tree->SetBranches(varnames);
     }
-    if (m_verbose) cout<<"Branches set for vars"<<endl;
+    verbose()<<"Branches set for vars"<<endl;
     for (std::vector<ReweightVar*>::iterator iv = m_reweightvariables.begin(); iv!=m_reweightvariables.end();++iv){
       vector<string> rwnames;
       vector<Expr*> exprs = (*iv)->GetExprs();
@@ -512,8 +496,8 @@ void Template::FillVars(){
       tree->SetBranches(rwnames);
     }
     
-    if (m_verbose) cout<<"Branches set for reweighted variables"<<endl;
-    if (m_entryLists.size() == 0) cerr<<"Cuts haven't been applied"<<endl;
+    verbose()<<"Branches set for reweighted variables"<<endl;
+    if (m_entryLists.size() == 0) info()<<"Cuts haven't been applied"<<endl;
     
     TEntryList* l = m_entryLists.at(ti);
     double tree_w = m_trees.at(ti)->GetWeight();
@@ -522,7 +506,7 @@ void Template::FillVars(){
     // Loop  over all entries in entrylist
     for (int jentry = 0 ; jentry < nentries ; ++jentry) {
 
-      if (jentry%10000==0 && m_outputevts) cout<<"Entry "<<jentry<<" of "<<nentries<<endl;
+      if (jentry%10000==0 && m_outputevts) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
 
       int entry = l->GetEntry(jentry);
       t->GetEntry(entry);
@@ -588,8 +572,8 @@ void Template::FillVars(){
     }
     t->SetBranchStatus("*",1);
     }
-    if ( m_verbose ) cout<<"Finished looping over events"<<endl;
-  }
+  verbose()<<"Finished looping over events"<<endl;
+}
 
 void Template::SetNormEvts(double evts){
   m_normN = evts;
@@ -643,7 +627,7 @@ void Template::NormaliseToEvts(double evts, bool fixed){
 }
 
 void Template::NormaliseToMC(double xsec, double acc, double Lumi, double nEvts, bool fixed){
-  cout<<"Normalising to MC for: "<<m_name<<endl;
+  info()<<"Normalising to MC for: "<<m_name<<endl;
   double scale = xsec * Lumi * acc / nEvts;
 
   Scale(scale, fixed);
@@ -721,13 +705,13 @@ void Template::SetStyle(enum EColor fillcolor, enum EColor linecolor, Style_t fi
 
 
 void Template::SaveToFile(){
-  cout<<"Saving "<<m_name<<" to file"<<endl;
   TFile* f = new TFile((m_name+".root").c_str(),"RECREATE");
   
   SaveToCurrentFile();
   //f->Write();
   gROOT->cd();
   f->Close();
+  info()<<"Wrote to "<<m_name<<".root"<<endl;
 }
 
 TH1F* Template::GetHist(string name){
@@ -813,7 +797,7 @@ void Template::AddAsymmetry(string eta1, string eta2){
 
 void Template::PrintVars(){
   for (std::map<string,Var*>::iterator it = m_variables.begin(); it != m_variables.end(); ++it){
-    std::cout<< it->first <<std::endl;
+    info()<< it->first <<std::endl;
   }
 }
 
@@ -877,8 +861,7 @@ Template::Template(string name, boost::python::list& ns, PyObject* pycut){
   }
 
   Init();
-  if (m_verbose) cout<<"Initialising as "<<name<<endl;
-  cout<<"Initialising as "<<name<<endl;
+  verbose()<<"Initialising as "<<name<<endl;
   m_name = name;
   for (unsigned int i = 0; i < trees.size(); ++i){
     if (trees.at(i)){
@@ -887,11 +870,9 @@ Template::Template(string name, boost::python::list& ns, PyObject* pycut){
       //cout<<"added "<<cut->GetTitle()<<endl<<endl;
     }
     else{
-      cout<<"Tree "<<name<<" passed is null - not adding"<<endl;
+      info()<<"Tree "<<name<<" passed is null - not adding"<<endl;
     }
   }
-  if (m_verbose) cout<<"Name is "<<m_name<<endl;
-
 }
 
 
@@ -949,7 +930,7 @@ void Template::AddTrees_py(boost::python::list& ns){
 }
 void Template::AddTrees2_py(boost::python::list& ns, boost::python::list& ns2){
   if (len(ns) != len(ns2)) {
-    cout<<"mistmatch between size of trees and cuts"<<endl;
+    info()<<"mistmatch between size of trees and cuts"<<endl;
     return;
   }
   for (int i = 0; i < len(ns); ++i){
@@ -995,7 +976,7 @@ void Template::Add3DVar_py(boost::python::list& var){
     Add3DVar(var1, var2, var3);
   }
   else{
-    cout<<"Can't add 3D Var"<<endl;
+    info()<<"Can't add 3D Var"<<endl;
   }
 }
 
@@ -1081,7 +1062,7 @@ void Template::Reweight1_py(string var, PyObject* pyObj){
     Reweight(var,f);
   }
   else{
-    cout<<hist->ClassName()<<" is not matched to any possibilities"<<endl;
+    info()<<hist->ClassName()<<" is not matched to any possibilities"<<endl;
   }
   //std::cout<<hist->ClassName()<<std::endl;
   //Reweight(var,hist);

@@ -3,6 +3,7 @@
 #include <EfficiencyClass.h>
 #include <TGraphAsymmErrors.h>
 #include <Expr.h>
+#include <JawaObj.h>
 #include <Tune.h>
 #include <MWTemplate.h>
 #include <Utils.h>

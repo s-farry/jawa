@@ -28,7 +28,7 @@ class Data{
   string GetType();
 };
 
-class Tree{
+class Tree : public JawaObj{
  public:
   Tree(string name , TTree* t, double w = 1.0);
   Tree(string name, PyObject* t, double w = 1.0);
@@ -49,7 +49,6 @@ class Tree{
   string GetBranchType(string name);
   bool isSet(string name);
   void AddBranches(Expr* e);
-  string GetName();
   void SetWeight(double w);
   EntryList* GetEntryList(Expr* e);
   int GetEntries(Expr* e);
@@ -71,7 +70,6 @@ class Tree{
   #endif
 
  private:
-  string m_name;
   TTree* m_tree;
   double m_weight;
   std::map<string, Data*> m_output;

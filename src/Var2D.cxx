@@ -17,12 +17,9 @@
 
 using namespace std;
 
-Var2D::Var2D(string name){
-  m_name = name;
-}
+Var2D::Var2D(string name) : JawaObj("Var2D", name){}
 
-Var2D::Var2D(string name , string var1 , int bins1 , double lo1 , double hi1 ,  string var2 , int bins2 , double lo2 , double hi2, string prefix){
-  m_name   = name;
+Var2D::Var2D(string name , string var1 , int bins1 , double lo1 , double hi1 ,  string var2 , int bins2 , double lo2 , double hi2, string prefix) : JawaObj("Var2D", name){
   m_name1   = var1;
   m_name2   = var2;
   m_varname1    = var1;
@@ -53,8 +50,7 @@ Var2D::Var2D(string name , string var1 , int bins1 , double lo1 , double hi1 ,  
   m_hist_bwd->Delete();
   }*/
 
-Var2D::Var2D(string name , Var* var1 , Var* var2, string prefix){
-  m_name   = name;
+Var2D::Var2D(string name , Var* var1 , Var* var2, string prefix) : JawaObj("Var2D", name){
   m_name1   = var1->GetName();
   m_name2   = var2->GetName();
   m_varname1  = var1->GetVar();
@@ -99,7 +95,7 @@ Var2D::Var2D(string name , Var* var1 , Var* var2, string prefix){
 
 }
 
-Var2D::Var2D(string name , Var2D* varA , Var2D* varB, string prefix){
+Var2D::Var2D(string name , Var2D* varA , Var2D* varB, string prefix) : JawaObj("Var2D",name){
   if ( varA->GetName() == varB->GetName() && 
        varA->GetName1() == varB->GetName1() && 
        varA->GetName2() == varB->GetName2() && 
@@ -110,7 +106,6 @@ Var2D::Var2D(string name , Var2D* varA , Var2D* varB, string prefix){
        varA->GetBins1() == varB->GetBins1() &&
        varA->GetBins2() == varB->GetBins2() )
     {
-      m_name   = name;
       m_name1   = varA->GetName1();
       m_name2   = varA->GetName2();
       m_varname1  = varA->GetVar1()->GetVar();
@@ -161,8 +156,7 @@ Var2D::Var2D(string name , Var2D* varA , Var2D* varB, string prefix){
       m_hist->Add(varB->GetHist());
     }
 }
-Var2D::Var2D(string name , Var2D* v, string prefix){
-      m_name   = name;
+Var2D::Var2D(string name , Var2D* v, string prefix) : JawaObj("Var2D",name){
       m_name1   = v->GetName1();
       m_name2   = v->GetName2();
       m_varname1  = v->GetVar1()->GetVar();
@@ -212,9 +206,7 @@ void Var2D::FillHist(double val1, double val2, double w){
   if (val1 < m_hi1)  m_hist_comb->Fill(val1, w);
   if (val2 >= m_lo2)  m_hist_comb->Fill(val2 + m_hi1, w);
 }
-string Var2D::GetName(){
-  return m_name;
-}
+
 string Var2D::GetName1(){
   return m_name1;
 }

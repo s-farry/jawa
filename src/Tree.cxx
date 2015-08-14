@@ -23,17 +23,15 @@ using namespace std;
   m_weight  = 1.0;
   m_verbose = false;
   }*/
-Tree::Tree(string name , TTree* t, double w){
-  m_name    = name;
+Tree::Tree(string name , TTree* t, double w) : JawaObj("Tree", name){
   //t->SetBranchStatus("*",0);
   m_tree    = t;
   m_weight  = w;
   m_verbose = false;
 }
 
-Tree::Tree(string name, PyObject* t, double w){
+Tree::Tree(string name, PyObject* t, double w) : JawaObj("Tree",name){
   TTree* tree = (TTree*)(TPython::ObjectProxy_AsVoidPtr(t));
-  m_name = name;
   //tree->SetBranchStatus("*",0);
   m_tree = tree;
   m_weight = w;
@@ -63,11 +61,11 @@ void Tree::SetBranches(vector<string> variables){
 
 void Tree::SetBranch(string name){
   if (m_tree->FindBranch(name.c_str()) == 0) {
-    cout<<"No Branch - "<<name<<" - found in Tree"<<endl;
+    info()<<"No Branch - "<<name<<" - found in Tree"<<endl;
     return;
   }
   if (m_output.find(name) != m_output.end()){
-    if (m_verbose) cout<<"Branch "<<name<<" already set"<<endl;
+    verbose()<<"Branch "<<name<<" already set"<<endl;
   }
   m_tree->SetBranchStatus(name.c_str(), 1);
   string type = GetBranchType(name);
@@ -95,7 +93,7 @@ Data* Tree::GetData(string var){
     return m_output[var];
   }
   else{
-    cout<<"Warning: Cout not find branch "<<var<<endl;
+    info()<<"Warning: Cout not find branch "<<var<<endl;
     return 0;
   }
 }
@@ -281,9 +279,6 @@ int Tree::GetEntries(Expr* e){
 
 }
 
-string Tree::GetName(){
-  return m_name;
-}
 void Tree::SetWeight(double w){
   m_weight = w;
 }
@@ -389,7 +384,7 @@ boost::python::list Tree::getCorrelationMatrix_py(boost::python::list& ns, Expr*
   for (unsigned int i = 0; i < v.size() ; ++i){
     boost::python::list l1;
     for (unsigned int j = 0; j < v[i].size(); ++j){
-      cout<<"Adding "<<v[i][j]<<endl;
+      info()<<"Adding "<<v[i][j]<<endl;
       l1.append(v[i][j]);
     }
     l.append(l1);

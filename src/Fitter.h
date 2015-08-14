@@ -9,13 +9,14 @@
 #include <TColor.h>
 #include <TFractionFitter.h>
 #include <TF1.h>
+#include <JawaObj.h>
 #ifdef WITHPYTHON
 #include <TPython.h>
 #include <boost/python.hpp>
 #endif
 using namespace std;
 
-class Fitter{
+class Fitter : public JawaObj {
  public:
   Fitter();
   Fitter(TH1F* hist, TObjArray* array, vector<string> names, string var = "");

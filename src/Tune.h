@@ -23,7 +23,7 @@
 
 using namespace std;
 
-class Tune{
+class Tune : public JawaObj {
  public:
   Tune();
   Tune(string name);
@@ -93,7 +93,6 @@ class Tune{
   TObjArray* m_data_array;
   TObjArray* m_mc_array;
   TObjArray* m_mc_corr_array;
-  string m_name;
   TRandom3 m_r3;
 
   double standard_deviation(vector< pair<double, double> >& vals, double max = -1);

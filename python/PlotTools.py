@@ -80,6 +80,8 @@ def SetROOTFillColor(hist, mcolor):
        hist.SetFillColor(colordict[mcolor])
     elif mcolor is 'hatch':
        hist.SetFillStyle(3004)
+    elif mcolor is 'None' or mcolor is 'none' or mcolor is None:
+        hist.SetFillStyle(0)
     else:
        hist.SetFillColor(mcolor)
 
@@ -638,7 +640,6 @@ class Plot:
    def setProps(self, props):
       for key in props:
          self.properties[key] = props[key]
-
 
 class WJetPlot(Plot):
     def drawROOT(self, filename = None):

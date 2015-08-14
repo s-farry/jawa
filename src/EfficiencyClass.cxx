@@ -366,7 +366,8 @@ void EfficiencyClass::SaveToFile(const char* file){
   //gROOT->cd();
   if ( m_verbose ) cout<<"Writing - opened file"<<endl;
   for (std::map<string, EffVar*>::iterator ei = m_variables.begin(); ei != m_variables.end(); ++ei){
-    cout<<"in loop"<<endl;
+
+
     if (m_verbose) cout<<"Writing - "<<ei->first<<endl;
     EffVar* evar = ei->second;
     f->cd();
@@ -1072,7 +1073,6 @@ void EfficiencyClass::AddSystematic3_py(string name, boost::python::list& ns){
   }
   AddSystematic(name, pc);
 }
-
 
 void EfficiencyClass::PrintEfficiencies(string name){
   EffVar* effvar = m_variables.at(name);

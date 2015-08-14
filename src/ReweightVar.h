@@ -15,7 +15,7 @@
 
 using namespace std;
 
-class ReweightVar{
+class ReweightVar : public JawaObj{
  public:
   ReweightVar(string name, TH1F* hist);
   ReweightVar(string name1, string name2, TH2F* hist);

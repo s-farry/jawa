@@ -19,7 +19,7 @@
 
 using namespace std;
 
-Fitter::Fitter(){
+Fitter::Fitter() : JawaObj("Fitter"){
   m_toFit = new TObjArray();
   m_status = 0;
   m_clo = 0;
@@ -32,7 +32,7 @@ Fitter::Fitter(){
   m_2d = false;
 }
 
-Fitter::Fitter(TH1F* hist, TObjArray* array, vector<string> names, string var){
+Fitter::Fitter(TH1F* hist, TObjArray* array, vector<string> names, string var) : JawaObj("Fitter"){
   m_data = hist;
   m_toFit = array;
   m_status = 0;
@@ -48,7 +48,7 @@ Fitter::Fitter(TH1F* hist, TObjArray* array, vector<string> names, string var){
 
 }
 
-Fitter::Fitter(TH2F* hist, TObjArray* array, vector<string> names, string var){
+Fitter::Fitter(TH2F* hist, TObjArray* array, vector<string> names, string var) : JawaObj("Fitter"){
   m_2ddata = hist;
   m_toFit = array;
   m_status = 0;
@@ -63,17 +63,17 @@ Fitter::Fitter(TH2F* hist, TObjArray* array, vector<string> names, string var){
   for (unsigned int i = 0; i < names.size(); ++i) m_names[names.at(i)] = i;
 
 }
-Fitter::Fitter(PyObject* hist, PyObject* array, boost::python::list& ns, string var){
+Fitter::Fitter(PyObject* hist, PyObject* array, boost::python::list& ns, string var) : JawaObj("Fitter"){
   m_data  = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(hist));
   m_2ddata = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(hist));
   std::string cName(m_data->ClassName());
   if (cName.find("TH1") == 0){
-    cout<<"Initialising 1D fitter from python: "<<m_data->ClassName()<<endl;
+    info()<<"Initialising 1D fitter from python: "<<m_data->ClassName()<<endl;
     m_2ddata = 0;
     m_2d = false;
   }
   else{
-    cout<<"Initialising 2D fitter from python: "<<m_data->ClassName()<<endl;
+    info()<<"Initialising 2D fitter from python: "<<m_data->ClassName()<<endl;
     m_data = 0;
     m_2d = true;
   }
@@ -184,9 +184,9 @@ void Fitter::TFracFit(){
   //Perform the fit using TFractionFitter
   if (!m_2d)  m_fit = new TFractionFitter(m_data, m_toFit);
   else {
-    cout<<"preparing 2d fit"<<endl;
+    info()<<"preparing 2d fit"<<endl;
     m_fit = new TFractionFitter(m_2ddata, m_toFit);
-    cout<<"object created "<<m_fit<<endl;
+    info()<<"object created "<<m_fit<<endl;
     
   }
   //TFitter* fitter = (TFitter*)m_fit->GetFitter();
@@ -197,36 +197,36 @@ void Fitter::TFracFit(){
     else m_fit->SetRangeX(m_lo, m_hi);
   }
 
-  cout<<"range set"<<endl;
+  info()<<"range set"<<endl;
   //Perform constraints
   ConstrainParams();
 
-  cout<<"parameters constrained"<<endl;
+  info()<<"parameters constrained"<<endl;
 
   //Exclude low bins for fit stability
   if (m_exclude) ExcludeBins(3);
 
-  cout<<"fitting"<<endl;
+  info()<<"fitting"<<endl;
   //Perform the fit
   m_status = m_fit->Fit();// perform the fit
-  cout<<"fitted"<<endl;
+  info()<<"fitted"<<endl;
   if (m_status == 0) { // If successful
     for(map<string, int>::iterator im = m_names.begin(); im != m_names.end(); ++im){
       double value, error;
-      cout<<"getting result for "<<(*im).first<<endl;
+      info()<<"getting result for "<<(*im).first<<endl;
       m_fit->GetResult((*im).second,value,error);
       //Fill results with value and error
-      cout<<"got result"<<endl;
+      info()<<"got result"<<endl;
       m_results[(*im).first] = pair<double, double>(value,error);
-      cout<<"result set"<<endl;
+      info()<<"result set"<<endl;
     }
   }
 }
 /*
 void Fitter::RooFit(){
   RooRealVar x("X","X", m_data->GetBinLowEdge(1), m_data->GetXaxis()->GetBinUpEdge(m_data->GetNbinsX() + 1));
-  x.printValue(std::cout);
-  x.printExtras(std::cout);
+  x.printValue(std::info());
+  x.printExtras(std::info());
 
   RooDataHist data("data","data",RooArgSet(x), m_data);
   //vector<RooDataHist> roohists_mc;
@@ -243,12 +243,12 @@ void Fitter::RooFit(){
     rooyields_mc->Add(new RooRealVar(m_toFit->At(i)->GetName(), m_toFit->At(i)->GetName(),0,data_evts));
     roohistpdfs_mc->Add(new RooHistPdf(m_toFit->At(i)->GetName(), m_toFit->At(i)->GetName(), x, hist));
   }
-  cout<<"About to make model"<<endl;
+  info()<<"About to make model"<<endl;
   RooAddPdf model("model","model", RooArgList(*roohistpdfs_mc), RooArgList(*rooyields_mc));
-  cout<<"About to fit to model"<<endl;
+  info()<<"About to fit to model"<<endl;
   model.fitTo(data, RooFit::Extended());
   RooArgSet* params = model.getParameters(x);
-  cout<<"Got parameters"<<endl;
+  info()<<"Got parameters"<<endl;
   params->Print("v");
 
   for(map<string, int>::iterator im = m_names.begin(); im != m_names.end(); ++im){
@@ -263,11 +263,11 @@ void Fitter::RooFit(){
     //error = error * s;
 
 
-    cout<<"getting result for "<<(*im).first<<endl;
+    info()<<"getting result for "<<(*im).first<<endl;
     //Fill results with value and error
-    cout<<"got result"<<endl;
+    info()<<"got result"<<endl;
     m_results[(*im).first] = pair<double, double>(value,error);
-    cout<<"result set"<<endl;
+    info()<<"result set"<<endl;
 
     //RooPlot* frame = x.frame(RooFit::Title("Data"),RooFit::Bins(m_data->GetNbinsX()));
     //data.plotOn(frame);
@@ -287,7 +287,7 @@ void Fitter::ExcludeBins(double evts){
       if (m_data->GetBinContent(i) ==0) {
 	m_fit->ExcludeBin(i);
 	exclude = true;
-	cout<<"Excluding bin: "<<i<<endl;
+	info()<<"Excluding bin: "<<i<<endl;
       }
       double mcsum = 0;
       for (int j = 0 ; j <m_toFit->GetEntries(); j++){
@@ -297,7 +297,7 @@ void Fitter::ExcludeBins(double evts){
       if (mcsum < evts && !exclude) {
 	m_fit->ExcludeBin(i);
 	exclude = true;
-	cout<<"Excluding bin: "<<i<<endl;
+	info()<<"Excluding bin: "<<i<<endl;
       }
     }
   }
@@ -308,7 +308,7 @@ void Fitter::ExcludeBins(double evts){
 	if (m_2ddata->GetBinContent(i, j) ==0) {
 	  m_fit->ExcludeBin(m_2ddata->GetBin(i, j));
 	  exclude = true;
-	  cout<<"Excluding bin: "<<i<<" "<<j<<endl;
+	  info()<<"Excluding bin: "<<i<<" "<<j<<endl;
 	}
 	double mcsum = 0;
 	for (int k = 0 ; k <m_toFit->GetEntries(); k++){
@@ -318,7 +318,7 @@ void Fitter::ExcludeBins(double evts){
 	if (mcsum < evts && !exclude) {
 	  m_fit->ExcludeBin(m_2ddata->GetBin(i,j));
 	  exclude = true;
-	  cout<<"Excluding bin: "<<i<<"_"<<j<<endl;
+	  info()<<"Excluding bin: "<<i<<"_"<<j<<endl;
 	}
       }
     }
@@ -433,7 +433,7 @@ void Fitter::SetResults_py(boost::python::list& ns){
       results[name] = pair<double, double>(res, err);
     }
     else{
-      cout<<"Input to Results not correct - ignoring"<<endl;
+      info()<<"Input to Results not correct - ignoring"<<endl;
     }
   }
   SetResults(results);

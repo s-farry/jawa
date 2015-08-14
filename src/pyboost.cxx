@@ -22,7 +22,13 @@ BOOST_PYTHON_MODULE(Jawa)
     def("saveTGraphErrs"    ,  &Utils::saveTGraphErrs_py      );
     def("tgraph2hist"       ,  &Utils::tgraph2hist_py         );
     def("saveAsTree"        ,  &Utils::saveAsTree_py          );
-
+    
+    class_<JawaObj>("JawaObj", init<>() )
+      .def(init<string, string>() )
+      .def(init<string>() )
+      .add_property("Verbose",  &JawaObj::GetVerbose, &JawaObj::SetVerbose)
+      ;
+    
 
     class_<std::vector<double> >("vect")
       .def(vector_indexing_suite<std::vector<double> >())
@@ -58,7 +64,7 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("GetHist",       &Var3D::GetHist_py)
       ;
     
-    class_<Expr>("Expr", init<string>())
+    class_<Expr, bases<JawaObj> >("Expr", init<string>())
       .def(self + self)
       .def(self - self)
       .def(self & self)
@@ -88,7 +94,6 @@ BOOST_PYTHON_MODULE(Jawa)
       .def(init<string, Template*, Template* >())
       .def(init<string, Template* >())
       .def(init<string, boost::python::list&, PyObject* >())
-      .def(self + self)
       .def("AddTree",    &Template::AddTree_py)
       .def("AddTree",    &Template::AddTree2_py)
       .def("AddTree",    &Template::AddTree3_py)
@@ -112,7 +117,6 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("SaveToFile", &Template::SaveToFile)
       .def("IsVerbose",  &Template::IsVerbose)
       .def("GetName",    &Template::GetName)
-      .def("SetName",    &Template::SetName)
       .def("Reweight",   &Template::Reweight1_py)
       .def("Reweight",   &Template::Reweight2_py)
       .def("Reweight",   &Template::Reweight3_py)

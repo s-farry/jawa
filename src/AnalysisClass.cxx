@@ -16,8 +16,7 @@
 
 using namespace std;
 
-AnalysisClass::AnalysisClass(string name){
-  m_name = name;
+AnalysisClass::AnalysisClass(string name) : JawaObj("AnalysisClass", name) {
   m_fit = 0;
   m_fitter = 0;
   m_fitchi2 = 0;
@@ -154,7 +153,7 @@ void AnalysisClass::AddFitter(string var, double lo, double hi, bool combine){
   //Set up fitter as a tfractionfitter
 
   if (!m_data) {
-    cout<<"No Data Set! - Not adding Fitter"<<endl;
+    info()<<"No Data Set! - Not adding Fitter"<<endl;
     return;
   }
   
@@ -201,11 +200,11 @@ void AnalysisClass::AddFitter(string var, double lo, double hi, bool combine){
 void AnalysisClass::Add2DFitter(string var){
   //Set up fitter as a tfractionfitter
   if (!m_data){
-    cout<<"No data set - not additing fitter"<<endl;
+    info()<<"No data set - not additing fitter"<<endl;
     return;
   }
   
-  cout<<"getting 2d fitter"<<endl;
+  verbose()<<"getting 2d fitter"<<endl;
   TObjArray* toFit = new TObjArray();
   TH2F* data;
 
@@ -234,7 +233,7 @@ void AnalysisClass::Add2DFitter(string var){
   m_fitter = new Fitter(data, toFit, names, var);
   m_fitter->AddConstraints(0.0,1.0);
   m_fitter->AddConstraints(constrain_names, constrain_vals);
-  cout<<"Got 2d fitter"<<endl;
+  verbose()<<"Got 2d fitter"<<endl;
 }
 
 void AnalysisClass::ClearFitter(){
@@ -254,7 +253,7 @@ void AnalysisClass::UnscaleTemplates(){
 void AnalysisClass::Apply2DFitResults(){
   //Get the results from the fitter and scale templates appropriately
   if ((!m_data) || (!m_fitter)) {
-    cout<<"No fit results to apply - not applying"<<endl;
+    info()<<"No fit results to apply - not applying"<<endl;
     return;
 
   }
@@ -286,7 +285,7 @@ void AnalysisClass::ApplyFitResults(bool combine){
   //Get the results from the fitter and scale templates appropriately
   
   if ((!m_data) || (!m_fitter)) {
-    cout<<"No fit results to apply - not applying"<<endl;
+    info()<<"No fit results to apply - not applying"<<endl;
     return;
 
   }
@@ -319,13 +318,9 @@ void AnalysisClass::ApplyFitResults(bool combine){
 TFractionFitter* AnalysisClass::TFracFit(string var1, string var2){
   //Helper function that performs the key TFracFit stages
   string var = var1+"_"+var2;
-  cout<<"adding fitter"<<endl;
   if (!m_fitter) Add2DFitter(var);
-  cout<<"2d fitted added "<<m_fitter<<endl;
   m_fitter->TFracFit();
-  cout<<"fit performed"<<endl;
   Apply2DFitResults();
-  cout<<"results applied"<<endl;
   return m_fitter->GetFitter();
 }
 
@@ -372,24 +367,23 @@ Template* AnalysisClass::GetData(){
 
 void AnalysisClass::ApplyCuts(){
   if (m_data){
-    cout<<"Applying cuts to "<<m_data->GetName()<<endl;
+    info()<<"Applying cuts to "<<m_data->GetName()<<endl;
     m_data->ApplyCut();
   }
   else{
-    cout<<"Note - no data to run over"<<endl;
+    info()<<"Note - no data to run over"<<endl;
   }
   for (std::map<string,Template*>::iterator it = m_templates.begin() ; it != m_templates.end() ; ++it ){
-    cout<<"Applying cuts to "<<(*it).first<<endl;
+    info()<<"Applying cuts to "<<(*it).first<<endl;
     Template* temp = (*it).second;
     temp->ApplyCut();
-    //cout<<"Cut Applied"<<endl;
   }
 }
 
 void AnalysisClass::FillVars(){
   if (m_data) m_data->FillVars();
   for (std::map<string, Template*>::iterator it = m_templates.begin() ; it != m_templates.end() ; ++it ){
-    cout<<"Filling Variables for "<<(*it).first<<endl;
+    verbose()<<"Filling Variables for "<<(*it).first<<endl;
     Template* temp = (*it).second;
     temp->FillVars();
   }
@@ -431,7 +425,7 @@ void AnalysisClass::SaveToFile(string output){
   f->Close();
 
   //f->Delete();
-  cout<<"File saved"<<endl;
+  info()<<"Wrote to "<<outputFile<<endl;
 }
 
 double AnalysisClass::GetChi2nDoF(){
@@ -442,7 +436,7 @@ double AnalysisClass::GetChi2nDoF(){
 
 void AnalysisClass::AddVar(string name, string var, int bins, double lo, double hi){
   m_vars.push_back(name);
-  if (m_templates.size() == 0) cout<<"No templates to add variables to"<<endl;
+  if (m_templates.size() == 0) info()<<"No templates to add variables to"<<endl;
 
   //if (var.find("-") == std::string::npos && var.find("+") == std::string::npos)
   //  {
@@ -462,7 +456,7 @@ void AnalysisClass::AddVar(string name, string var, int bins, double lo, double 
 }
 void AnalysisClass::AddVar(string name, string var, std::vector<double> edges){
   m_vars.push_back(name);
-  if (m_templates.size() == 0) cout<<"No templates to add variables to"<<endl;
+  if (m_templates.size() == 0) info()<<"No templates to add variables to"<<endl;
   //if (var.find("-") == std::string::npos && var.find("+") == std::string::npos)
   //{
   if (m_data) m_data->AddVar(name , var , edges, m_name+"_"+m_data->GetName() );
@@ -502,8 +496,9 @@ void AnalysisClass::AddAlgVar(string name, string varexp, std::vector<double> ed
 void AnalysisClass::Add2DVar(string var1, string var2){
   string name = var1+"_"+var2;
   m_2Dvars.push_back(name);
-  if (m_templates.size() == 0) cout<<"No templates to add variables to"<<endl;
+  if (m_templates.size() == 0) info()<<"No templates to add variables to"<<endl;
   if (m_data) m_data->Add2DVar(name , var1, var2 , m_name+"_"+m_data->GetName() );
+  info()<<"adding as "<<m_name<<" "<<m_data->GetName()<<endl;
   for (std::map<string,Template*>::iterator it = m_templates.begin() ; it != m_templates.end() ; ++it ){
     Template* temp = (*it).second;
     temp->Add2DVar( name, var1, var2, m_name+"_"+temp->GetName());
@@ -512,7 +507,7 @@ void AnalysisClass::Add2DVar(string var1, string var2){
 void AnalysisClass::Add3DVar(string var1, string var2, string var3){
   string name = var1+"_"+var2+"_"+var3;
   m_3Dvars.push_back(name);
-  if (m_templates.size() == 0) cout<<"No templates to add variables to"<<endl;
+  if (m_templates.size() == 0) info()<<"No templates to add variables to"<<endl;
   if (m_data) m_data->Add3DVar(name , var1, var2 , var3, m_name+"_"+m_data->GetName() );
   for (std::map<string,Template*>::iterator it = m_templates.begin() ; it != m_templates.end() ; ++it ){
     Template* temp = (*it).second;
@@ -551,7 +546,7 @@ THStack* AnalysisClass::MakeStack(string name){
 
   for (std::vector<string>::iterator s = m_stackorder.begin() ; s != m_stackorder.end() ; ++s){
     if (m_templates.find(*s) == m_templates.end()) {
-      cout<<"Template "<<*s<<" not found"<<endl;
+      info()<<"Template "<<*s<<" not found"<<endl;
       return hs0;
     }
 
@@ -574,7 +569,7 @@ THStack* AnalysisClass::MakeStack(string name){
 THStack* AnalysisClass::GetStack(string name){
   if (m_stacks.find(name) != m_stacks.end()) return m_stacks.at(name);
   else {
-    cout<<"No stack of the name "<<name<<" present"<<endl;
+    info()<<"No stack of the name "<<name<<" present"<<endl;
     return 0;
   }
 
@@ -671,7 +666,7 @@ void AnalysisClass::ReplaceInStack(string toRemove, string toAdd){
       m_stackorder[i] = toAdd;
     }
   }
-  if (!found) cout<<"No template "<<toRemove<<" found in stack"<<endl;
+  if (!found) info()<<"No template "<<toRemove<<" found in stack"<<endl;
 }
 void AnalysisClass::ReplaceInFit(string toRemove, string toAdd){
   bool found = false;
@@ -681,7 +676,7 @@ void AnalysisClass::ReplaceInFit(string toRemove, string toAdd){
       m_fitorder[i] = toAdd;
     }
   }
-  if (!found) cout<<"No template "<<toRemove<<" found in fit"<<endl;
+  if (!found) info()<<"No template "<<toRemove<<" found in fit"<<endl;
 }
 
 void AnalysisClass::RemoveFromStack(string name){
@@ -694,7 +689,7 @@ void AnalysisClass::RemoveFromStack(string name){
     }
   }
   if (found)  m_stackorder.erase(to_erase);
-  else cout<<"No Template: "<<name<<" found in stack for class "<<m_name<<endl;
+  else info()<<"No Template: "<<name<<" found in stack for class "<<m_name<<endl;
 }
 void AnalysisClass::RemoveFromFit(string name){
   bool found = false;
@@ -706,7 +701,7 @@ void AnalysisClass::RemoveFromFit(string name){
     }
   }
   if (found) m_fitorder.erase(to_erase);
-  else cout<<"No Template: "<<name<<" found in fit for class "<<m_name<<endl;
+  else info()<<"No Template: "<<name<<" found in fit for class "<<m_name<<endl;
 }
 
 void AnalysisClass::AddToStack(string name){
@@ -743,7 +738,7 @@ vector<string> AnalysisClass::GetToStack(){ return m_stackorder;}
 
 TCanvas* AnalysisClass::DrawFitted(){
   if ((!m_data) || (!m_fitter)) {
-    cout<<"No fit to draw"<<endl;
+    info()<<"No fit to draw"<<endl;
     return 0;
   }
   string var = m_fitter ? m_fitter->GetVar(): "";
@@ -752,14 +747,14 @@ TCanvas* AnalysisClass::DrawFitted(){
   if (stack){
     stack->Draw("hist");
   }
-  else cout<<"No stack found"<<endl;
+  else info()<<"No stack found"<<endl;
   if (m_data->GetVar(var)){
     m_data->GetVar(var)->GetHist()->Draw("e1same");
   }
   if (m_fit){
     m_fit->Draw("same");
   }
-  else cout <<"No variable "<<var<<" found in data template"<<endl;
+  else info() <<"No variable "<<var<<" found in data template"<<endl;
   return c1;
 }
 
@@ -877,7 +872,7 @@ void AnalysisClass::Add2DVars_py(boost::python::list& ns){
       Add2DVar(var1, var2);
     }
     else{
-      cout<<"Cannot Add 2D Variable - Wrong Dimensions"<<endl;
+      info()<<"Cannot Add 2D Variable - Wrong Dimensions"<<endl;
     }
   }
 }
@@ -892,7 +887,7 @@ void AnalysisClass::Add3DVars_py(boost::python::list& ns){
       Add3DVar(var1, var2, var3);
     }
     else{
-      cout<<"Cannot Add 3D Variable - Wrong Dimensions"<<endl;
+      info()<<"Cannot Add 3D Variable - Wrong Dimensions"<<endl;
     }
   }
 }
