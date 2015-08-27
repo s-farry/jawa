@@ -135,6 +135,8 @@ void Fitter::AddConstraint(string name, double value, double lo, double hi){
 
 
 
+/* can't use getfitter with new root version...
+
 void Fitter::ConstrainParams(){
   //Apply all the constraints that have been added
 
@@ -165,6 +167,8 @@ void Fitter::ConstrainParams(){
   }
 
 }
+
+*/
 
 void Fitter::AddConstraints(double lo, double hi){
   //Add overall constraints - such as fractions between 0 and 1
@@ -198,8 +202,8 @@ void Fitter::TFracFit(){
   }
 
   info()<<"range set"<<endl;
-  //Perform constraints
-  ConstrainParams();
+  //Perform constraints - no can do with new root
+  //ConstrainParams();
 
   info()<<"parameters constrained"<<endl;
 
@@ -222,62 +226,6 @@ void Fitter::TFracFit(){
     }
   }
 }
-/*
-void Fitter::RooFit(){
-  RooRealVar x("X","X", m_data->GetBinLowEdge(1), m_data->GetXaxis()->GetBinUpEdge(m_data->GetNbinsX() + 1));
-  x.printValue(std::info());
-  x.printExtras(std::info());
-
-  RooDataHist data("data","data",RooArgSet(x), m_data);
-  //vector<RooDataHist> roohists_mc;
-  TObjArray* roohistpdfs_mc = new TObjArray();
-  TObjArray* rooyields_mc   = new TObjArray();
-  roohistpdfs_mc->SetOwner(kTRUE);
-  rooyields_mc->SetOwner(kTRUE);
-
-  double data_evts = m_data->Integral();
-  int nmc = m_toFit->GetSize();
-
-  for (int i = 0 ; i < nmc; ++i){
-    RooDataHist hist(m_toFit->At(i)->GetName(), m_toFit->At(i)->GetName(), x, ((TH1F*)m_toFit->At(i)));
-    rooyields_mc->Add(new RooRealVar(m_toFit->At(i)->GetName(), m_toFit->At(i)->GetName(),0,data_evts));
-    roohistpdfs_mc->Add(new RooHistPdf(m_toFit->At(i)->GetName(), m_toFit->At(i)->GetName(), x, hist));
-  }
-  info()<<"About to make model"<<endl;
-  RooAddPdf model("model","model", RooArgList(*roohistpdfs_mc), RooArgList(*rooyields_mc));
-  info()<<"About to fit to model"<<endl;
-  model.fitTo(data, RooFit::Extended());
-  RooArgSet* params = model.getParameters(x);
-  info()<<"Got parameters"<<endl;
-  params->Print("v");
-
-  for(map<string, int>::iterator im = m_names.begin(); im != m_names.end(); ++im){
-    //double mc_evts = ((TH1F*)m_toFit->At((*im).second))->Integral();
-    string name = m_toFit->At((*im).second)->GetName();
-    RooRealVar* param = (RooRealVar*)params->find(name.c_str());
-    double value = param->getValV();
-    double error = param->getError();
-    //convert to fraction ala TFractionFitter
-    //double s = mc_evts / data_evts;
-    //value = value * s;
-    //error = error * s;
-
-
-    info()<<"getting result for "<<(*im).first<<endl;
-    //Fill results with value and error
-    info()<<"got result"<<endl;
-    m_results[(*im).first] = pair<double, double>(value,error);
-    info()<<"result set"<<endl;
-
-    //RooPlot* frame = x.frame(RooFit::Title("Data"),RooFit::Bins(m_data->GetNbinsX()));
-    //data.plotOn(frame);
-    //model.plotOn(frame, RooFit::LineStyle(kDashed));
-    //TCanvas* c1 = new TCanvas("c1", "fit");
-    //frame->Draw();
-    //c1->Print("test.pdf");
-  }
-}
-*/
 
 void Fitter::ExcludeBins(double evts){
   //Exclude bins with < X events to see if this changes anything
@@ -352,10 +300,10 @@ vector<string> Fitter::GetNames(){
   }
   return names;
 }
-
+/*
 TFractionFitter* Fitter::GetFitter(){
   return m_fit;
-}
+  }*/
 
 TObjArray* Fitter::GetTemplates(){
   return m_toFit;
@@ -371,10 +319,11 @@ PyObject* Fitter::GetTemplates_py(){
 PyObject* Fitter::GetData_py(){
   return TPython::ObjectProxy_FromVoidPtr(m_data, m_data->ClassName());
 }
+/*
 PyObject* Fitter::GetFitter_py(){
   return TPython::ObjectProxy_FromVoidPtr(m_fit, m_fit->ClassName());
 
-}
+}*/
 void Fitter::AddConstraint_py(boost::python::list& ns){
   if (len(ns) == 2){
     string name = boost::python::extract<string>(ns[0]);

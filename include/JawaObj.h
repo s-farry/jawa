@@ -9,6 +9,11 @@
 
 using namespace std;
 
+/**
+Base class containing name and output functions
+ */
+
+
 class NullBuffer : public std::streambuf
 {
   virtual int         overflow( int c ) ;

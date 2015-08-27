@@ -192,10 +192,8 @@ Tree* Template::GetTree(string name){
 
 
 void Template::AddTrees(vector<TTree*>& trees){
-  for (std::vector<TTree*>::iterator it = trees.begin(); it != trees.end(); ++it){
-    AddTree(*it);
-    //m_trees.push_back(new Tree(m_name+"_tree", (*it), 1.0));
-  }
+  for (auto it : trees){ AddTree(it); }
+
 }
 void Template::AddTrees(vector<TTree*>& trees, vector<TCut*>& cuts){
   int ntrees = m_trees.size();
