@@ -540,7 +540,7 @@ namespace Utils{
     
     Long64_t nentries = list->GetN();
     
-    vals.reser(nentries);
+    vals.reserve(nentries);
     for (Long64_t jentry = 0 ; jentry < nentries ; jentry++) {
       if (jentry%10000==0) cout<<"Entry "<<jentry<<" of "<<nentries<<endl;
       int entry = list->GetEntry(jentry);

@@ -53,9 +53,9 @@ ostream& JawaObj::msg(string logname, OutputLevel o){
   string logname_out(logname);
   logname_out.resize(7, ' ');
   string output(m_class);
-  output.resize(8, ' ');
+  output.resize(15, ' ');
   string name(m_name);
-  name.resize(8,' ');
+  name.resize(18,' ');
   //first set to NULL
   //ostream& stream = *m_null;
   //Now check if it should be to cout
