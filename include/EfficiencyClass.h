@@ -15,13 +15,12 @@ using namespace std;
 Double_t fitGaussLine(Double_t* x, Double_t* par);
 Double_t fitCB(Double_t* x, Double_t* par);
 Double_t fitCBGauss(Double_t* x, Double_t* par);
-
+/*
 class EfficiencyBaseClass {
  public:
   
   int m_npltbins;
  protected:
-  string m_name;
   string m_pltvar;
   bool m_verbose;
   std::vector<const char*> passvars;
@@ -54,7 +53,6 @@ class EfficiencyBaseClass {
   TObjArray* effhists;
 
   public:
-  string GetName();
   std::vector<Tree*> m_trees;
   void SetPltRange(string var, int bins, double lo, double hi);
   void AddPassVar(const char* var);
@@ -82,8 +80,8 @@ class EfficiencyBaseClass {
   double m_Npass;
   
 };
-
-class EfficiencyClass: public EfficiencyBaseClass {
+*/
+class EfficiencyClass: public JawaObj {
 
  public:
   EfficiencyClass(string name);
@@ -182,6 +180,67 @@ class EfficiencyClass: public EfficiencyBaseClass {
   double GetCorrectedEfficiency(string var, TTree* t, string name);
   std::vector<double> GetCorrectedEfficiency(string var, std::vector<TH1F*> hists, bool smear = false);
   double GetTotEff_py();
+ public:
+  
+  int m_npltbins;
+ protected:
+  string m_pltvar;
+  bool m_verbose;
+  std::vector<const char*> passvars;
 
+  std::map<std::string, EffVar*> m_variables;
+  std::map<std::string, EffVar2D*> m_2Dvariables;
+
+  TCut m_selcut;
+
+  double m_pltrangelow;
+  double m_pltrangehi;
+  //double countrangelow;
+  //double countrangehi;
+
+  double m_efflo, m_effhi;
+
+  
+  Eff m_toteff;
+
+  TH1F* m_tot;
+  TH1F* m_pass;
+  TH1F* m_fail;
+
+  std::vector<TEntryList*> entryListTot;
+  std::vector<TEntryList*> entryListPass;
+
+  //TTree* t;
+  TCut m_passcut;
+
+  TObjArray* effhists;
+
+  public:
+  std::vector<Tree*> m_trees;
+  void SetPltRange(string var, int bins, double lo, double hi);
+  void AddPassVar(const char* var);
+  void SetTree(TTree* tree);
+  void SetTree_py(PyObject* tree);
+  void SetTrees(TTree* priTree, TTree* secTree);
+  void SetVerbose(bool verbose);
+  bool GetVerbose();
+  void AddTree(TTree* tree);
+  void AddTree_py(PyObject* tree);
+  void SetSelectionCut(TCut cut);
+  void SetSelectionCut_py(PyObject* cut);
+  std::pair<TF1*,TF1*> FitHistogram(TH1F* massplot, double lo, double hi, string opt = "Z0_CB");
+  void StripTree(TCut cut);
+  void StripTrees(TCut cut);
+  void SetPassCut(TCut cut);
+  void SetPassCut_py(PyObject* cut);
+  void MakeEntryLists();
+  std::map<string, EffVar*> GetVariables();
+  void SetVariables(std::map<string, EffVar*>);
+  void SetEffRange(double lo, double hi);
+  Eff GetTotEff();
+  //double as they can be weighted
+  double m_Ntot;
+  double m_Npass;
+  
 
 };

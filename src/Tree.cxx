@@ -78,6 +78,10 @@ void Tree::SetBranch(string name){
     m_output.insert(std::pair<string, Data*>(name, da));
     m_tree->SetBranchAddress(name.c_str() , m_output[name]->f);
   }
+  else if ( type == "uint"){
+    m_output.insert(std::pair<string, Data*>(name, da));
+    m_tree->SetBranchAddress(name.c_str() , m_output[name]->u);
+  }
   else if ( type == "int"){
     m_output.insert(std::pair<string, Data*>(name, da));
     m_tree->SetBranchAddress(name.c_str() , m_output[name]->i);
@@ -141,6 +145,15 @@ int Tree::GetIntVal(string var){
   }
   return i;
 }
+unsigned int Tree::GetUIntVal(string var){
+  unsigned int i = -1;
+  if (m_output.find(var) != m_output.end()){
+    if ( m_output[var]->type == "uint"){
+      i = *(m_output[var]->u);
+    }
+  }
+  return i;
+}
 
 double Tree::GetVal(string var){
   double d = -1.0;
@@ -150,6 +163,9 @@ double Tree::GetVal(string var){
     }
     else if ( m_output[var]->type == "float" ){
       d = *(m_output[var]->f);
+    }
+    else if ( m_output[var]->type == "uint" ){
+      d = *(m_output[var]->u);
     }
     else if ( m_output[var]->type == "int" ){
       d = *(m_output[var]->i);
@@ -180,9 +196,10 @@ string Tree::GetBranchType(string name){
   ((TBranch*)m_tree->GetBranch(name.c_str()))->GetExpectedType(cl, ctype);
   string type;
 
-  if (ctype == 8) type = "double";
-  else if (ctype == 5) type="float";
-  else if (ctype == 18) type="bool";
+  if (ctype == EDataType::kDouble_t) type = "double";
+  else if (ctype == EDataType::kFloat_t) type="float";
+  else if (ctype == EDataType::kBool_t) type="bool";
+  else if (ctype == EDataType::kUInt_t) type="uint";
   else type="int"; // ctype == 3
   return type;
 }
@@ -193,6 +210,8 @@ Data::Data(string t){
     d = new double();
   } else if ( type == "float" ){
     f = new float();
+  } else if ( type == "uint" ){
+    u = new unsigned int();
   } else if ( type == "int" ){
     i = new int();
   } else{
@@ -207,6 +226,8 @@ Data::~Data(){
     delete f;
   } else if ( type == "int" ){
     delete i;
+  } else if ( type == "uint" ){
+    delete u;
   } else{
     delete b;
   }

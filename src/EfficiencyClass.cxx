@@ -16,8 +16,7 @@
 
 using namespace std;
 
-EfficiencyClass::EfficiencyClass(string name){
-  m_name = name;
+EfficiencyClass::EfficiencyClass(string name) : JawaObj("EfficiencyClass", name){
   m_verbose = false;
   m_reweight = false;
   m_reweight_map  = false;
@@ -32,9 +31,8 @@ EfficiencyClass::EfficiencyClass(string name){
 
 }
 
-EfficiencyClass::EfficiencyClass( string name , EfficiencyClass* classA , EfficiencyClass* classB ){
+EfficiencyClass::EfficiencyClass( string name , EfficiencyClass* classA , EfficiencyClass* classB ) : JawaObj("EfficiencyClass", name){
   //cout<<"Combining efficiency classes"<<endl;
-  m_name          = name;
   m_verbose       = false;
   m_reweight      = false;
   m_reweight_map  = false;
@@ -165,7 +163,7 @@ void EfficiencyClass::CorrectGraphs(EfficiencyClass* classA, EfficiencyClass* cl
 	    graph_comb = CombineTHists(vect);
 	  }
 	  else {
-	    cout<<"Name is: "<<varA->GetName()<<endl;
+	    info()<<"Name is: "<<varA->GetName()<<endl;
 	    graph_comb = DivideTHists(varA->Get2DEffGraph(), varB->Get2DEffGraph());
 	  }
 	  EffVar2D* combVar = new EffVar2D(varA->GetName(), graph_comb);
@@ -176,40 +174,36 @@ void EfficiencyClass::CorrectGraphs(EfficiencyClass* classA, EfficiencyClass* cl
 }
 
 
-string EfficiencyBaseClass::GetName(){
-  return m_name;
-}
-
-void EfficiencyBaseClass::SetVariables(std::map<string, EffVar*> variables){
+void EfficiencyClass::SetVariables(std::map<string, EffVar*> variables){
   m_variables = variables;
   for (std::map<string, EffVar*>::iterator ie = m_variables.begin(); ie != m_variables.end(); ++ie){
     ie->second->SetPrefix(m_name);
   }
 }
 
-std::map<string, EffVar*> EfficiencyBaseClass::GetVariables(){
+std::map<string, EffVar*> EfficiencyClass::GetVariables(){
   return m_variables;
 }
 
-void EfficiencyBaseClass::SetTree(TTree* tree){
+void EfficiencyClass::SetTree(TTree* tree){
   tree->SetEntryList(0);
   tree->SetBranchStatus("*", 1);
   m_trees.push_back(new Tree("", tree, 1.0));
 }
 
-void EfficiencyBaseClass::SetVerbose(bool verbose){
+void EfficiencyClass::SetVerbose(bool verbose){
   m_verbose = verbose;
 }
-bool EfficiencyBaseClass::GetVerbose(){
+bool EfficiencyClass::GetVerbose(){
   return m_verbose;
 }
 
-void EfficiencyBaseClass::SetEffRange(double lo, double hi){
+void EfficiencyClass::SetEffRange(double lo, double hi){
   m_efflo = lo;
   m_effhi = hi;
 
 }
-void EfficiencyBaseClass::SetTrees(TTree* priTree, TTree* secTree){
+void EfficiencyClass::SetTrees(TTree* priTree, TTree* secTree){
   priTree->SetEntryList(0);
   priTree->SetBranchStatus("*",1);
   m_trees.push_back(new Tree("", priTree, 1.0));
@@ -220,16 +214,16 @@ void EfficiencyBaseClass::SetTrees(TTree* priTree, TTree* secTree){
 
 }
 
-void EfficiencyBaseClass::AddTree_py(PyObject* pyObj){
+void EfficiencyClass::AddTree_py(PyObject* pyObj){
   TTree* tree = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
   AddTree(tree);
 }
-void EfficiencyBaseClass::AddTree(TTree* tree){
+void EfficiencyClass::AddTree(TTree* tree){
   tree->SetEntryList(0);
   tree->SetBranchStatus("*",1);
   m_trees.push_back(new Tree("", tree, 1.0));
 }
-Eff EfficiencyBaseClass::GetTotEff(){
+Eff EfficiencyClass::GetTotEff(){
   return m_toteff;
 }
 
@@ -246,10 +240,10 @@ void EfficiencyClass::Add2DVar(string var1, string var2, string name){
   EffVar* varA = m_variables.at(var1);
   EffVar* varB = m_variables.at(var2);
   if (name=="")  name = varA->GetName() + "_" + varB->GetName();
-  if(m_verbose) cout<<"Adding 2D variable with name: "<<name<<endl;
+  verbose()<<"Adding 2D variable with name: "<<name<<endl;
   EffVar2D* variable  = new EffVar2D(name, varA, varB, m_name);
   m_2Dvariables.insert(std::pair<string, EffVar2D*>(name, variable));
-  if (m_verbose) cout<<"Variable added"<<endl;
+  verbose()<<"Variable added"<<endl;
  
 }
 
@@ -272,23 +266,23 @@ void EfficiencyClass::Add2DVars_py(boost::python::list& ns){
       Add2DVar(var1, var2, name);
     }
     else{
-      cout<<"Cannot Add 2D Variable - Wrong Dimensions"<<endl;
+      info()<<"Cannot Add 2D Variable - Wrong Dimensions"<<endl;
     }
   }
 }
 
-void EfficiencyBaseClass::AddPassVar(const char* var){
+void EfficiencyClass::AddPassVar(const char* var){
   passvars.push_back(var);
 }
-void EfficiencyBaseClass::SetPassCut_py(PyObject* pyObj){
+void EfficiencyClass::SetPassCut_py(PyObject* pyObj){
   TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
   m_passcut = *cut;
 }
-void EfficiencyBaseClass::SetPassCut(TCut cut){
+void EfficiencyClass::SetPassCut(TCut cut){
   m_passcut = cut;
 }
 
-void EfficiencyBaseClass::SetPltRange(string var, int bins, double lo, double hi){
+void EfficiencyClass::SetPltRange(string var, int bins, double lo, double hi){
   m_pltvar = var;
   m_npltbins = bins;
   m_pltrangelow = lo;
@@ -361,10 +355,10 @@ void EfficiencyClass::SaveToFile(const char* file){
   string output = GetRootName(file);
   //const char* cwd = gDirectory->pwd();
 
-  cout<<"Outputting to file - "<<output<<endl;
+  verbose()<<"Outputting to file - "<<output<<endl;
   TFile* f = new TFile(output.c_str(),"RECREATE");
   //gROOT->cd();
-  if ( m_verbose ) cout<<"Writing - opened file"<<endl;
+  verbose()<<"Writing - opened file"<<endl;
   for (std::map<string, EffVar*>::iterator ei = m_variables.begin(); ei != m_variables.end(); ++ei){
 
 
@@ -377,7 +371,7 @@ void EfficiencyClass::SaveToFile(const char* file){
     if (evar->GetTotCBFits())  AddFits(evar->GetTotHists(), evar->GetTotCBFits());
     if (evar->GetPassCBFits()) AddFits(evar->GetPassHists(), evar->GetPassCBFits());
 
-    if (m_verbose) cout<<"Entries?: "<<evar->GetTotHists()->GetEntries()<<endl;
+    verbose()<<"Entries?: "<<evar->GetTotHists()->GetEntries()<<endl;
 
     if (evar->GetTotHists() && evar->GetTotHists()->GetEntries() > 0)  evar->GetTotHists()->Write("TotalHists", 1);
     if (evar->GetPassHists() && evar->GetPassHists()->GetEntries() > 0) evar->GetPassHists()->Write("PassHists",1);
@@ -398,15 +392,15 @@ void EfficiencyClass::SaveToFile(const char* file){
     }
 
 
-    if ( m_verbose ) cout<<"Wrote histograms"<<endl;
+    verbose()<<"Wrote histograms"<<endl;
     
     if (evar->GetEffGraph() == 0) 
       { 
-	cout<<"No Eff Graph"<<endl;
+	info()<<"No Eff Graph"<<endl;
       }
     else evar->GetEffGraph()->Write("EfficiencyGraph");
     
-    if ( m_verbose ) cout<<"Wrote efficiency graph"<<endl;
+    verbose()<<"Wrote efficiency graph"<<endl;
 
   }
   for (std::map<string, EffVar2D*>::iterator ei = m_2Dvariables.begin(); ei != m_2Dvariables.end(); ++ei){
@@ -446,7 +440,7 @@ void EfficiencyClass::SaveToFile(const char* file){
   if (m_tot) m_tot->Write("TotalHist");
   if (m_pass) m_pass->Write("PassHist");
   if (m_fail) m_fail->Write("FailHist");
-  cout<<"Output to file - "<<output<<endl;
+  info()<<"Written to file - "<<output<<endl;
   gROOT->cd();
   f->Close();
 }
@@ -510,7 +504,7 @@ void EfficiencyClass::LoadFromFile(const char* file){
   //f->Close();
 }
 
-void EfficiencyBaseClass::StripTree(TCut cut){
+void EfficiencyClass::StripTree(TCut cut){
   m_trees.at(0)->GetTTree()->Draw(">>myList",cut,"entrylist");
   TEntryList* list = (TEntryList*)gDirectory->Get("myList");
   entryListTot.push_back(list);
@@ -519,7 +513,7 @@ void EfficiencyBaseClass::StripTree(TCut cut){
   //t=t_sel;
 }
 
-void EfficiencyBaseClass::StripTrees(TCut cut){
+void EfficiencyClass::StripTrees(TCut cut){
   m_trees.at(0)->GetTTree()->Draw(">>myListA",cut,"entrylist");
   TEntryList* priList = (TEntryList*)gDirectory->Get("myListA");
   entryListTot.push_back(priList);
@@ -530,17 +524,17 @@ void EfficiencyBaseClass::StripTrees(TCut cut){
   entryListTot.push_back(secList);
 
 }
-void EfficiencyBaseClass::SetSelectionCut_py(PyObject* pyObj){
+void EfficiencyClass::SetSelectionCut_py(PyObject* pyObj){
   TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
   m_selcut = *cut;
 }
 
-void EfficiencyBaseClass::SetSelectionCut(TCut cut){
+void EfficiencyClass::SetSelectionCut(TCut cut){
   m_selcut = cut;
 
 }
 
-void EfficiencyBaseClass::MakeEntryLists(){
+void EfficiencyClass::MakeEntryLists(){
   for (unsigned int i = 0; i < m_trees.size(); ++i){
     ostringstream ss;
     ss<<">>myList"<<i;
@@ -596,7 +590,7 @@ Eff EfficiencyClass::GetEfficiency(const char* varname, TH1F* hist){
       return Eff(name.c_str(), eff, efferrhi, efferrlo);
     }
   else {
-    cout<<"Histogram and Variable do not match";
+    info()<<"Histogram and Variable do not match";
     return Eff(name.c_str(), 0., 0., 0.);
   }
 
@@ -687,7 +681,7 @@ void EfficiencyClass::LoopEntries(){
 
   for(unsigned int i = 0; i < m_trees.size(); i++){
     
-    cout<<m_name<<": Tree Number: "<<i<<endl;
+    verbose()<<m_name<<": Tree Number: "<<i<<endl;
     Tree* t = m_trees.at(i);
     SetBranches(t);
     
@@ -704,7 +698,7 @@ void EfficiencyClass::LoopEntries(){
       //Int_t ientry=t->LoadEntry(entry);
       //if (ientry < 0) break;
       //nb = t->GetEntry(entry);   nbytes += nb;
-      if (jentry%10000==0) cout<<"Entry "<<jentry<<" of "<<nentries<<endl;
+      if (jentry%10000==0) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
       //cout<<"Entry "<<jentry<<" of "<<nentries<<endl;
       
       //See if entry passes
@@ -725,7 +719,7 @@ void EfficiencyClass::LoopEntries(){
     FreeBranches( t );
   }
 
-  if ( m_verbose ) cout<<"Final totN: "<<totN<<endl;
+  verbose()<<"Final totN: "<<totN<<endl;
 
   m_Ntot = totN;
   m_Npass = passN;
@@ -736,14 +730,14 @@ void EfficiencyClass::LoopEntries(){
 
 void EfficiencyClass::MakeHists(){
   //Make a histogram for each bin
-  if ( m_verbose ) cout<<"Making hists for "<<m_name<<endl;
+  verbose()<<"Making hists for "<<m_name<<endl;
   for (std::map<string, EffVar*>::iterator ei = m_variables.begin(); ei != m_variables.end(); ++ei){
-    if ( m_verbose ) cout<<ei->first<<endl;
+    verbose()<<ei->first<<endl;
     EffVar* evar = ei->second;
     evar->MakeHists(m_name, m_npltbins, m_pltrangelow, m_pltrangehi, m_reweight);
   }
   for (std::map<string, EffVar2D*>::iterator ei = m_2Dvariables.begin(); ei != m_2Dvariables.end(); ++ei){
-    if ( m_verbose ) cout<<ei->first<<endl;
+    verbose()<<ei->first<<endl;
     EffVar2D* evar = ei->second;
     evar->MakeHists(m_name, m_npltbins, m_pltrangelow, m_pltrangehi, m_reweight);
   }
@@ -763,7 +757,7 @@ void EfficiencyClass::SetFitOpts(string opt){
 }
 
 void EfficiencyClass::FitHists(double lo, double hi){
-  cout<<"Fit Hists ---------- Fitting Histograms"<<endl;
+  verbose()<<"Fit Hists ---------- Fitting Histograms"<<endl;
 
   if (m_fitopt.size() == 0) m_fitopt = "Z0_CB";
 
@@ -778,7 +772,7 @@ void EfficiencyClass::FitHists(double lo, double hi){
 
   for (std::map<string, EffVar*>::iterator ei = m_variables.begin(); ei != m_variables.end(); ++ei){
     EffVar* evar = ei->second;
-    cout<<"Fit Hists -------------------- Fitting for "<<evar->GetName()<<endl;
+    verbose()<<"Fit Hists -------------------- Fitting for "<<evar->GetName()<<endl;
     TObjArray* tot  = (TObjArray*)evar->GetTotHists();
     TObjArray* pass = (TObjArray*)evar->GetPassHists();
     for (int i = 0; i<tot->GetEntries(); ++i){
@@ -797,7 +791,7 @@ void EfficiencyClass::FitHists(double lo, double hi){
 
   for (std::map<string, EffVar2D*>::iterator ei = m_2Dvariables.begin(); ei != m_2Dvariables.end(); ++ei){
     EffVar2D* evar = ei->second;
-    cout<<"Fit Hists -------------------- Fitting for "<<evar->GetName()<<endl;
+    verbose()<<"Fit Hists -------------------- Fitting for "<<evar->GetName()<<endl;
     TObjArray* tot  = (TObjArray*)evar->GetTotHists();
     TObjArray* pass = (TObjArray*)evar->GetPassHists();
     for (int i = 0; i<tot->GetEntries(); ++i){
@@ -865,7 +859,7 @@ void EfficiencyClass::MakeEfficiencyGraph(bool fromFit){
       
     }
     evar->MakeTGraph();
-    if ( m_verbose )cout<<"Set TGraph"<<endl;
+    verbose()<<"Set TGraph"<<endl;
   }
 
   for (std::map<string, EffVar2D*>::iterator ei = m_2Dvariables.begin(); ei != m_2Dvariables.end(); ++ei){
@@ -873,10 +867,10 @@ void EfficiencyClass::MakeEfficiencyGraph(bool fromFit){
     evar->MakeEffHist();
     evar->MakeTGraphs();
   }
-  if ( m_verbose ) cout<<"leaving"<<endl;
+  verbose()<<"leaving"<<endl;
 }
 
-std::pair<TF1*,TF1*> EfficiencyBaseClass::FitHistogram(TH1F* massplot, double lo, double hi, string opt){
+std::pair<TF1*,TF1*> EfficiencyClass::FitHistogram(TH1F* massplot, double lo, double hi, string opt){
   if (massplot->GetListOfFunctions()->GetSize() > 0) massplot->GetListOfFunctions()->Clear();
 
   double max = massplot->GetMaximum();
@@ -993,7 +987,7 @@ void EfficiencyClass::Reweight1_py(string var, PyObject* pyObj){
     ReweightVar(var,f);
   }
   else{
-    cout<<hist->ClassName()<<" is not matched to any possibilities"<<endl;
+    info()<<hist->ClassName()<<" is not matched to any possibilities"<<endl;
   }
   //std::cout<<hist->ClassName()<<std::endl;
   //Reweight(var,hist);
@@ -1046,7 +1040,7 @@ void EfficiencyClass::AddSystematic(string name, double pc){
     //evar->m_systematic = true;
     m_variables.at(name)->AddSystematic(pc);
   }
-  else cout<<"Could not find variable to add systematic"<<endl;
+  else info()<<"Could not find variable to add systematic"<<endl;
 }
 void EfficiencyClass::AddSystematic(string name, std::vector<double> pc){
   if (m_variables.find(name) != m_variables.end()){
@@ -1056,7 +1050,7 @@ void EfficiencyClass::AddSystematic(string name, std::vector<double> pc){
     //evar->m_systematic = true;
     m_variables.at(name)->AddSystematic(pc);
   }
-  else cout<<"Could not find variable to add systematic"<<endl;
+  else info()<<"Could not find variable to add systematic"<<endl;
 }
 
 void EfficiencyClass::AddSystematic1_py(string name, double pc){
@@ -1294,11 +1288,11 @@ void EfficiencyClass::RemoveErrors(){
 }
 
 TH2F* EfficiencyClass::DivideTHists(TH2F* numer, TH2F* denom){
-  cout<<"Gonna divide "<<numer<<" by "<<denom<<endl;
+  verbose()<<"Gonna divide "<<numer<<" by "<<denom<<endl;
   TH2F* res = (TH2F*)numer->Clone();
-  cout<<"Cloned"<<endl;
+  verbose()<<"Cloned"<<endl;
   res->Divide(denom);
-  cout<<"Divided"<<endl;
+  verbose()<<"Divided"<<endl;
 
   return res;
 }
@@ -1377,8 +1371,8 @@ std::vector<double> EfficiencyClass::GetCorrectedEfficiency(string var, std::vec
       int bin1 = v->FindBin(lo);
       int bin2 = v->FindBin(hi);
       if (bin1 != bin2 && hi != v->GetEdges().at(bin2 - 1 )){
-	cout<<"lo: "<<lo<<" hi: "<<hi<<" bin1: "<<bin1<<" bin2: "<<bin2<<endl;
-	cout<<"Precision will be lost in efficiency determination"<<endl;;
+	verbose()<<"lo: "<<lo<<" hi: "<<hi<<" bin1: "<<bin1<<" bin2: "<<bin2<<endl;
+	verbose()<<"Precision will be lost in efficiency determination"<<endl;;
 	return effs;
       }
       int p = bin1+1;
@@ -1407,7 +1401,7 @@ double EfficiencyClass::GetCorrectedEfficiency(string var, TH1F* h){
     int bin1 = hist->FindBin(lo);
     int bin2 = hist->FindBin(hi);
     if (bin1 != bin2 && hi != hist->GetXaxis()->GetBinLowEdge(bin2)){
-      cout<<"Precision will be lost in efficiency determination";
+      verbose()<<"Precision will be lost in efficiency determination";
       return -1;
     }
     int p = bin1+1;

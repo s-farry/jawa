@@ -102,7 +102,8 @@ namespace Utils{
   template <typename T> vector<T> pyList2Vec(boost::python::list& ns);
   template <typename T> vector< vector<T> > pyList2Mat(boost::python::list& ns);
   template <typename T> T* Py2RootObj(PyObject* pyObj);
-  template <typename T> PyObject* Root2PyObj(T* cxxObj);  
+  template <typename T> PyObject* Root2PyObj(T* cxxObj);
+
   void saveAsTree_py(string fileName, boost::python::list& varNames, string output);
   #endif
 

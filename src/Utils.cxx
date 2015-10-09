@@ -210,7 +210,7 @@ namespace Utils{
 	errors.push_back(geteff(title.str(), data, eff, -1*(i+1), form));
       }
     }
-    return std::make_pair< TH1D*, vector<TH1D*> >(central, errors);
+    return std::pair< TH1D*, vector<TH1D*> >(central, errors);
   }
 
   pair< TH1D*, vector<TH1D*> > getEffVariations(string name, TH2F* data, TGraphAsymmErrors* eff, string form, bool correlated){
@@ -262,6 +262,7 @@ namespace Utils{
     //vector<double> total(bins, 0.0);
     for (int j = 0; j < (int)p.second.size()/2; ++j){
       vector<double> a;
+      a.reserve(bins);
       for (int i = 0 ; i < bins ; ++i){
 	double err = max(abs(p.second.at(j*2)->GetBinContent(i+1) - central->GetBinContent(i+1)),
 			 abs(p.second.at(j*2+1)->GetBinContent(i+1) - central->GetBinContent(i+1)))
@@ -448,6 +449,7 @@ namespace Utils{
 
   vector<double> getColumn(int n, vector<vector<double> > vals){
     vector<double> col;
+    col.reserve(vals.size());
     for (unsigned int i = 0 ; i < vals.size() ; ++i){
       col.push_back(vals[i][n]);
     }
@@ -461,6 +463,8 @@ namespace Utils{
     unsigned int nvals    = vals[0].size();
     vector<double> means;
     vector<double> stddevs;
+    means.reserve(vals.size());
+    stddevs.reserve(vals.size());
 
     for ( unsigned int i = 0 ; i < vals.size() ; ++ i ){
       vector<double> col = getColumn(i, vals);
@@ -504,6 +508,7 @@ namespace Utils{
   std::vector<double> GetBinEdgesX(TH2F* hist){
     int nbins = hist->GetXaxis()->GetNbins();
     std::vector<double> edges;
+    edges.reserve(nbins+1);
     for (int i = 0; i <nbins+1 ; ++i){
       edges.push_back(hist->GetXaxis()->GetBinLowEdge(i+1));
     }
@@ -512,6 +517,7 @@ namespace Utils{
   std::vector<double> GetBinEdgesY(TH2F* hist){
     int nbins = hist->GetYaxis()->GetNbins();
     std::vector<double> edges;
+    edges.reserve(nbins+1);
     //double* edges = new double[nbins+1];
     //double edges[nbins+1];
     for (int i = 0; i <nbins+1 ; ++i){
@@ -534,6 +540,7 @@ namespace Utils{
     
     Long64_t nentries = list->GetN();
     
+    vals.reserve(nentries);
     for (Long64_t jentry = 0 ; jentry < nentries ; jentry++) {
       if (jentry%10000==0) cout<<"Entry "<<jentry<<" of "<<nentries<<endl;
       int entry = list->GetEntry(jentry);
@@ -1089,8 +1096,6 @@ namespace Utils{
   template <typename T> PyObject* Root2PyObj(T* cxxObj){
     return TPython::ObjectProxy_FromVoidPtr(cxxObj, cxxObj->ClassName());
   }
-
-  
   
   #endif
   

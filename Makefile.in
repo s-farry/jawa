@@ -1,12 +1,15 @@
 CC = @CXX@ # c compiler
-CXXFLAGS = -O2 -ansi -W -Wall -fPIC -c # c flags
+CXXFLAGS = -O2 -ansi -W -Wall -fPIC -std=c++11 -c # c flags
 LDFLAGS = -shared
-ROOTLIBS = -lRIO -lNet -lHist -lTree -lMatrix -lMathCore -lThread -lPhysics -lPyROOT -lMinuit -lMinuit2 -lGpad -lRooFit # root libraries
+ROOTLIBS = -lRIO -lNet -lHist -lTree -lMatrix -lMathCore -lThread -lPhysics -lPyROOT -lMinuit -lMinuit2 -lGpad # root libraries
 
 #boost
-BOOST_INC = /usr/local/include
-BOOST_LIB = /usr/local/lib
+#BOOST_INC = /usr/local/include
+#BOOST_LIB = /usr/local/lib
 BOOSTLIBS = -lboost_python
+
+BOOST_INC = /cvmfs/sft.cern.ch/lcg/external/Boost/1.53.0_python2.7/x86_64-slc6-gcc48-opt/include
+BOOST_LIB = /cvmfs/sft.cern.ch/lcg/external/Boost/1.53.0_python2.7/x86_64-slc6-gcc48-opt//lib
 
 RM = rm -f # rm command
 TARGET_LIB = libJawa.so # target lib
@@ -30,8 +33,8 @@ all	: ${TARGET_LIB}
 
 $(TARGET_LIB) : $(OBJS)
 	$(CC) $(LDFLAGS) $^ $(BOOSTLIBS) -L$(ROOTLIBDIR) $(ROOTLIBS) -o lib/$@ 
-$(OBJS): %.o:src/%.cxx src/%.h
-	$(CC) $(CXXFLAGS) -Isrc/ -I/usr/include -I$(ROOTINCDIR) $(PYTHON_CPP_FLAGS) -I$(BOOST_INC) $< -o lib/$@
+$(OBJS): %.o:src/%.cxx include/%.h
+	$(CC) $(CXXFLAGS) -Isrc/ -I/usr/include -Iinclude -I$(ROOTINCDIR) $(PYTHON_CPP_FLAGS) -I$(BOOST_INC) $< -o lib/$@
 
 clean	: 
 	-${RM} lib/${TARGET_LIB} ${OBJS}

@@ -276,9 +276,10 @@ void AnalysisClass::Apply2DFitResults(){
 
   //Save some of the key variables for later - fit and chi2/ndof
   //m_fit = (TH1F*)m_fitter->GetFitter()->GetPlot();
+  /*
   m_fitchi2 = m_fitter->GetFitter()->GetChisquare();
   m_ndof = m_fitter->GetFitter()->GetNDF();
-
+  */
 
 }
 void AnalysisClass::ApplyFitResults(bool combine){
@@ -307,10 +308,12 @@ void AnalysisClass::ApplyFitResults(bool combine){
   }
 
   //Save some of the key variables for later - fit and chi2/ndof
+
+  /*
   m_fit = (TH1F*)m_fitter->GetFitter()->GetPlot();
   m_fitchi2 = m_fitter->GetFitter()->GetChisquare();
   m_ndof = m_fitter->GetFitter()->GetNDF();
-
+  */
 
 }
 
@@ -321,7 +324,9 @@ TFractionFitter* AnalysisClass::TFracFit(string var1, string var2){
   if (!m_fitter) Add2DFitter(var);
   m_fitter->TFracFit();
   Apply2DFitResults();
-  return m_fitter->GetFitter();
+  //return m_fitter->GetFitter();
+  //hack for now - new update to root does not take kindly to getfitter
+  return 0;
 }
 
 TFractionFitter* AnalysisClass::TFracFit(string var, double lo, double hi, bool combine){
@@ -329,7 +334,10 @@ TFractionFitter* AnalysisClass::TFracFit(string var, double lo, double hi, bool 
   if (!m_fitter) AddFitter(var, lo, hi, combine);
   m_fitter->TFracFit();
   ApplyFitResults(combine);
-  return m_fitter->GetFitter();
+  
+  //return m_fitter->GetFitter();
+  //ditto to above
+  return 0;
 
 }
 TFractionFitter* AnalysisClass::RedoFit(string var, double lo, double hi, bool combine){
@@ -338,7 +346,9 @@ TFractionFitter* AnalysisClass::RedoFit(string var, double lo, double hi, bool c
   AddFitter(var, lo, hi, combine);
   m_fitter->TFracFit();
   ApplyFitResults(combine);
-  return m_fitter->GetFitter();
+  //return m_fitter->GetFitter();
+  // and again
+  return 0;
 }
 
 

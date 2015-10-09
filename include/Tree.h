@@ -24,6 +24,7 @@ class Data{
   int* i;
   float* f;
   bool* b;
+  unsigned int* u;
   string type;
   string GetType();
 };
@@ -38,6 +39,7 @@ class Tree : public JawaObj{
   double GetVal(string var);
   double GetVal(Expr* e);
   float GetFloatVal(string var);
+  unsigned int GetUIntVal(string var);
   int GetIntVal(string var);
   double GetDoubleVal(string var);
   //template<typename T>  T GetVal(string var);

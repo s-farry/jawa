@@ -616,6 +616,9 @@ ROOTLIBDIR
 ROOTCINT
 ROOTEXEC
 ROOTCONF
+ac_ct_CC
+CFLAGS
+CC
 PYTHON_EXTRA_LDFLAGS
 PYTHON_EXTRA_LIBS
 PYTHON_SITE_PKG
@@ -623,12 +626,6 @@ PYTHON_LDFLAGS
 PYTHON_CPPFLAGS
 PYTHON
 PYTHON_VERSION
-PYTHON_LIB
-PYTHON_INCLUDE_DIR
-ac_ct_CC
-CFLAGS
-CC
-PYTHON_BIN
 OBJEXT
 EXEEXT
 ac_ct_CXX
@@ -687,9 +684,9 @@ LDFLAGS
 LIBS
 CPPFLAGS
 CCC
+PYTHON_VERSION
 CC
-CFLAGS
-PYTHON_VERSION'
+CFLAGS'
 
 
 # Initialize some variables set by options.
@@ -1320,12 +1317,12 @@ Some influential environment variables:
   LIBS        libraries to pass to the linker, e.g. -l<library>
   CPPFLAGS    C/C++/Objective C preprocessor flags, e.g. -I<include dir> if
               you have headers in a nonstandard directory <include dir>
-  CC          C compiler command
-  CFLAGS      C compiler flags
   PYTHON_VERSION
               The installed Python version to use, for example '2.3'. This
               string will be appended to the Python interpreter canonical
               name.
+  CC          C compiler command
+  CFLAGS      C compiler flags
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -1795,62 +1792,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 #
 
 # ===========================================================================
-#         http://www.gnu.org/software/autoconf-archive/ax_python.html
-# ===========================================================================
-#
-# SYNOPSIS
-#
-#   AX_PYTHON
-#
-# DESCRIPTION
-#
-#   This macro does a complete Python development environment check.
-#
-#   It recurses through several python versions (from 2.1 to 2.6 in this
-#   version), looking for an executable. When it finds an executable, it
-#   looks to find the header files and library.
-#
-#   It sets PYTHON_BIN to the name of the python executable,
-#   PYTHON_INCLUDE_DIR to the directory holding the header files, and
-#   PYTHON_LIB to the name of the Python library.
-#
-#   This macro calls AC_SUBST on PYTHON_BIN (via AC_CHECK_PROG),
-#   PYTHON_INCLUDE_DIR and PYTHON_LIB.
-#
-# LICENSE
-#
-#   Copyright (c) 2008 Michael Tindal
-#
-#   This program is free software; you can redistribute it and/or modify it
-#   under the terms of the GNU General Public License as published by the
-#   Free Software Foundation; either version 2 of the License, or (at your
-#   option) any later version.
-#
-#   This program is distributed in the hope that it will be useful, but
-#   WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-#   Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License along
-#   with this program. If not, see <http://www.gnu.org/licenses/>.
-#
-#   As a special exception, the respective Autoconf Macro's copyright owner
-#   gives unlimited permission to copy, distribute and modify the configure
-#   scripts that are the output of Autoconf when processing the Macro. You
-#   need not follow the terms of the GNU General Public License when using
-#   or distributing such scripts, even though portions of the text of the
-#   Macro appear in them. The GNU General Public License (GPL) does govern
-#   all other use of the material that constitutes the Autoconf Macro.
-#
-#   This special exception to the GPL applies to versions of the Autoconf
-#   Macro released by the Autoconf Archive. When you make and distribute a
-#   modified version of the Autoconf Macro, you may extend this special
-#   exception to the GPL to apply to your modified version as well.
-
-#serial 14
-
-
-# ===========================================================================
 #      http://www.gnu.org/software/autoconf-archive/ax_python_devel.html
 # ===========================================================================
 #
@@ -1940,6 +1881,103 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # about autoupdate's warning because that contains
 # information on what to do *after* running autoupdate.
 
+
+
+# ===========================================================================
+#       http://www.gnu.org/software/autoconf-archive/ax_boost_base.html
+# ===========================================================================
+#
+# SYNOPSIS
+#
+#   AX_BOOST_BASE([MINIMUM-VERSION], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+#
+# DESCRIPTION
+#
+#   Test for the Boost C++ libraries of a particular version (or newer)
+#
+#   If no path to the installed boost library is given the macro searchs
+#   under /usr, /usr/local, /opt and /opt/local and evaluates the
+#   $BOOST_ROOT environment variable. Further documentation is available at
+#   <http://randspringer.de/boost/index.html>.
+#
+#   This macro calls:
+#
+#     AC_SUBST(BOOST_CPPFLAGS) / AC_SUBST(BOOST_LDFLAGS)
+#
+#   And sets:
+#
+#     HAVE_BOOST
+#
+# LICENSE
+#
+#   Copyright (c) 2008 Thomas Porschberg <thomas@randspringer.de>
+#   Copyright (c) 2009 Peter Adolphs
+#
+#   Copying and distribution of this file, with or without modification, are
+#   permitted in any medium without royalty provided the copyright notice
+#   and this notice are preserved. This file is offered as-is, without any
+#   warranty.
+
+#serial 25
+
+
+
+# ===========================================================================
+#      http://www.gnu.org/software/autoconf-archive/ax_boost_python.html
+# ===========================================================================
+#
+# SYNOPSIS
+#
+#   AX_BOOST_PYTHON
+#
+# DESCRIPTION
+#
+#   This macro checks to see if the Boost.Python library is installed. It
+#   also attempts to guess the correct library name using several attempts.
+#   It tries to build the library name using a user supplied name or suffix
+#   and then just the raw library.
+#
+#   If the library is found, HAVE_BOOST_PYTHON is defined and
+#   BOOST_PYTHON_LIB is set to the name of the library.
+#
+#   This macro calls AC_SUBST(BOOST_PYTHON_LIB).
+#
+#   In order to ensure that the Python headers and the Boost libraries are
+#   specified on the include path, this macro requires AX_PYTHON_DEVEL and
+#   AX_BOOST_BASE to be called.
+#
+# LICENSE
+#
+#   Copyright (c) 2008 Michael Tindal
+#   Copyright (c) 2013 Daniel M"ullner <daniel@danifold.net>
+#
+#   This program is free software; you can redistribute it and/or modify it
+#   under the terms of the GNU General Public License as published by the
+#   Free Software Foundation; either version 2 of the License, or (at your
+#   option) any later version.
+#
+#   This program is distributed in the hope that it will be useful, but
+#   WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+#   Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+#   As a special exception, the respective Autoconf Macro's copyright owner
+#   gives unlimited permission to copy, distribute and modify the configure
+#   scripts that are the output of Autoconf when processing the Macro. You
+#   need not follow the terms of the GNU General Public License when using
+#   or distributing such scripts, even though portions of the text of the
+#   Macro appear in them. The GNU General Public License (GPL) does govern
+#   all other use of the material that constitutes the Autoconf Macro.
+#
+#   This special exception to the GPL applies to versions of the Autoconf
+#   Macro released by the Autoconf Archive. When you make and distribute a
+#   modified version of the Autoconf Macro, you may extend this special
+#   exception to the GPL to apply to your modified version as well.
+
+#serial 20
 
 
 
@@ -3248,233 +3286,6 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-
-{ $as_echo "$as_me:$LINENO: checking for python build information" >&5
-$as_echo_n "checking for python build information... " >&6; }
-{ $as_echo "$as_me:$LINENO: result: " >&5
-$as_echo "" >&6; }
-for python in python3.3 python3.2 python3.1 python3.0 python2.7 python2.6 python2.5 python2.4 python2.3 python2.2 python2.1 python; do
-for ac_prog in $python
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_prog_PYTHON_BIN+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$PYTHON_BIN"; then
-  ac_cv_prog_PYTHON_BIN="$PYTHON_BIN" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_PYTHON_BIN="$ac_prog"
-    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-fi
-fi
-PYTHON_BIN=$ac_cv_prog_PYTHON_BIN
-if test -n "$PYTHON_BIN"; then
-  { $as_echo "$as_me:$LINENO: result: $PYTHON_BIN" >&5
-$as_echo "$PYTHON_BIN" >&6; }
-else
-  { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$PYTHON_BIN" && break
-done
-
-ax_python_bin=$PYTHON_BIN
-if test x$ax_python_bin != x; then
-   as_ac_Lib=`$as_echo "ac_cv_lib_$ax_python_bin''_main" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for main in -l$ax_python_bin" >&5
-$as_echo_n "checking for main in -l$ax_python_bin... " >&6; }
-if { as_var=$as_ac_Lib; eval "test \"\${$as_var+set}\" = set"; }; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-l$ax_python_bin  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-
-int
-main ()
-{
-return main ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then
-  eval "$as_ac_Lib=yes"
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	eval "$as_ac_Lib=no"
-fi
-
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-ac_res=`eval 'as_val=${'$as_ac_Lib'}
-		 $as_echo "$as_val"'`
-	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-as_val=`eval 'as_val=${'$as_ac_Lib'}
-		 $as_echo "$as_val"'`
-   if test "x$as_val" = x""yes; then
-  ax_python_lib=$ax_python_bin
-else
-  ax_python_lib=no
-fi
-
-   if test x$ax_python_lib == xno; then
-     as_ac_Lib=`$as_echo "ac_cv_lib_${ax_python_bin}m''_main" | $as_tr_sh`
-{ $as_echo "$as_me:$LINENO: checking for main in -l${ax_python_bin}m" >&5
-$as_echo_n "checking for main in -l${ax_python_bin}m... " >&6; }
-if { as_var=$as_ac_Lib; eval "test \"\${$as_var+set}\" = set"; }; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-l${ax_python_bin}m  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-
-int
-main ()
-{
-return main ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then
-  eval "$as_ac_Lib=yes"
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	eval "$as_ac_Lib=no"
-fi
-
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-ac_res=`eval 'as_val=${'$as_ac_Lib'}
-		 $as_echo "$as_val"'`
-	       { $as_echo "$as_me:$LINENO: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-as_val=`eval 'as_val=${'$as_ac_Lib'}
-		 $as_echo "$as_val"'`
-   if test "x$as_val" = x""yes; then
-  ax_python_lib=${ax_python_bin}m
-else
-  ax_python_lib=no
-fi
-
-   fi
-   if test x$ax_python_lib != xno; then
-     ax_python_header=`$ax_python_bin -c "from distutils.sysconfig import *; print(get_config_var('CONFINCLUDEPY'))"`
-     if test x$ax_python_header != x; then
-       break;
-     fi
-   fi
-fi
-done
-if test x$ax_python_bin = x; then
-   ax_python_bin=no
-fi
-if test x$ax_python_header = x; then
-   ax_python_header=no
-fi
-if test x$ax_python_lib = x; then
-   ax_python_lib=no
-fi
-
-{ $as_echo "$as_me:$LINENO: result:   results of the Python check:" >&5
-$as_echo "  results of the Python check:" >&6; }
-{ $as_echo "$as_me:$LINENO: result:     Binary:      $ax_python_bin" >&5
-$as_echo "    Binary:      $ax_python_bin" >&6; }
-{ $as_echo "$as_me:$LINENO: result:     Library:     $ax_python_lib" >&5
-$as_echo "    Library:     $ax_python_lib" >&6; }
-{ $as_echo "$as_me:$LINENO: result:     Include Dir: $ax_python_header" >&5
-$as_echo "    Include Dir: $ax_python_header" >&6; }
-
-if test x$ax_python_header != xno; then
-  PYTHON_INCLUDE_DIR=$ax_python_header
-
-fi
-if test x$ax_python_lib != xno; then
-  PYTHON_LIB=$ax_python_lib
-
-fi
 
 
 	#

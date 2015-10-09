@@ -339,9 +339,10 @@ double Var::GetVal_py(boost::python::list& input){
 boost::python::list Var::GetVarNames_py(){ 
   boost::python::list l;
   vector<string> varnames = GetVarNames();
-    for (vector<string>::iterator is = varnames.begin(); is != varnames.end(); ++is){
-    l.append((*is));
-  }
+  //for (vector<string>::iterator is = varnames.begin(); is != varnames.end(); ++is){
+  //  l.append((*is));
+  //}
+  for (auto is : varnames) l.append(is);
   return l;
 }
 boost::python::list Var::GetEdges_py(){

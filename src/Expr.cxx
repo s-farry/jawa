@@ -16,20 +16,20 @@ typedef std::map< std::string, std::pair< int,int > > OpMap;
 //typedef std::vector<std::string>::const_iterator cv_iter;  
 //typedef std::string::iterator s_iter;
 
-const OpMap::value_type assocs[] =     
-  {  OpMap::value_type( "+", std::make_pair<int,int>( 0, LEFT_ASSOC ) ),      
-     OpMap::value_type( "-", std::make_pair<int,int>( 0, LEFT_ASSOC ) ),
-     OpMap::value_type( ">", std::make_pair<int,int>( 2, LEFT_ASSOC ) ),      
-     OpMap::value_type( "<", std::make_pair<int,int>( 2, LEFT_ASSOC ) ),   
-     OpMap::value_type( ">=", std::make_pair<int,int>( 2, LEFT_ASSOC ) ),      
-     OpMap::value_type( "<=", std::make_pair<int,int>( 2, LEFT_ASSOC ) ),     
-     OpMap::value_type( "==", std::make_pair<int,int>( 2, LEFT_ASSOC ) ),     
-     OpMap::value_type( "!=", std::make_pair<int,int>( 2, LEFT_ASSOC ) ),
-     OpMap::value_type( "*", std::make_pair<int,int>( 5, LEFT_ASSOC ) ),        
-     OpMap::value_type( "&&", std::make_pair<int,int>( 1, LEFT_ASSOC ) ),       
-     OpMap::value_type( "||", std::make_pair<int,int>( 1, LEFT_ASSOC ) ),
-     OpMap::value_type( "/", std::make_pair<int,int>( 5, LEFT_ASSOC ) ),
-     OpMap::value_type( "^", std::make_pair<int,int>( 6, RIGHT_ASSOC ) )};
+const OpMap::value_type assocs[] =
+  {  OpMap::value_type( "+", std::pair<int,int>(  0, LEFT_ASSOC ) ),      
+     OpMap::value_type( "-", std::pair<int,int>(  0, LEFT_ASSOC ) ),
+     OpMap::value_type( ">", std::pair<int,int>(  2, LEFT_ASSOC ) ),      
+     OpMap::value_type( "<", std::pair<int,int>(  2, LEFT_ASSOC ) ),   
+     OpMap::value_type( ">=", std::pair<int,int>( 2, LEFT_ASSOC ) ),      
+     OpMap::value_type( "<=", std::pair<int,int>( 2, LEFT_ASSOC ) ),     
+     OpMap::value_type( "==", std::pair<int,int>( 2, LEFT_ASSOC ) ),     
+     OpMap::value_type( "!=", std::pair<int,int>( 2, LEFT_ASSOC ) ),
+     OpMap::value_type( "*", std::pair<int,int>(  5, LEFT_ASSOC ) ),        
+     OpMap::value_type( "&&", std::pair<int,int>( 1, LEFT_ASSOC ) ),       
+     OpMap::value_type( "||", std::pair<int,int>( 1, LEFT_ASSOC ) ),
+     OpMap::value_type( "/", std::pair<int,int>(  5, LEFT_ASSOC ) ),
+     OpMap::value_type( "^", std::pair<int,int>(  6, RIGHT_ASSOC ) )};
      
 const OpMap opmap( assocs, assocs + sizeof( assocs ) / sizeof( assocs[ 0 ] ) );    
 
@@ -87,6 +87,7 @@ double Expr::GetVal(std::vector<double>& input){
 
 double Expr::GetVal_py(boost::python::list& input){
   vector<double> dbl_vec;
+  dbl_vec.reserve(len(input));
   for (unsigned int i = 0; i < len(input); ++i){
     double d = boost::python::extract<double>(input[i]);
     dbl_vec.push_back(d);
