@@ -41,14 +41,11 @@ Template::Template(string name) : JawaObj("Template", name){
 
 }
 
-//Template::~Template(){
-  //  if (m_reweightTF1)  m_reweightTF1->Delete();
-//  if (m_reweightTH1F) m_reweightTH1F->Delete();
-//}
-
 Template::~Template(){
-  for (unsigned int i = 0 ; i < m_selcuts.size(); ++i){
-    if (m_selcuts.at(i)) m_selcuts.at(i)->Delete();
+  //only delete unique entries
+  std::set<TCut*> unique_cuts(m_selcuts.begin(), m_selcuts.end());
+  for (TCut* is : unique_cuts){
+    if (is) is->Delete();
   }
 }
 
@@ -56,26 +53,40 @@ Template::~Template(){
 Template::Template(string name, TTree* t, TCut* cut) : JawaObj("Template", name){
   Init();
   m_selcut->Delete();
-  m_selcut = (TCut*)cut->Clone("selcut");
+  ostringstream s;
+  s<<name<<"_selcut";
+  m_selcut = (TCut*)cut->Clone(s.str().c_str());
 
-  if (t){
+  if (t && cut){
     m_trees.push_back(new Tree(name+"_tree", t, 1.0));
-    m_selcuts.push_back((TCut*)cut->Clone("cut"));
+    m_selcuts.push_back(m_selcut);
   }
-  else{
+  else if (!t){
     info()<<"Tree "<<name<<" passed is null - not adding"<<endl;
   }
-  verbose()<<"Name is "<<m_name<<endl;
+  else info()<<"Selcut passed is null - not adding tree"<<endl;
+    
+
 }
 Template::Template(string name, vector<TTree*> trees, TCut* cut) : JawaObj("Template",name){
   Init();
   verbose()<<"Initialising as "<<name<<endl;
   m_selcut->Delete();
-  m_selcut = (TCut*)cut->Clone("selcut");
+
+  if (!cut) {
+    info()<<"cut passed is null - not adding trees"<<endl;
+    return;
+  }
+  
+  ostringstream s;
+  s<<name<<"_selcut";
+  m_selcut = (TCut*)cut->Clone(s.str().c_str());
+  
+  //m_selcut = (TCut*)cut->Clone("selcut");
   for (unsigned int i = 0; i < trees.size(); ++i){
     if (trees.at(i)){
       m_trees.push_back(new Tree(name+"_tree", trees.at(i), 1.0));
-      m_selcuts.push_back((TCut*)cut->Clone("cut"));
+      m_selcuts.push_back(m_selcut);
       //cout<<"added "<<cut->GetTitle()<<endl<<endl;
     }
     else{
@@ -89,10 +100,14 @@ Template::Template(string name, vector<TTree*> trees, TCut* cut) : JawaObj("Temp
 Template::Template(string name, TTree* t, TCut* cut, enum EColor color) : JawaObj("Template",name){
   Init();
   m_selcut->Delete();
-  m_selcut = (TCut*)cut->Clone("selcut");
+  
+  ostringstream s;
+  s<<name<<"_selcut";
+  m_selcut = (TCut*)cut->Clone(s.str().c_str());
+  //m_selcut = (TCut*)cut->Clone("selcut");
   if (t){
     m_trees.push_back(new Tree(name+"_tree", t, 1.0));
-    m_selcuts.push_back((TCut*)cut->Clone("cut"));
+    m_selcuts.push_back(m_selcut);
   }
   else{
     info()<<"Tree "<<name<<" passed is null - not adding"<<endl;
@@ -103,11 +118,15 @@ Template::Template(string name, TTree* t, TCut* cut, enum EColor color) : JawaOb
 Template::Template(string name, vector<TTree*> trees, TCut* cut, enum EColor color){
   m_name = name;
   m_selcut->Delete();
-  m_selcut = (TCut*)cut->Clone("selcut");
+  //m_selcut = (TCut*)cut->Clone("selcut");
+  
+  ostringstream s;
+  s<<name<<"_selcut";
+  m_selcut = (TCut*)cut->Clone(s.str().c_str());
   for (unsigned int i = 0; i < trees.size(); ++i){
     if (trees.at(i)){
       m_trees.push_back(new Tree(name+"_tree", trees.at(i), 1.0));
-      m_selcuts.push_back((TCut*)cut->Clone("cut"));
+      m_selcuts.push_back(m_selcut);
     }
     else{
       info()<<"Tree "<<name<<" passed is null - not adding"<<endl;
@@ -203,8 +222,11 @@ void Template::AddTrees(vector<TTree*>& trees, vector<TCut*>& cuts){
     for (unsigned int i = 0 ; i < m_trees.size() ; ++i){
       stringstream s;
       s<<"selcut_"<<ntrees+i;
-      m_trees.push_back(new Tree(m_name+"_tree", trees.at(i), 1.0));
-      m_selcuts.push_back((TCut*)cuts.at(i)->Clone(s.str().c_str()));
+      if(trees.at(i)){
+	m_trees.push_back(new Tree(m_name+"_tree", trees.at(i), 1.0));
+	m_selcuts.push_back((TCut*)cuts.at(i)->Clone(s.str().c_str()));
+      }
+      else info()<<"TTree is null - not adding as Tree"<<endl;
     }
   }
   else{
@@ -214,25 +236,36 @@ void Template::AddTrees(vector<TTree*>& trees, vector<TCut*>& cuts){
 
 
 void Template::AddTree(TTree* t){
-  int ntrees = m_trees.size();
-  stringstream s;
-  s<<"selcut_"<<ntrees;
-  m_trees.push_back(new Tree(m_name+"_tree", t, 1.0));
-  m_selcuts.push_back((TCut*)m_selcut->Clone(s.str().c_str()));
+  if(t && m_selcut){
+    m_trees.push_back(new Tree(m_name+"_tree", t, 1.0));
+    m_selcuts.push_back(m_selcut);
+  }
+  else if (!t) info()<<"TTree is null - not adding as Tree"<<endl;
+  else info()<<"SelCut is null - not adding Tree"<<endl;
+
+  verbose()<<"Added ttree "<<t<<" to tree"<<endl;
 
 }
 void Template::AddTree(TTree* t, TCut* cut){
   int ntrees = m_trees.size();
   stringstream s;
   s<<"selcut_"<<ntrees;
-  m_trees.push_back(new Tree(m_name+"_tree", t, 1.0));
-  m_selcuts.push_back((TCut*)cut->Clone(s.str().c_str()));
+  if(t){
+    m_trees.push_back(new Tree(m_name+"_tree", t, 1.0));
+    m_selcuts.push_back((TCut*)cut->Clone(s.str().c_str()));
+  }
+  else info()<<"TTree is null - not adding as Tree"<<endl;
+
 }
-void Template::AddTree(TTree* t, double w){  
-  m_trees.push_back(new Tree(m_name+"_tree", t, w));
-  m_selcuts.push_back(m_selcut);
+void Template::AddTree(TTree* t, double w){
+  if(t){
+    m_trees.push_back(new Tree(m_name+"_tree", t, w));
+    m_selcuts.push_back(m_selcut);
+  }
+  else info()<<"TTree is null - not adding as Tree"<<endl;
+
 }
-void Template::AddTree(TTree* t, double w, TCut* cut){ 
+void Template::AddTree(TTree* t, double w, TCut* cut){
   int ntrees = m_trees.size();
   stringstream s;
   s<<"selcut_"<<ntrees;
@@ -243,29 +276,47 @@ void Template::AddTree(string name, TTree* t){
   int ntrees = m_trees.size();
   stringstream s;
   s<<"selcut_"<<ntrees;
-  m_trees.push_back(new Tree(name+"_tree", t, 1.0));
-  m_selcuts.push_back((TCut*)m_selcut->Clone(s.str().c_str()));
+  if(t){
+    m_trees.push_back(new Tree(name+"_tree", t, 1.0));
+    m_selcuts.push_back((TCut*)m_selcut->Clone(s.str().c_str()));
+  }
+  else info()<<"TTree is null - not adding as Tree"<<endl;
+  cout<<"Here"<<endl;
+  verbose()<<"TTree "<<t<<" added to tree"<<endl;
 }
 void Template::AddTree(string name, TTree* t, double w){
   int ntrees = m_trees.size();
   stringstream s;
   s<<"selcut_"<<ntrees;
-  m_trees.push_back(new Tree(name+"_tree", t, w));
-  m_selcuts.push_back((TCut*)m_selcut->Clone(s.str().c_str()));
+  if (t) {
+    m_trees.push_back(new Tree(name+"_tree", t, w));
+    m_selcuts.push_back((TCut*)m_selcut->Clone(s.str().c_str()));
+  }
+  else info()<<"TTree is null - not adding as Tree"<<endl;
 }
 void Template::AddTree(string name, TTree* t, TCut* cut){
+  cout<<"Here3"<<endl;
+
   int ntrees = m_trees.size();
   stringstream s;
   s<<"selcut_"<<ntrees;
-  m_trees.push_back(new Tree(name+"_tree", t, 1.0));
-  m_selcuts.push_back((TCut*)cut->Clone(s.str().c_str()));
+  if(t){
+    m_trees.push_back(new Tree(name+"_tree", t, 1.0));
+    m_selcuts.push_back((TCut*)cut->Clone(s.str().c_str()));
+  }
+  else info()<<"TTree is null - not adding as Tree"<<endl;
+
 }
 void Template::AddTree(string name, TTree* t, double w, TCut* cut){
   int ntrees = m_trees.size();
   stringstream s;
   s<<"selcut_"<<ntrees;
-  m_trees.push_back(new Tree(name+"_tree", t, w));
-  m_selcuts.push_back((TCut*)cut->Clone(s.str().c_str()));
+  if (t){
+    m_trees.push_back(new Tree(name+"_tree", t, w));
+    m_selcuts.push_back((TCut*)cut->Clone(s.str().c_str()));
+  }
+  else info()<<"TTree is null - not adding as Tree"<<endl;
+
 }
 
 
@@ -332,14 +383,20 @@ void Template::SetSelCut(TCut* cut){
   if (m_trees.size() > 0) info()<<"Note the "<<m_trees.size()<<" trees already present will not have sel cut applied!"<<endl;
 }
 
+TCut* Template::GetSelCut(){
+  return m_selcut;
+}
+
 
 void Template::ApplyCut(){
+  verbose()<<"Applying Cut"<<endl;
   m_evts = 0;
   if ((m_trees.size()  != m_selcuts.size()) && m_selcuts.size() != 1) {
     info()<<"Error - mismatch between number of trees and cuts ("<<m_trees.size()<<" , "<<m_selcuts.size()<<")"<<endl;
     return;
   }
 
+  verbose()<<"Applying Cut : "<<m_trees.size()<<" trees and "<<m_selcuts.size()<<" cuts"<<endl;
   for (unsigned int i = 0; i < m_trees.size(); ++i){
     TCut* cut = 0;
     if (m_selcuts.size() == 1) cut = m_selcuts.at(0);
@@ -350,9 +407,15 @@ void Template::ApplyCut(){
     string label = ss.str();
     string trimlabel = ss.str();
     trimlabel.erase(0,2);
+    verbose()<<"Tree is at "<<m_trees.at(i)<<endl;
+    verbose()<<"TTree is at "<<m_trees.at(i)->GetTTree()<<endl;
+    verbose()<<"Sel cut is at "<<m_selcuts.at(i)<<endl;
+
     m_trees.at(i)->GetTTree()->Draw(label.c_str(), (*cut) , "entrylist");
+    verbose()<<"Drawn"<<endl;
     const TEntryList* list = (TEntryList*)gDirectory->Get(trimlabel.c_str());
     m_entryLists.push_back(new TEntryList(*list));
+    verbose()<<"Entrylist is at "<<m_entryLists.at(i)<<endl;
     m_evts += m_entryLists.at(i)->GetN();
     m_trees.at(i)->GetTTree()->SetEntryList(0);
     //delete list;
@@ -831,12 +894,22 @@ void Template::Run(){
 
 
 Template::Template(string name, PyObject* pyt, PyObject* pycut){
+  Init();
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
   TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
+
+  cout<<"deleting the existing selcut"<<endl;
+  m_selcut->Delete();
+  cout<<"deleted"<<endl;
+  m_selcut = (TCut*)cut->Clone("selcut");
+  
+  cout<<"here"<<endl;
+  cout<<cut->GetTitle()<<endl;
+  cout<<"end"<<endl;
   //Template(name, t, *cut);
   m_name = name;
   m_trees.push_back(new Tree(name+"_tree", t, 1.0));
-  m_selcuts.push_back((TCut*)cut->Clone("cut"));
+  m_selcuts.push_back(m_selcut);
   m_fixed = false;
   m_asymm = false;
   m_fillTree = false;
@@ -850,6 +923,10 @@ Template::Template(string name, PyObject* pyt, PyObject* pycut){
 
 Template::Template(string name, boost::python::list& ns, PyObject* pycut){
   TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
+  cout<<"here2"<<endl;
+  cout<<cut->GetTitle()<<endl;
+  cout<<"end"<<endl;
+
   vector<TTree*> trees;
   for (int i = 0; i < len(ns); ++i){
     boost::python::object obj = ns[i];
@@ -887,10 +964,14 @@ void Template::AddTree_py(PyObject* pyObj){
   AddTree(t);
 }
 void Template::AddTree2_py(string name, PyObject* pyObj){
+    cout<<"in here3"<<endl;
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  verbose()<<"converted ttree to "<<endl;
   AddTree(name, t);
 }
 void Template::AddTree3_py(PyObject* pyObj, double w){
+  cout<<"in here2"<<endl;
+
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
   AddTree(t, w);
 }
@@ -899,6 +980,7 @@ void Template::AddTree4_py(string name, PyObject* pyObj, double w){
   AddTree(name, t, w);
 }
 void Template::AddTree5_py(PyObject* pyObj, PyObject* pyCut){
+  cout<<"in here"<<endl;
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
   TCut*  c = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyCut));
   AddTree(t, c);
@@ -1093,6 +1175,15 @@ PyObject* Template::GetHist_py(string name){
   if (hist) return TPython::ObjectProxy_FromVoidPtr(hist, hist->ClassName());
   else return 0;
 }
+
+PyObject* Template::GetSelCut_py(){
+  if (m_selcut)  return TPython::ObjectProxy_FromVoidPtr(m_selcut, m_selcut->ClassName());
+  else {
+    info()<<"Sel cut is null"<<endl;
+    return 0;
+  }
+}
+
 boost::python::list Template::GetVariables_py(){
   boost::python::list l;
   for (map<string, Var* >::iterator im = m_variables.begin(); im != m_variables.end(); ++im){

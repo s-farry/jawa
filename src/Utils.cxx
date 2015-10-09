@@ -1096,8 +1096,6 @@ namespace Utils{
   template <typename T> PyObject* Root2PyObj(T* cxxObj){
     return TPython::ObjectProxy_FromVoidPtr(cxxObj, cxxObj->ClassName());
   }
-
-  
   
   #endif
   

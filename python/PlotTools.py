@@ -221,8 +221,12 @@ def makeNormErr2Graph(name, graph):
             val1y = ROOT.Double(0.0)
             graph.GetPoint(i, val1x, val1y)
             normgraph.SetPoint(i, val1x, 1.0)
-            normgraph.SetPointEYhigh(i, graph.GetErrorYhigh(i)/val1y)
-            normgraph.SetPointEYlow (i, graph.GetErrorYlow(i)/val1y)
+            if val1y != 0 :
+                normgraph.SetPointEYhigh(i, graph.GetErrorYhigh(i)/val1y)
+                normgraph.SetPointEYlow (i, graph.GetErrorYlow(i)/val1y)
+            else:
+                normgraph.SetPointEYhigh(i,0)
+                normgraph.SetPointEYlow(i,0)
         return normgraph
 
 
@@ -238,14 +242,47 @@ def makeResidual(grapha, graphb):
             hist.SetBinError(bin, 0)
       return hist
 
+class StyleObj:
+    def __init__(self, color = 1, fillcolor=None, linecolor=None, fill = False, fillstyle = 0, linestyle = 1):
+        #make sure things are set correctly
+        if fillstyle != 0  and fill == False:
+            fill = True
+        if fillcolor is not None:
+            fill = True
+        if fillstyle == 0 and fill:
+            fillstyle = 1001
+
+        self.linecolor = 1 # set default of black if it is also filled
+        if fill == False : self.linecolor = color # if not filled, line is main color
+        self.fillcolor = color
+
+        if linecolor is not None: self.linecolor = color
+        if fillcolor is not None: self.fillcolor = color
+
+def SetStyle(h, s):
+    h.SetFillStyle(s.fillstyle)
+    h.SetLineStyle(s.linestyle)
+    h.SetFillColor(s.fillcolor)
+    h.SetLineColor(s.linecolor)
+
+def getStyleObjs(colors, linecolors, fillcolors, fillstyles, linestyles):
+    styles = []
+    #make copies
+    colors_cpy = copy.copy(colors)
+    linecolors_cpy = copy.copy(linecolors)
+    fillcolors_cpy = copy.copy(fillcolors)
+    linestyles_cpy = copy.copy(linestyles)
+    fillstyles_cpy = copy.copy(fillstyles)
+
 class PlotObj:
-    def __init__(self,name, plot, color, style, linecolor, linestyle, drawOpt):
+    def __init__(self,name, plot, color, style, linecolor, linestyle, markerstyle, drawOpt):
         self.name      = name
         self.plot      = plot
         self.color     = color
         self.linecolor = linecolor
         self.style     = style
         self.linestyle = linestyle
+        self.markerstyle = markerstyle
         self.drawOpt   = drawOpt
         if ('TGraph' in self.plot.ClassName()):
             self.split     = TGraph2Hists(self.name, self.plot)
@@ -264,9 +301,10 @@ class PlotObj:
                 SetROOTFillColor(p, self.color)
                 p.SetFillStyle(self.style)
                 SetROOTLineColor(p, self.linecolor)
+                if self.markerstyle != 0 : p.SetMarkerStyle(self.markerstyle)
                 p.SetLineStyle(self.linestyle)
-                p.GetXaxis().SetRangeUser(xlims[0], xlims[1])
-                p.GetYaxis().SetRangeUser(ylims[0], ylims[1])
+                if xlims is not None and len(xlims) == 2: p.GetXaxis().SetRangeUser(xlims[0], xlims[1])
+                if ylims is not None and len(ylims) == 2: p.GetYaxis().SetRangeUser(ylims[0], ylims[1])
                 p.GetXaxis().SetTitle(xlabel)
                 p.GetYaxis().SetTitle(ylabel)
                 if offset != 0.0: p.GetYaxis().SetTitleOffset(offset)
@@ -276,8 +314,9 @@ class PlotObj:
                     p.SetFillStyle(self.style)
                     SetROOTLineColor(p, self.linecolor)
                     p.SetLineStyle(self.linestyle)
-                    p.GetXaxis().SetRangeUser(xlims[0], xlims[1])
-                    p.GetYaxis().SetRangeUser(ynormlims[0], ynormlims[1])
+                    if self.markerstyle != 0 : p.SetMarkerStyle(self.markerstyle)
+                    if xlims is not None and len(xlims) == 2: p.GetXaxis().SetRangeUser(xlims[0], xlims[1])
+                    if ynormlims is not None and len(ynormlims) == 2: p.GetYaxis().SetRangeUser(ynormlims[0], ynormlims[1])
                     p.GetXaxis().SetTitle(xlabel)
                     #p.GetYaxis().SetTitle("Rel. Err")
                     p.GetYaxis().SetNdivisions(505)
@@ -302,28 +341,39 @@ class PlotObj:
 class Plot:
    def __init__(self, plots):
       self.plots = plots
-      self.properties = {"xlabel" : "", "ylabel" : "", "filename" : "", # labels
-                         "logscale": False, "legwidth" : 0, "legheight" : 0, "legloc" : 2, "legend" : True,
-                         "leglims" : [], "split" : False, "splitstyles" : [1001,3001,3001],
-                         "labels" : [], "includeFit" : False,
-                         "xlims" : None, "ylims" : None,
-                         "includeNormErr" : False, "title" : "",
-                         "colors" : None, "linecolors" : None, "styles" : 1001, "linestyles" : 1, # colors and styles
-                         "normerrlims" : None, 
-                         "mplcolors" : [], "mpllabels" : [], "mplxlabel" : "", "mplylabel" : "",
-                         'mpltitle' : "", 'normalised' : False,
-                         "location" : ".", "extraObjs" : [],
-                         "drawOpts" : 'e1', "drawOpts2" : None, "yoffset" : 0.0,
-                         "forcestyle" : False
-                         }
+      self.properties = {
+          #output
+          "filename" : "PlotTool", "location" : ".",
+          #labels
+          "xlabel" : "", "ylabel" : "",
+          #legend
+          "legend": True, "labels" : [], "legwidth" : 0, "legheight" : 0, "legloc" : 2,
+          #x and y axes limits
+          "xlims" : None, "ylims" : None,
+          #plot scale
+          "logscale" : False, "normalised" : False,
+          "leglims" : [], "split" : False, "splitstyles" : [1001,3001,3001],
+          "includeFit" : False,
+          "xlims" : None, "ylims" : None,
+          "includeNormErr" : False, "title" : "",
+          #colors
+          "colors" : None, "linecolors" : None, "markercolors": None,
+          #styles
+          "styles" : 1001, "linestyles" : 1, "markerstyles" : 0, # colors and styles
+          "normerrlims" : None, 
+          "extraObjs" : [],
+          "drawOpts" : 'e1', "drawOpts2" : None, "yoffset" : 0.0,
+          "style" : True, "forcestyle" : False
+          }
 
    def getPlotObjs(self, hide_label = False):
       #get colors and styles
-      colors      = self.properties['colors']
-      linecolors  = self.properties['linecolors']
-      styles      = self.properties['styles']
-      linestyles  = self.properties['linestyles']
-      plots       = self.plots
+      colors       = self.properties['colors']
+      linecolors   = self.properties['linecolors']
+      styles       = self.properties['styles']
+      linestyles   = self.properties['linestyles']
+      markerstyles = self.properties['markerstyles']
+      plots        = self.plots
       objs = []
       
       size  = len(plots)
@@ -331,6 +381,7 @@ class Plot:
       #if no colors are specified use existing hist colors
       if not colors:
           colors = [hist.GetLineColor() for hist in plots]
+      # if just one instance make it an array
       elif isinstance(colors,str):
           colors = [self.properties['colors'] for i in range(size)]
       if isinstance(linecolors,str):
@@ -342,6 +393,8 @@ class Plot:
           styles     = [styles for i in range(size)]
       if isinstance(linestyles, int):
           linestyles = [linestyles for i in range(size)]
+      if isinstance(markerstyles, int):
+          markerstyles = [markerstyles for i in range(size)]
 
       drawOpts = self.properties['drawOpts']
       drawOpts2 = self.properties['drawOpts2']
@@ -352,7 +405,6 @@ class Plot:
       elif isinstance(drawOpts2,str):
           drawOpts2 = [drawOpts2 for k in range(size)]
 
-
       xlabel      = self.properties['xlabel']
       ylabel      = self.properties['ylabel']
       xlims       = self.properties['xlims']
@@ -362,9 +414,8 @@ class Plot:
       offset      = self.properties['yoffset']
 
 
-      for plot,color,linecolor,style,linestyle,drawOpt,i in zip(plots, colors, linecolors, styles, linestyles,drawOpts, range(size)):
-          print "initialising object with linestyle "+str(linestyle)
-          p = PlotObj(self.properties['filename']+"_"+str(color)+"_"+str(style)+"_"+str(i), plot,color,style, linecolor,linestyle, drawOpt)
+      for plot,color,linecolor,style,linestyle,markerstyle,drawOpt,i in zip(plots, colors, linecolors, styles, linestyles, markerstyles, drawOpts, range(size)):
+          p = PlotObj(self.properties['filename']+"_"+str(color)+"_"+str(style)+"_"+str(i), plot,color,style, linecolor,linestyle, markerstyle, drawOpt)
           p.ApplyStyle(xlabel, ylabel, xlims, ylims, normerrlims, offset)    
           if hide_label:
               for h in [p.plot ] + p.split:
@@ -420,14 +471,16 @@ class Plot:
        legwidth  = self.properties['legwidth']
        labels    = self.properties['labels']
        title     = self.properties['title']
-       drawOpts  = self.properties['drawOpts']
-
+       drawOpts      = self.properties['drawOpts']
+       markerstyles  = self.properties['markerstyles']
 
        styles = []
        if isinstance(drawOpts,str):
            drawOpts = [drawOpts for j in range(len(labels))]
-       for d in drawOpts:
-           if 'p' in d:
+       if isinstance(markerstyles,int):
+           markerstyles = [drawOpts for j in range(len(labels))]
+       for d,m in zip(drawOpts,markerstyles):
+           if 'p' in d or m != 0:
                styles += ['lep']
            else:
                styles += ['l']
@@ -483,13 +536,40 @@ class Plot:
          lowerPad.SetTopMargin(y2 - (y1 - y0))
 
       if (self.properties["logscale"]): c.SetLogy()
+      
+      self.plotObjs = self.getPlotObjs()
 
+      for i,p in enumerate(self.plotObjs):
+          drawOpt = ''
+          if 'TGraph' in p.plot.ClassName(): drawOpt += 'p'
+          if i == 0 and 'TGraph' in p.plot.ClassName(): drawOpt += 'A'
+          if i > 0: drawOpt += 'same'
+          if self.properties['normalised']: 
+              p.plot.Scale(1/p.plot.Integral())
+              p.Draw(drawOpt)
+          else : p.Draw(drawOpt)
+
+      leg = self.GetLegend()
+      if self.properties['legend']: leg.Draw("same")
+      for obj in self.properties["extraObjs"]: obj.Draw("same")
+
+      if '.pdf' not in filename and '.eps' not in filename:
+          filenames = [filename + '.pdf', filename+'.eps']
+      else: filenames = [filename]
+      location = self.properties["location"]
+      
+      for fName in filenames:
+          c.Print(location + '/' + fName) ## Include this line to save image
+      return c
+
+      '''
       #get colors and styles
       colors = self.properties['colors']
       linecolors = self.properties['linecolors']
       styles = self.properties['styles']
       linestyles = self.properties['linestyles']
       
+
       #if no colors are specified use existing hist colors
       if not colors:
          colors = [hist.GetLineColor() for hist in plots]
@@ -626,10 +706,11 @@ class Plot:
       if self.properties['forcestyle'] : 
           ROOT.gROOT.ForceStyle(True)
           c.UseCurrentStyle()
-
+   
       for fname in filenames:
           c.Print(location + '/' + fname) ## Include this line to save image
       return c
+      '''
    
    def ShiftLegX(self, x):
        oldleg = self.properties['leglims']
@@ -640,6 +721,14 @@ class Plot:
    def setProps(self, props):
       for key in props:
          self.properties[key] = props[key]
+   def setProp(self, keyname, prop):
+       key_exists = False
+       for key in self.properties:
+           if key == keyname:
+               self.properties[key] = prop
+               key_exists = True
+       if key_exists == False: print "Did not find property: ",keyname
+               
 
 class WJetPlot(Plot):
     def drawROOT(self, filename = None):
@@ -945,4 +1034,13 @@ class StackPlot:
 
    def setProps(self, props):
       for key in props:
-         self.properties[key] = props[key]
+          if key in self.properties.keys():
+              self.properties[key] = props[key]
+          else:
+           print "Error: ",name," not in properties"
+
+   def setProp(self, name, value):
+       if name in self.properties.keys():
+           props[name] = value
+       else:
+           print "Error: ",name," not in properties"

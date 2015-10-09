@@ -92,7 +92,7 @@ void JawaObj::output(const char* msg, OutputLevel o){
   output.resize(8, ' ');
   string name(m_name);
   name.resize(8,' ');
-  printf("%.8s : %.8s : %s \n", output.c_str(), name.c_str(), msg);
+  printf("%.8s.%.8s : %s \n", output.c_str(), name.c_str(), msg);
 }
 
 /*

@@ -14,6 +14,7 @@
 #include <Var3D.h>
 #include <ReweightVar.h>
 #include <Tree.h>
+#include <Utils.h>
 
 #ifdef WITHPYTHON
 #include <boost/python.hpp>
@@ -52,6 +53,7 @@ class Template : public JawaObj {
   void AddVar(string name, string var, int bins, double lo, double hi, string prefix = "");
   void AddVar(string name, string var, std::vector<double>& edges, string prefix = "");
   void SetSelCut(TCut* cut);
+  TCut* GetSelCut();
   void SaveToFile();
   virtual void SaveToCurrentFile();
   bool IsFixed();
@@ -146,6 +148,7 @@ class Template : public JawaObj {
   void SetStyle3_py(int fillcolor, int linecolor, int fillstyle);
   void NormaliseToMC1_py(double xsec, double acc, double Lumi, double nEvts, bool fixed);
   void NormaliseToMC2_py(double xsec, double acc, double Lumi, double nEvts);
+  PyObject* GetSelCut_py();
   #endif
   
  protected:
