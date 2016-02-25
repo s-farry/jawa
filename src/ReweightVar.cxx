@@ -19,6 +19,7 @@ using namespace std;
 ReweightVar::ReweightVar(string name, TF1* func) : JawaObj("ReweightVar", name){
   m_exprs.push_back(new Expr(name));
   m_func = func;
+  m_form= 0;
   m_weighttype = ReweightVar::Func;
   if (!m_func) cout<<"Warning - Function passed is Null!"<<endl;
 }
@@ -27,6 +28,7 @@ ReweightVar::ReweightVar(string name, TH1F* hist) : JawaObj("ReweightVar", name)
   m_exprs.push_back(new Expr(name));
   m_hists.push_back(hist);
   m_weighttype = ReweightVar::Hist1D;
+  m_form= 0;
   if (!hist) cout<<"Warning - hist passed is Null!"<<endl;
 }
 
@@ -37,6 +39,35 @@ ReweightVar::ReweightVar(string name1, string name2, TH2F* hist) : JawaObj("Rewe
   //m_func = 0;
   m_2dhists.push_back(hist);
   m_weighttype = ReweightVar::Hist2D;
+  m_form = 0;
+  if (!hist) cout<<"Warning - hist passed is Null!"<<endl;
+
+}
+
+ReweightVar::ReweightVar(string name1, string name2, TH1F* hist, string form) : JawaObj("ReweightVar", name1+"_"+name2){
+  //m_expr = 0;
+  m_exprs.push_back(new Expr(name1));
+  m_exprs.push_back(new Expr(name2));
+  //m_func = 0;
+  m_hists.push_back(hist);
+  m_weighttype = ReweightVar::Hist1D;
+  m_form = 0;
+  if (form != "") m_form = new Expr(form);
+  if (!hist) cout<<"Warning - hist passed is Null!"<<endl;
+
+}
+
+ReweightVar::ReweightVar(string name1, string name2, string name3, string name4, TH2F* hist, string form) : JawaObj("ReweightVar", name1+"_"+name2+"_"+name3+"_"+name4){
+  //m_expr = 0;
+  m_exprs.push_back(new Expr(name1));
+  m_exprs.push_back(new Expr(name2));
+  m_exprs.push_back(new Expr(name3));
+  m_exprs.push_back(new Expr(name4));
+  //m_func = 0;
+  m_2dhists.push_back(hist);
+  m_weighttype = ReweightVar::Hist2D;
+  m_form = 0;
+  if (form != "") m_form = new Expr(form);
   if (!hist) cout<<"Warning - hist passed is Null!"<<endl;
 
 }
@@ -94,17 +125,35 @@ double ReweightVar::GetWeight(double val1, double val2){
   if (m_weighttype == ReweightVar::Hist2D &&
       m_2dhists.size() == 1 && m_exprs.size() == 2){
     if (m_2dhists.at(0)){
-    int bin1 = m_2dhists.at(0)->GetXaxis()->FindBin(val1);
-    int bin2 = m_2dhists.at(0)->GetYaxis()->FindBin(val2);
-    //info()<<"vals are: "<<val1<<" "<<val2<<endl;
-    //info()<<"bins are: "<<bin1<<" "<<bin2<<endl;
-    if (bin1 > 0 && bin1 <= m_2dhists.at(0)->GetNbinsX() &&
-	bin2 > 0 && bin2 <= m_2dhists.at(0)->GetNbinsY()){
-      w = w * m_2dhists.at(0)->GetBinContent(bin1,bin2);
-    }
+      int bin1 = m_2dhists.at(0)->GetXaxis()->FindBin(val1);
+      int bin2 = m_2dhists.at(0)->GetYaxis()->FindBin(val2);
+      //info()<<"vals are: "<<val1<<" "<<val2<<endl;
+      //info()<<"bins are: "<<bin1<<" "<<bin2<<endl;
+      if (bin1 > 0 && bin1 <= m_2dhists.at(0)->GetNbinsX() &&
+	  bin2 > 0 && bin2 <= m_2dhists.at(0)->GetNbinsY()){
+	w = w * m_2dhists.at(0)->GetBinContent(bin1,bin2);
+      }
     }
     else info()<<"hist passed is null!"<<endl;
   }
+  else if (m_weighttype == ReweightVar::Hist1D &&
+	   m_hists.size() == 1 && m_exprs.size() == 2)
+    {
+      if(m_hists.at(0)){
+	int bin1 = m_hists.at(0)->GetXaxis()->FindBin(val1);
+	int bin2 = m_hists.at(0)->GetXaxis()->FindBin(val2);
+	if (!m_form){
+	  w = w * m_hists.at(0)->GetBinContent(bin1) *
+	    m_hists.at(0)->GetBinContent(bin2);
+	}
+	else{
+	  std::vector<double> weights;
+	  weights.push_back(m_hists.at(0)->GetBinContent(bin1));
+	  weights.push_back(m_hists.at(0)->GetBinContent(bin2));
+	  w = w * m_form->GetVal(weights);
+	}
+      }
+    }
   else{
     info()<<"Could not get 2d weight"<<endl;
   }
@@ -112,6 +161,37 @@ double ReweightVar::GetWeight(double val1, double val2){
   return w;
 }
 
+double ReweightVar::GetWeight(double val1, double val2, double val3, double val4){
+  double w = 1.0;
+  if (m_weighttype == ReweightVar::Hist2D &&
+      m_2dhists.size() == 1 && m_exprs.size() == 4){
+    std::vector<double> weights;
+    if (m_2dhists.at(0)){
+      int bin1 = m_2dhists.at(0)->GetXaxis()->FindBin(val1);
+      int bin2 = m_2dhists.at(0)->GetYaxis()->FindBin(val2);
+      int bin3 = m_2dhists.at(0)->GetXaxis()->FindBin(val3);
+      int bin4 = m_2dhists.at(0)->GetYaxis()->FindBin(val4);
+      if (bin1 > 0 && bin1 <= m_2dhists.at(0)->GetNbinsX() &&
+	  bin2 > 0 && bin2 <= m_2dhists.at(0)->GetNbinsY() &&
+	  bin3 > 0 && bin3 <= m_2dhists.at(0)->GetNbinsX() &&
+	  bin4 > 0 && bin4 <= m_2dhists.at(0)->GetNbinsY()){
+	weights.push_back(m_2dhists.at(0)->GetBinContent(bin1,bin2));
+	weights.push_back(m_2dhists.at(0)->GetBinContent(bin3,bin4));
+	if (!m_form) {
+	  w = weights.at(0) * weights.at(1);
+	}
+	else{
+	  w = w*m_form->GetVal(weights);
+	}
+      }
+    }
+    else info()<<"hist passed is null!"<<endl;
+  }
+  else{
+    info()<<"Could not get 2d weight"<<endl;
+  }
+  return w;
+}
 double ReweightVar::GetWeight(float val){
   double d_val = double(val);
   return GetWeight(d_val);

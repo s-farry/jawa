@@ -7,6 +7,7 @@ BOOST_PYTHON_MODULE(Jawa)
     
     def("GetSum"      ,  &Utils::GetSum_py       );
     def("GetLumi"     ,  &Utils::GetLumi_py      );
+    def("GetLumiError",  &Utils::GetLumiError_py      );
     def("RemoveErrors",  &Utils::RemoveErrors_py );
     def("GetWeightSum",  &Utils::GetWeightSum_py );
     def("geteff"      ,  &Utils::geteff_py       );
@@ -121,6 +122,8 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("Reweight",   &Template::Reweight1_py)
       .def("Reweight",   &Template::Reweight2_py)
       .def("Reweight",   &Template::Reweight3_py)
+      .def("Reweight",   &Template::Reweight4_py)
+      .def("Reweight",   &Template::Reweight5_py)
       .def("GetHist",    &Template::GetHist_py)
       .def("Scale",      &Template::Scale1_py)
       .def("Scale",      &Template::Scale2_py)
@@ -147,6 +150,7 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("Run",        &Template::Run)
       .add_property("Vars",  &Template::GetVariables_py, &Template::SetVars_py)
       .add_property("FitFrac", &Template::GetFitFrac, &Template::SetFitFrac_py)
+      .add_property("MaxEvts", &Template::GetMaxEvts, &Template::SetMaxEvts)
       ;
 
 
@@ -158,6 +162,7 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("GetWeightHist", &MWTemplate::GetWeightHist_py)
       .def("GetWeight2DHist", &MWTemplate::GetWeight2DHist_py)
       .def("ScaleAllWeights", &MWTemplate::ScaleAllWeights)
+      .def("PrintWeights", &MWTemplate::PrintWeights)
       .def("SaveToFile",  &MWTemplate::SaveToFile)
       ;
 

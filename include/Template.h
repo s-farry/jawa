@@ -83,6 +83,8 @@ class Template : public JawaObj {
   void Reweight(string var, TH1F* scales);
   void Reweight(string weightname);
   void Reweight(string var1, string var2, TH2F* hist);
+  void Reweight(string var1, string var2, TH1F* hist, string form = "");
+  void Reweight(string var1, string var2, string var3, string var4, TH2F* hist, string form = "");
   void SetFitFrac(double f);
   void SetFitFrac(double f, double err);
   void SetNormEvts(double evts);
@@ -104,6 +106,8 @@ class Template : public JawaObj {
   Tree* GetTree(string name);
   void PrintVars();
   void Run();
+  void SetMaxEvts(int maxevts);
+  int GetMaxEvts();
 
   // For python
   #ifdef WITHPYTHON
@@ -126,6 +130,8 @@ class Template : public JawaObj {
   void Reweight1_py(string var, PyObject* tf1);
   void Reweight2_py(string var1, string var2, PyObject* th2f);
   void Reweight3_py(string leaf);
+  void Reweight4_py(string var1, string var2, PyObject* th2f, string form);
+  void Reweight5_py(string var1, string var2, string var3, string var4, PyObject* th2f, string form);
   void SetSelCut_py(PyObject* pyObj);
   void AddTree_py(PyObject* py);
   void AddTree2_py(string name, PyObject* py);
@@ -165,6 +171,7 @@ class Template : public JawaObj {
   vector<TCut*> m_selcuts;
   bool m_fixed;
   int m_evts;
+  int m_maxevts;
 
   bool m_fillTree;
   std::map<int,double> m_reweightmap;

@@ -302,6 +302,11 @@ namespace Utils{
       ofile<<h->GetBinContent(i+1);
     }
     ofile<<"\n";
+    for ( int i = 0 ; i < h->GetNbinsX() ; ++i ){
+      if ( i != 0 ) ofile<<",";
+      ofile<<h->GetBinError(i+1);
+    }
+    ofile<<"\n";
     cout<<"wrote th1f to "<<name<<endl;
   }
   void saveTGraph(string name, TGraph* g){
@@ -314,6 +319,15 @@ namespace Utils{
       ofile<<y;
     }
     ofile<<"\n";
+    for ( int i = 0 ; i < g->GetN() ; ++i ){
+      if ( i != 0 ) ofile<<",";
+      ofile<<g->GetErrorYhigh(i);
+    }
+    ofile<<"\n";
+    for ( int i = 0 ; i < g->GetN() ; ++i ){
+      if ( i != 0 ) ofile<<",";
+      ofile<<g->GetErrorYlow(i);
+    }
     cout<<"wrote tgraph to "<<name<<endl;
   }
   void saveTGraphErrs(string name, TGraph* g){
@@ -975,6 +989,11 @@ namespace Utils{
   double GetLumi_py(PyObject* pyf){
     TFile* f = (TFile*)(TPython::ObjectProxy_AsVoidPtr(pyf));
     return GetLumi(f);
+  }
+
+  double GetLumiError_py(PyObject* pyf){
+    TFile* f = (TFile*)(TPython::ObjectProxy_AsVoidPtr(pyf));
+    return GetLumiError(f);
   }
   
   double GetWeightSum_py(PyObject* pyObj, string w, string cut){

@@ -22,7 +22,7 @@ def split_list(list_items, split_idx):
         split_list += list_items[min_idx:max_idx]
 
 def TGraph2Hists(name, graph):
-    if ("TGraph" in graph.ClassName()):
+    if isinstance(graph, ROOT.TGraph):
         xmin = ROOT.Double(0.0)
         xmax = ROOT.Double(0.0)
         ymin = ROOT.Double(0.0)
@@ -110,7 +110,6 @@ def SetROOTLineColor(hist, mcolor):
       hist.SetLineColor(colordict[mcolor])
       hist.SetMarkerColor(colordict[mcolor])
    else:
-      print "Filing manually for color: ",mcolor
       hist.SetLineColor(mcolor)
       hist.SetMarkerColor(mcolor)
 
@@ -128,7 +127,7 @@ def MeVtoGeV(graph):
         graph.SetPointError(j,xerrlo/1000,xerrhi/1000,yerrlo,yerrhi)
 
 def makeComp(grapha, graphb):
-   if ("TGraph" in grapha.ClassName()):
+   if isinstance(grapha, ROOT.TGraph):
       xmin = ROOT.Double(0.0)
       xmax = ROOT.Double(0.0)
       ymin = ROOT.Double(0.0)
@@ -221,12 +220,13 @@ def makeNormErr2Graph(name, graph):
             val1y = ROOT.Double(0.0)
             graph.GetPoint(i, val1x, val1y)
             normgraph.SetPoint(i, val1x, 1.0)
-            if val1y != 0 :
-                normgraph.SetPointEYhigh(i, graph.GetErrorYhigh(i)/val1y)
-                normgraph.SetPointEYlow (i, graph.GetErrorYlow(i)/val1y)
-            else:
-                normgraph.SetPointEYhigh(i,0)
-                normgraph.SetPointEYlow(i,0)
+            if isinstance(graph, ROOT.TGraphAsymmErrors):
+                if val1y != 0 :
+                    normgraph.SetPointEYhigh(i, graph.GetErrorYhigh(i)/val1y)
+                    normgraph.SetPointEYlow (i, graph.GetErrorYlow(i)/val1y)
+                else:
+                    normgraph.SetPointEYhigh(i,0)
+                    normgraph.SetPointEYlow(i,0)
         return normgraph
 
 
@@ -275,7 +275,7 @@ def getStyleObjs(colors, linecolors, fillcolors, fillstyles, linestyles):
     fillstyles_cpy = copy.copy(fillstyles)
 
 class PlotObj:
-    def __init__(self,name, plot, color, style, linecolor, linestyle, markerstyle, drawOpt):
+    def __init__(self,name, plot, color, style, linecolor, linestyle, markerstyle, drawOpt, compareAsRatio = False):
         self.name      = name
         self.plot      = plot
         self.color     = color
@@ -284,13 +284,17 @@ class PlotObj:
         self.linestyle = linestyle
         self.markerstyle = markerstyle
         self.drawOpt   = drawOpt
-        if ('TGraph' in self.plot.ClassName()):
+        self.compareAsRatio = False
+        self.friends     = []
+        self.comparisons  = []
+        if isinstance(self.plot, ROOT.TGraph):
             self.split     = TGraph2Hists(self.name, self.plot)
             self.norm      = makeNormErr2Graph(self.name, self.plot)
             self.normsplit = TGraph2Hists(self.name+"_norm", self.norm)
         else:
             self.split = []
-            self.norm = None
+            self.norm = self.plot.Clone(self.name+"_norm")
+            self.norm.Scale(1/self.norm.Integral())
             self.normsplit = []
                
     def ApplyStyle(self, xlabel, ylabel, xlims, ylims, ynormlims, offset = 0.0):
@@ -304,7 +308,8 @@ class PlotObj:
                 if self.markerstyle != 0 : p.SetMarkerStyle(self.markerstyle)
                 p.SetLineStyle(self.linestyle)
                 if xlims is not None and len(xlims) == 2: p.GetXaxis().SetRangeUser(xlims[0], xlims[1])
-                if ylims is not None and len(ylims) == 2: p.GetYaxis().SetRangeUser(ylims[0], ylims[1])
+                if ylims is not None and len(ylims) == 2:
+                    p.GetYaxis().SetRangeUser(ylims[0], ylims[1])
                 p.GetXaxis().SetTitle(xlabel)
                 p.GetYaxis().SetTitle(ylabel)
                 if offset != 0.0: p.GetYaxis().SetTitleOffset(offset)
@@ -316,11 +321,86 @@ class PlotObj:
                     p.SetLineStyle(self.linestyle)
                     if self.markerstyle != 0 : p.SetMarkerStyle(self.markerstyle)
                     if xlims is not None and len(xlims) == 2: p.GetXaxis().SetRangeUser(xlims[0], xlims[1])
-                    if ynormlims is not None and len(ynormlims) == 2: p.GetYaxis().SetRangeUser(ynormlims[0], ynormlims[1])
+                    if ylims is not None and len(ylims) == 2: 
+                        p.GetYaxis().SetRangeUser(ylims[0], ylims[1])
                     p.GetXaxis().SetTitle(xlabel)
                     #p.GetYaxis().SetTitle("Rel. Err")
                     p.GetYaxis().SetNdivisions(505)
                     p.GetXaxis().SetLabelSize(0.05)
+            for p,c in zip(self.comparisons, self.friends):
+                SetROOTFillColor(p[0], c.color)
+                p[0].SetFillStyle(c.style)
+                SetROOTLineColor(p[0], c.linecolor)
+                p[0].SetLineStyle(c.linestyle)
+                if c.markerstyle != 0 : p[0].SetMarkerStyle(c.markerstyle)
+                if xlims is not None and len(xlims) == 2: p[0].GetXaxis().SetRangeUser(xlims[0], xlims[1])
+                if ynormlims is not None and len(ynormlims) == 2: p[0].GetYaxis().SetRangeUser(ynormlims[0], ynormlims[1])
+                p[0].GetXaxis().SetTitle(xlabel)
+                p[0].GetYaxis().SetTitle("")
+                p[0].GetYaxis().SetNdivisions(505)
+                p[0].GetXaxis().SetLabelSize(0.05)
+
+                SetROOTFillColor(p[1], c.color)
+                p[1].SetFillStyle(c.style)
+                SetROOTLineColor(p[1], c.linecolor)
+                p[1].SetLineStyle(c.linestyle)
+                if c.markerstyle != 0 : p[1].SetMarkerStyle(c.markerstyle)
+                if xlims is not None and len(xlims) == 2: p[1].GetXaxis().SetRangeUser(xlims[0], xlims[1])
+                if ynormlims is not None and len(ynormlims) == 2: p[1].GetYaxis().SetRangeUser(ynormlims[0], ynormlims[1])
+                p[1].GetXaxis().SetTitle(xlabel)
+                p[1].GetYaxis().SetTitle("")
+                p[1].GetYaxis().SetNdivisions(505)
+                p[1].GetXaxis().SetLabelSize(0.05)
+
+    def AddComparison(self, c):
+        self.friends     += [c]
+        ratioclone = c.plot.Clone(self.name+'ratiocomp'+str(len(self.comparisons)))
+        diffclone = c.plot.Clone(self.name+'diffcomp'+str(len(self.comparisons)))
+        if 'TH1' in ratioclone.ClassName() and ratioclone.GetLabelSize() == 0: ratioclone.SetLabelSize(0.05)
+        if 'TH1' in ratioclone.ClassName() and ratioclone.GetLabelOffset() == 999: ratioclone.SetLabelOffset(0.02)
+        if 'TH1' in diffclone.ClassName() and diffclone.GetLabelSize() == 0: diffclone.SetLabelSize(0.05)
+        if 'TH1' in diffclone.ClassName() and diffclone.GetLabelOffset() == 999: diffclone.SetLabelOffset(0.02)
+        if ('TH1' in ratioclone.ClassName() and 'TH1' in self.plot.ClassName()):
+            for i in range(ratioclone.GetNbinsX()):
+                ratioclone.SetBinContent(i+1, ratioclone.GetBinContent(i+1)/self.plot.GetBinContent(i+1))
+                ratioclone.SetBinError(i+1, ratioclone.GetBinError(i+1)/self.plot.GetBinContent(i+1))
+                diffclone.SetBinContent(i+1, diffclone.GetBinContent(i+1) - self.plot.GetBinContent(i+1))
+                #ratioclone.Divide(self.plot)
+        elif ('TH1' in ratioclone.ClassName() and 'TGraph' in self.plot.ClassName()):
+            if ratioclone.GetNbinsX() == self.plot.GetN():
+                x = ROOT.Double(0.0)
+                y = ROOT.Double(0.0)
+                for i in range(self.plot.GetN()):
+                    self.plot.GetPoint(i, x, y)
+                    ratioclone.SetBinContent(i+1, ratioclone.GetBinContent(i+1)/ y)
+                    ratioclone.SetBinError(i+1, ratioclone.GetBinError(i+1)/ y)
+                    diffclone.SetBinContent(i+1, diffclone.GetBinContent(i+1) - y)
+        elif ('TGraph' in ratioclone.ClassName() and 'TH1F' in self.plot.ClassName()):
+            if ratioclone.GetN() == self.plot.GetNbinsX():
+                x = ROOT.Double(0.0)
+                y = ROOT.Double(0.0)
+                for i in range(ratioclone.GetN()):
+                    ratioclone.GetPoint(i, x, y)
+                    ratioclone.SetPoint(i, x, y / self.plot.GetBinContent(i+1))
+                    ratioclone.SetPointEYhigh(i, ratioclone.GetErrorYhigh(i)/self.plot.GetBinContent(i+1))
+                    ratioclone.SetPointEYlow(i, ratioclone.GetErrorYlow(i)/self.plot.GetBinContent(i+1))
+                    diffclone.SetPoint(i, x, y - self.plot.GetBinContent(i+1))
+
+        elif ('TGraph' in clone.ClassName() and 'TGraph' in self.plot.ClassName()):
+            if ratioclone.GetN() == self.plot.GetN():
+                x1 = ROOT.Double(0.0)
+                y1 = ROOT.Double(0.0)
+                x2 = ROOT.Double(0.0)
+                y2 = ROOT.Double(0.0)
+                ratioclone.GetPoint(i, x1, y1)
+                self.plot.GetPoint(i, x2, y2)
+                ratioclone.SetPoint(i, x1, y1/ y2)
+                ratioclone.SetPointEYhigh(i, ratioclone.GetErrorYhigh(i)/y2)
+                ratioclone.SetPointEYlow(i, ratioclone.GetErrorYlow(i)/y2)
+                diffclone.SetPoint(i, x1, y1 - y2)
+        else:
+            print "Not valid plots for comparison: ",clone.ClassName(), self.plot.ClassName()
+        self.comparisons += [ [diffclone, ratioclone, c.drawOpt] ]
 
     def Draw(self, extra=""):
         self.plot.Draw(self.drawOpt+extra)
@@ -339,8 +419,10 @@ class PlotObj:
 
 
 class Plot:
-   def __init__(self, plots):
+   def __init__(self, plots, name='default'):
+      ROOT.gROOT.SetBatch(True)
       self.plots = plots
+      self.name = name
       self.properties = {
           #output
           "filename" : "PlotTool", "location" : ".",
@@ -349,30 +431,34 @@ class Plot:
           #legend
           "legend": True, "labels" : [], "legwidth" : 0, "legheight" : 0, "legloc" : 2,
           #x and y axes limits
-          "xlims" : None, "ylims" : None,
+          "xlims" : None, "ylims" : None, "yloglims" : None,
           #plot scale
-          "logscale" : False, "normalised" : False,
+          "logscale" : False, 'logx' : False, "normalised" : False,
           "leglims" : [], "split" : False, "splitstyles" : [1001,3001,3001],
           "includeFit" : False,
-          "xlims" : None, "ylims" : None,
           "includeNormErr" : False, "title" : "",
           #colors
           "colors" : None, "linecolors" : None, "markercolors": None,
           #styles
-          "styles" : 1001, "linestyles" : 1, "markerstyles" : 0, # colors and styles
+          "fillstyles" : 1001, "linestyles" : 1, "markerstyles" : 0, # colors and styles
           "normerrlims" : None, 
           "extraObjs" : [],
-          "drawOpts" : 'e1', "drawOpts2" : None, "yoffset" : 0.0,
-          "style" : True, "forcestyle" : False
+          "drawOpts" : '', "drawOpts2" : None, "yoffset" : 0.0,
+          "style" : True, "forcestyle" : False,
+          #
+          'canvas_size' : [700, 500],
+          #comparison plots
+          'toCompare' : {}, 'compareAsRatio' : True
           }
 
    def getPlotObjs(self, hide_label = False):
       #get colors and styles
       colors       = self.properties['colors']
       linecolors   = self.properties['linecolors']
-      styles       = self.properties['styles']
+      fillstyles   = self.properties['fillstyles']
       linestyles   = self.properties['linestyles']
       markerstyles = self.properties['markerstyles']
+      compareAsRatio = self.properties['compareAsRatio']
       plots        = self.plots
       objs = []
       
@@ -389,8 +475,8 @@ class Plot:
       elif not linecolors:
           linecolors = colors
       #if just one option is specified for styles use it for all
-      if isinstance(styles, int):
-          styles     = [styles for i in range(size)]
+      if isinstance(fillstyles, int):
+          fillstyles     = [fillstyles for i in range(size)]
       if isinstance(linestyles, int):
           linestyles = [linestyles for i in range(size)]
       if isinstance(markerstyles, int):
@@ -413,21 +499,27 @@ class Plot:
       if normerrlims is None : normerrlims = [0.8, 1.2]
       offset      = self.properties['yoffset']
 
-
-      for plot,color,linecolor,style,linestyle,markerstyle,drawOpt,i in zip(plots, colors, linecolors, styles, linestyles, markerstyles, drawOpts, range(size)):
-          p = PlotObj(self.properties['filename']+"_"+str(color)+"_"+str(style)+"_"+str(i), plot,color,style, linecolor,linestyle, markerstyle, drawOpt)
+      for plot,color,linecolor,fillstyle,linestyle,markerstyle,drawOpt,i in zip(plots, colors, linecolors, fillstyles, linestyles, markerstyles, drawOpts, range(size)):
+          p = PlotObj(self.properties['filename']+"_"+str(color)+"_"+str(fillstyle)+"_"+str(i), plot,color,fillstyle, linecolor,linestyle, markerstyle, drawOpt)
           p.ApplyStyle(xlabel, ylabel, xlims, ylims, normerrlims, offset)    
+          objs += [p]
+      for c in self.properties['toCompare'].keys():
+          for c2 in self.properties['toCompare'][c]:
+              if isinstance(c,int) and isinstance(c2,int) and c >= 0 and c < len(objs) and c2 >= 0 and c2 < len(objs):
+                  objs[c].AddComparison(objs[c2])
+
+      for o in objs:
+          o.ApplyStyle(xlabel, ylabel, xlims, ylims, normerrlims, offset)    
           if hide_label:
-              for h in [p.plot ] + p.split:
+              for h in [o.plot ] + o.split:
                   h.GetXaxis().SetLabelOffset(999)
                   h.GetXaxis().SetLabelSize(0)
                   h.GetXaxis().SetTitle("")
-          objs += [p]
       return objs
 
 
 
-   def getPads(self, n, large = False, x1 = 0.005, x2 = 0.995, y0 = 0.05, y1 = 0.32, y2 = 0.995, bm = 0.12, y3 = 0.46):
+   def getPads(self, n, large = False, x1 = 0.005, x2 = 0.995, y0 = 0.05, y1 = 0.32, y2 = 0.995, bm = 0.14, y3 = 0.46):
        pads = []
        #x1 = 0.005
        #x2 = 0.995
@@ -482,6 +574,8 @@ class Plot:
        for d,m in zip(drawOpts,markerstyles):
            if 'p' in d or m != 0:
                styles += ['lep']
+           elif 'f' in d:
+               styles += ['f']
            else:
                styles += ['l']
                       
@@ -514,50 +608,87 @@ class Plot:
 
       includeNormErr = self.properties['includeNormErr']
 
-      c = ROOT.TCanvas()
+      canvas_size = self.properties['canvas_size']
+
+      c = ROOT.TCanvas(self.name+"_Canvas", self.name+"Canvas", canvas_size[0], canvas_size[1])
       if self.properties['forcestyle'] : 
           ROOT.gROOT.ForceStyle(True)
           c.UseCurrentStyle()
-          
-      if includeNormErr:
-         x1 = 0.005
-         x2 = 0.995
-         y0 = 0.05
-         y1 = 0.32
-         y2 = 0.995
-         bm = 0.12
-         upperPad = ROOT.TPad("upperPad", "upperPad", x1, y0, x2, y2)
-         lowerPad = ROOT.TPad("lowerPad", "lowerPad", x1, y0, x2, y2)
-         upperPad.Draw("epl")
-         lowerPad.Draw("epl")
-         upperPad.SetBottomMargin(y1-y0)
-         lowerPad.SetBottomMargin(bm)
-         lowerPad.SetFillStyle(0)
-         lowerPad.SetTopMargin(y2 - (y1 - y0))
+      self.pads = []
+      x1 = 0.005
+      x2 = 0.995
+      y0 = 0.05
+      y1 = 0.32
+      y2 = 0.995
+      bm = 0.12
+    
+      if includeNormErr or len(self.properties['toCompare'].keys()) == 1:
+          self.pads = Plot.getPads(self,2, y1 = 0.38)
+      elif len(self.properties['toCompare'].keys()) == 2:
+          self.pads = Plot.getPads(self, 3)
+      else:
+          self.pads = Plot.getPads(self, 1)
+        
+      for pad in self.pads: pad.Draw("epl")
 
-      if (self.properties["logscale"]): c.SetLogy()
+      if (self.properties["logscale"]):
+          self.pads[0].SetLogy()
+      if (self.properties["logx"])    : 
+          for p in self.pads: 
+              p.SetLogx()
+
+      hide_label = False
+      if len(self.pads) > 1: hide_label = True
       
-      self.plotObjs = self.getPlotObjs()
+      self.plotObjs = self.getPlotObjs(hide_label = hide_label)
 
+      self.pads[0].cd()
       for i,p in enumerate(self.plotObjs):
           drawOpt = ''
-          if 'TGraph' in p.plot.ClassName(): drawOpt += 'p'
-          if i == 0 and 'TGraph' in p.plot.ClassName(): drawOpt += 'A'
+          if isinstance(p.plot, ROOT.TGraph) and not isinstance(p.plot, ROOT.RooCurve): drawOpt += 'p'
+          if i == 0 and isinstance(p.plot, ROOT.TGraph) and not isinstance(p.plot, ROOT.RooCurve): drawOpt += 'A'
           if i > 0: drawOpt += 'same'
+          if self.properties['logx'] : 
+              p.plot.GetXaxis().SetNdivisions(505)
           if self.properties['normalised']: 
-              p.plot.Scale(1/p.plot.Integral())
+              #p.plot.Scale(1/p.plot.Integral())
+              p.DrawNorm(drawOpt)
+          else : 
               p.Draw(drawOpt)
-          else : p.Draw(drawOpt)
 
       leg = self.GetLegend()
       if self.properties['legend']: leg.Draw("same")
       for obj in self.properties["extraObjs"]: obj.Draw("same")
 
+      if len(self.properties['toCompare']) > 0:
+          for i,k in enumerate(self.properties['toCompare'].keys()):
+              self.pads[i+1].cd()
+              p = self.plotObjs[k]
+              for j,pp in enumerate(p.comparisons):
+                  drawOpt = ''
+                  if i == 0 and j == 0 and (isinstance(pp[0], ROOT.TGraph)): drawOpt += 'A'
+                  if i > 0 or j > 0 : drawOpt += 'same'
+                  if len(self.pads) == 3 and i != 0 :
+                      pp[0].GetXaxis().SetLabelOffset(999)
+                      pp[0].GetXaxis().SetLabelSize(0)
+                      pp[0].GetXaxis().SetTitle("")
+                      pp[1].GetXaxis().SetLabelOffset(999)
+                      pp[1].GetXaxis().SetLabelSize(0)
+                      pp[1].GetXaxis().SetTitle("")
+                  if self.properties['compareAsRatio']:
+                      pp[1].Draw(pp[2]+drawOpt)
+                  else:
+                      pp[0].Draw(pp[2]+drawOpt)
+                  
       if '.pdf' not in filename and '.eps' not in filename:
           filenames = [filename + '.pdf', filename+'.eps']
       else: filenames = [filename]
       location = self.properties["location"]
       
+      #for p in self.plotObjs: 
+      #    if isinstance(p, ROOT.TH1F): p.Draw("SAMEAXIS")
+      for pad in self.pads:
+          pad.RedrawAxis()
       for fName in filenames:
           c.Print(location + '/' + fName) ## Include this line to save image
       return c
@@ -841,7 +972,7 @@ class WAsymmPlot(Plot):
         k = 0
         for plot in plotshi:
             if k == 0: 
-                if ('TGraph' in plot.plot.ClassName()):
+                if isinstance(p.plot, ROOT.TGraph):
                     plot.Draw("A")
                 else:
                     plot.Draw()
@@ -911,12 +1042,12 @@ class StackPlot:
          bm = 0.12
          upperPad = ROOT.TPad("upperPad", "upperPad", x1, y0, x2, y2)
          lowerPad = ROOT.TPad("lowerPad", "lowerPad", x1, y0, x2, y2)
-         upperPad.Draw("epl")
-         lowerPad.Draw("epl")
          upperPad.SetBottomMargin(y1-y0)
          lowerPad.SetBottomMargin(bm)
          lowerPad.SetFillStyle(0)
          lowerPad.SetTopMargin(y2 - (y1 - y0))
+         upperPad.Draw("epl")
+         lowerPad.Draw("epl")
 
       if (self.properties["logscale"]): c.SetLogy()
       histlist      = stack.GetHists()
