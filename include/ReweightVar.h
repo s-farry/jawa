@@ -19,6 +19,8 @@ class ReweightVar : public JawaObj{
  public:
   ReweightVar(string name, TH1F* hist);
   ReweightVar(string name1, string name2, TH2F* hist);
+  ReweightVar(string name1, string name2, TH1F* hist, string form = "");
+  ReweightVar(string name1, string name2, string name3, string name4, TH2F* hist, string form = "");
   ReweightVar(string name, TF1* func);
   ReweightVar(string name1, TH1F* hist1, string name2, TH1F* hist2);
   ReweightVar(string name, std::map<int,double> map);
@@ -34,10 +36,7 @@ class ReweightVar : public JawaObj{
   double GetWeight(float val);
   Expr* GetExpr();
   vector<Expr*> GetExprs();
-
   string GetWeightName();
-
-
 
  private:
   vector<string> m_names;
@@ -47,6 +46,7 @@ class ReweightVar : public JawaObj{
   TF1* m_func;
   std::map<int,double> m_vect;
   string m_weightname;
+  Expr* m_form;
   WeightType m_weighttype;  
 };
 #endif

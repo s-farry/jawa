@@ -28,6 +28,7 @@ void Template::Init(){
   m_tree = 0;
   m_outputevts = true;
   m_selcut = new TCut("");
+  m_maxevts = -1;
 
 }
 
@@ -87,7 +88,6 @@ Template::Template(string name, vector<TTree*> trees, TCut* cut) : JawaObj("Temp
     if (trees.at(i)){
       m_trees.push_back(new Tree(name+"_tree", trees.at(i), 1.0));
       m_selcuts.push_back(m_selcut);
-      //cout<<"added "<<cut->GetTitle()<<endl<<endl;
     }
     else{
       info()<<"Tree "<<name<<" passed is null - not adding"<<endl;
@@ -281,7 +281,6 @@ void Template::AddTree(string name, TTree* t){
     m_selcuts.push_back((TCut*)m_selcut->Clone(s.str().c_str()));
   }
   else info()<<"TTree is null - not adding as Tree"<<endl;
-  cout<<"Here"<<endl;
   verbose()<<"TTree "<<t<<" added to tree"<<endl;
 }
 void Template::AddTree(string name, TTree* t, double w){
@@ -295,8 +294,6 @@ void Template::AddTree(string name, TTree* t, double w){
   else info()<<"TTree is null - not adding as Tree"<<endl;
 }
 void Template::AddTree(string name, TTree* t, TCut* cut){
-  cout<<"Here3"<<endl;
-
   int ntrees = m_trees.size();
   stringstream s;
   s<<"selcut_"<<ntrees;
@@ -562,7 +559,7 @@ void Template::FillVars(){
     
     TEntryList* l = m_entryLists.at(ti);
     double tree_w = m_trees.at(ti)->GetWeight();
-    int nentries = l->GetN();
+    int nentries = m_maxevts == -1 ? l->GetN() : min((int)l->GetN(), m_maxevts);
 
     // Loop  over all entries in entrylist
     for (int jentry = 0 ; jentry < nentries ; ++jentry) {
@@ -588,11 +585,22 @@ void Template::FillVars(){
 	  double val2 = tree->GetVal(e2);
 	  w = w * ((*iv)->GetWeight(val1, val2));
 	}
+	else if ((*iv)->GetExprs().size() == 4){
+	  Expr* e1 = (*iv)->GetExprs().at(0);
+	  Expr* e2 = (*iv)->GetExprs().at(1);
+	  Expr* e3 = (*iv)->GetExprs().at(2);
+	  Expr* e4 = (*iv)->GetExprs().at(3);
+	  double val1 = tree->GetVal(e1);
+	  double val2 = tree->GetVal(e2);
+	  double val3 = tree->GetVal(e3);
+	  double val4 = tree->GetVal(e4);
+	  w = w * ((*iv)->GetWeight(val1, val2, val3, val4));
+	}
       }
       m_normN += w;
       
       // Loop through 1-D variables
-
+      verbose()<<"looping through 1d variables"<<endl;
       for (std::map<string,Var*>::iterator iv = m_variables.begin() ; iv != m_variables.end() ; ++iv ){
 	Var* var = (*iv).second;
 	double output = tree->GetVal(var->GetExpr());
@@ -600,6 +608,7 @@ void Template::FillVars(){
 	if (m_fillTree) output_idx.at(tree_idx[(*iv).second->GetName()]) = output;
 	
       }
+      verbose()<<"looping through 2d variables"<<endl;
       
       // Loop through 2-D variables
       
@@ -612,6 +621,7 @@ void Template::FillVars(){
 	yval = tree->GetVal(var2->GetExpr());
 	(*iv).second->FillHist(xval, yval,w);
       }
+      verbose()<<"looping through 3d variables"<<endl;
 
       // Loop through 3-D variables
       for (std::map<string,Var3D*>::iterator iv = m_3Dvariables.begin() ; iv != m_3Dvariables.end() ; ++iv ){
@@ -627,6 +637,7 @@ void Template::FillVars(){
 	//j++;
       }
 
+      verbose()<<"finished looping"<<endl;
 
       if (m_fillTree) output_idx.at(tree_idx["w"]) = w;
       if (m_fillTree) m_tree->Fill();
@@ -726,15 +737,18 @@ void Template::Reweight(string var, std::map<int,double> weights){
 void Template::Reweight(string var, TH1F* scale){
   m_reweightvariables.push_back(new ReweightVar(var,scale));
 }
-
 void Template::Reweight(string var1, string var2, TH2F* scale){
   m_reweightvariables.push_back(new ReweightVar(var1,var2, scale));
 }
-
+void Template::Reweight(string var1, string var2, TH1F* scale, string form){
+  m_reweightvariables.push_back(new ReweightVar(var1,var2, scale, form));
+}
+void Template::Reweight(string var1, string var2, string var3, string var4, TH2F* scale, string form){
+  m_reweightvariables.push_back(new ReweightVar(var1,var2, var3, var4, scale, form));
+}
 void Template::Reweight(string weightname){
   m_reweightvariables.push_back(new ReweightVar(weightname));
 }
-
 void Template::SetStyle(enum EColor fillcolor){
   m_styled = true;
   m_linecolor = fillcolor;
@@ -849,6 +863,10 @@ int Template::GetEvts(){
   return m_evts;
 }
 
+int Template::GetMaxEvts(){ return m_maxevts;}
+
+void Template::SetMaxEvts(int maxevts){ m_maxevts = maxevts;}
+
 void Template::AddAsymmetry(string eta1, string eta2){
   m_asymm=true;
   m_asymmvar1 = eta1;
@@ -898,15 +916,9 @@ Template::Template(string name, PyObject* pyt, PyObject* pycut){
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyt));
   TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
 
-  cout<<"deleting the existing selcut"<<endl;
   m_selcut->Delete();
-  cout<<"deleted"<<endl;
   m_selcut = (TCut*)cut->Clone("selcut");
   
-  cout<<"here"<<endl;
-  cout<<cut->GetTitle()<<endl;
-  cout<<"end"<<endl;
-  //Template(name, t, *cut);
   m_name = name;
   m_trees.push_back(new Tree(name+"_tree", t, 1.0));
   m_selcuts.push_back(m_selcut);
@@ -923,9 +935,6 @@ Template::Template(string name, PyObject* pyt, PyObject* pycut){
 
 Template::Template(string name, boost::python::list& ns, PyObject* pycut){
   TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pycut));
-  cout<<"here2"<<endl;
-  cout<<cut->GetTitle()<<endl;
-  cout<<"end"<<endl;
 
   vector<TTree*> trees;
   for (int i = 0; i < len(ns); ++i){
@@ -942,7 +951,6 @@ Template::Template(string name, boost::python::list& ns, PyObject* pycut){
     if (trees.at(i)){
       m_trees.push_back(new Tree(name+"_tree", trees.at(i), 1.0));
       m_selcuts.push_back((TCut*)cut->Clone("cut"));
-      //cout<<"added "<<cut->GetTitle()<<endl<<endl;
     }
     else{
       info()<<"Tree "<<name<<" passed is null - not adding"<<endl;
@@ -964,14 +972,11 @@ void Template::AddTree_py(PyObject* pyObj){
   AddTree(t);
 }
 void Template::AddTree2_py(string name, PyObject* pyObj){
-    cout<<"in here3"<<endl;
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
   verbose()<<"converted ttree to "<<endl;
   AddTree(name, t);
 }
 void Template::AddTree3_py(PyObject* pyObj, double w){
-  cout<<"in here2"<<endl;
-
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
   AddTree(t, w);
 }
@@ -980,7 +985,6 @@ void Template::AddTree4_py(string name, PyObject* pyObj, double w){
   AddTree(name, t, w);
 }
 void Template::AddTree5_py(PyObject* pyObj, PyObject* pyCut){
-  cout<<"in here"<<endl;
   TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
   TCut*  c = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyCut));
   AddTree(t, c);
@@ -1144,16 +1148,38 @@ void Template::Reweight1_py(string var, PyObject* pyObj){
   else{
     info()<<hist->ClassName()<<" is not matched to any possibilities"<<endl;
   }
-  //std::cout<<hist->ClassName()<<std::endl;
-  //Reweight(var,hist);
 }
 void Template::Reweight2_py(string var1, string var2, PyObject* th2f){
-  TH2F* hist  = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(th2f));
-  Reweight(var1, var2, hist);
+  TH2F* hist_2d  = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(th2f));
+  TH1F* hist_1d  = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(th2f));
+  if (strcmp(hist_1d->ClassName(),"TH1F") == 0){
+    Reweight(var1, var2, hist_1d);
+  }
+  else{
+    Reweight(var1, var2, hist_2d);
+  }
 }
 
 void Template::Reweight3_py(string leaf){
   Reweight(leaf);
+}
+void Template::Reweight4_py(string var1, string var2, PyObject* th1f, string form){
+  TH1F* hist  = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(th1f));
+  if (strcmp(hist->ClassName(),"TH1F") == 0){
+    Reweight(var1, var2, hist, form);
+  }
+  else{
+    info()<<"Cannot reweight for "<<var1<<" "<<var2<<endl;
+  }
+}
+void Template::Reweight5_py(string var1, string var2, string var3, string var4, PyObject* th2f, string form){
+  TH2F* hist  = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(th2f));
+  if (strcmp(hist->ClassName(),"TH2F") == 0){
+    Reweight(var1, var2, var3, var4, hist, form);
+  }
+  else{
+    info()<<"Cannot reweight for "<<var1<<" "<<var2<<" "<<var3<<" "<<var4<<endl;
+  }
 }
 void Template::SetStyle1_py(int fillcolor){
   enum EColor col = (EColor)fillcolor;

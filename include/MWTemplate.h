@@ -39,6 +39,7 @@ class MWTemplate : public Template {
   PyObject* GetWeightHist_py(string var, string wname);
   PyObject* GetWeight2DHist_py(string var, string wname);
   void ScaleAllWeights(double s);
+  void PrintWeights();
   void ScaleWeight(string w, double s);
 
 

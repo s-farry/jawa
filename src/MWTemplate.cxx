@@ -297,6 +297,19 @@ void MWTemplate::ScaleAllWeights(double w){
   }
 }
 
+void MWTemplate::PrintWeights(){
+  for (std::map<string, std::map<string, TH1F*> >::iterator im = m_varhists.begin(); im != m_varhists.end(); ++im){
+    for (std::map<string, TH1F*>::iterator ih = (*im).second.begin(); ih != (*im).second.end(); ++ih){
+      cout<<(*im).first<<" "<<(*ih).first<<endl;
+    }
+  }
+  for (std::map<string, std::map<string, TH2F*> >::iterator im = m_2dvarhists.begin(); im != m_2dvarhists.end(); ++im){
+    for (std::map<string, TH2F*>::iterator ih = (*im).second.begin(); ih != (*im).second.end() ; ++ih){
+      cout<<(*im).first<<" "<<(*ih).first<<endl;
+    }
+  }
+}
+
 void MWTemplate::ScaleWeight(string w, double s){
   for (std::map<string, std::map<string, TH1F*> >::iterator im = m_varhists.begin(); im != m_varhists.end(); ++im){
     if ((*im).second.find(w) != (*im).second.end()){

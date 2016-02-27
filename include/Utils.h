@@ -89,6 +89,7 @@ namespace Utils{
   void RemoveErrors_py(PyObject* pyObj);
   double GetSum_py(PyObject* t, string leaf);
   double GetLumi_py(PyObject* f);
+  double GetLumiError_py(PyObject* f);
   double standard_deviation_py(boost::python::list& ns);
   boost::python::list GetStdDevs_py();
   boost::python::list cholesky_py(boost::python::list& ns);

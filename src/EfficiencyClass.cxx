@@ -82,6 +82,10 @@ EfficiencyClass::EfficiencyClass( string name , EfficiencyClass* classA , Effici
   m_pass = new TH1F((m_name+"_Pass").c_str() , "Pass Histogram" , classA->m_npltbins , classA->m_pltrangelow , classA->m_pltrangehi);
   m_fail = new TH1F((m_name+"_Fail").c_str() , "Fail Histogram" , classA->m_npltbins , classA->m_pltrangelow , classA->m_pltrangehi);
   
+  m_tot->Sumw2();
+  m_pass->Sumw2();
+  m_fail->Sumw2();
+
   m_tot->Add(classA->m_tot);
   m_pass->Add(classA->m_pass);
   m_fail->Add(classA->m_fail);
@@ -294,6 +298,10 @@ void EfficiencyClass::SetPltRange(string var, int bins, double lo, double hi){
   m_tot  = new TH1F((m_name+"_Tot").c_str()  , "Total Histogram", bins , lo , hi);
   m_pass = new TH1F((m_name+"_Pass").c_str() , "Pass Histogram" , bins , lo , hi);
   m_fail = new TH1F((m_name+"_Fail").c_str() , "Fail Histogram" , bins , lo , hi);
+
+  m_tot->Sumw2();
+  m_pass->Sumw2();
+  m_fail->Sumw2();
 
 }
 
@@ -633,6 +641,8 @@ double EfficiencyClass::FillVars(bool pass, Tree* t){
     double binval = m_reweight_hist->At(bin);
     if (binval != 0) w = binval;
   }
+
+  
   double v_pltvar = t->GetVal(m_pltvar);
 
   //iter=0;

@@ -146,7 +146,8 @@ bool Expr::isFunction( const std::string& token)
   return token == "sqrt" || token == "abs" || token == "fabs" ||     
     token == "sin" || token == "cos" ||
     token == "tan" || token == "log" || token == "log10" ||
-    token == "min" || token == "max";
+    token == "min" || token == "max" || token == "cosh" ||
+    token == "sinh" || token == "tanh";
 }
 
       
@@ -410,6 +411,9 @@ double Expr::RPNtoDouble( std::vector<double>& input )
 	  else if (token == "sin") result =  sin(d);
 	  else if (token == "cos") result =  cos(d);
 	  else if (token == "tan") result =  tan(d);
+	  else if (token == "sinh") result =  sinh(d);
+	  else if (token == "cosh") result =  cosh(d);
+	  else if (token == "tanh") result =  tanh(d);
 	  else if (token == "log") result =  log(d);
 	  else if (token == "log10") result =  log10(d);
 	  else if (token == "min") {
