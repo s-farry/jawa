@@ -372,4 +372,22 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("RemoveErrors", &EfficiencyClass::RemoveErrors)
       .add_property("Verbose",  &EfficiencyClass::GetVerbose, &EfficiencyClass::SetVerbose)
       ;
+    class_<Fit>("Fit", init<string, string>())
+      .def("GetExpr",  &Fit::GetExpr, return_internal_reference<>())
+      .def("GetTF1" ,  &Fit::GetTF1_py)
+      .def("FitHist",  &Fit::FitHist_py)
+      .def("SetParameter",  &Fit::SetParameter)
+      .def("SetParLimits",  &Fit::SetParLimits)
+      .def("PrintParameters", &Fit::PrintParameters)
+      .def("SetRange", &Fit::SetRange)
+      ;
+    class_<FitAnalysis>("FitAnalysis", init<string, string, string>())
+      .def("SetVal",   &FitAnalysis::SetVal)
+      .def("FixVal",   &FitAnalysis::FixVal)
+      .def("SetRange", &FitAnalysis::SetRange)
+      .def("FitIt",    &FitAnalysis::FitIt)
+      .def("Init",     &FitAnalysis::Init)
+      .def("SaveToFile", &FitAnalysis::SaveToFile);
+    
+
 }

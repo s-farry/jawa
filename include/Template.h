@@ -61,7 +61,7 @@ class Template : public JawaObj {
   map<string, Var*> GetVariables();
   map<string, Var2D*> Get2DVariables();
   map<string, Var3D*> Get3DVariables();
-  //AlgVar* GetAlgVar(string name);
+
   Var2D* Get2DVar(string name);
   Var2D* Get2DVar(string name1, string name2);
   Var3D* Get3DVar(string name);
