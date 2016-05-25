@@ -4,6 +4,7 @@
 #include <math.h>
 #include <Expr.h>
 #include <boost/algorithm/string.hpp>
+#include <TMath.h>
 
 using namespace std;
 
@@ -85,6 +86,24 @@ double Expr::GetVal(std::vector<double>& input){
   return RPNtoDouble(input);
 }
 
+double Expr::operator()(double* x, double* p){
+  //cout<<x[0]<<" "<<p[0]<<endl;
+  std::vector<double> input;
+  int j = 0;
+  for (unsigned int i = 0 ; i < m_varnames.size(); ++i){
+    if ("x" == m_varnames.at(i)) {
+      //cout<<"x: "<<x[0]<<endl;
+      input.push_back(x[0]);
+    }
+    else {
+      //cout<<j<<" "<<p[j]<<endl;
+      input.push_back(p[j]);
+      j++;
+    }
+  }
+  return GetVal(input);
+}
+
 double Expr::GetVal_py(boost::python::list& input){
   vector<double> dbl_vec;
   dbl_vec.reserve(len(input));
@@ -147,7 +166,8 @@ bool Expr::isFunction( const std::string& token)
     token == "sin" || token == "cos" ||
     token == "tan" || token == "log" || token == "log10" ||
     token == "min" || token == "max" || token == "cosh" ||
-    token == "sinh" || token == "tanh";
+    token == "sinh" || token == "tanh" || token == "exp" ||
+    token == "CB" || token == "Voigtian";
 }
 
       
@@ -416,6 +436,7 @@ double Expr::RPNtoDouble( std::vector<double>& input )
 	  else if (token == "tanh") result =  tanh(d);
 	  else if (token == "log") result =  log(d);
 	  else if (token == "log10") result =  log10(d);
+	  else if (token == "exp") result = exp(d);
 	  else if (token == "min") {
 	    double d2 = st.top();
 	    st.pop();
@@ -425,6 +446,34 @@ double Expr::RPNtoDouble( std::vector<double>& input )
 	    double d2 = st.top();
 	    st.pop();
 	    result = max(d, d2);
+	  }
+	  else if (token == "CB") {
+	    double d2 = st.top();
+	    st.pop();
+	    double d3 = st.top();
+	    st.pop();
+	    double d4 = st.top();
+	    st.pop();
+	    double d5 = st.top();
+	    st.pop();
+	    double d6 = st.top();
+	    st.pop();
+	    double d7 = st.top();
+	    st.pop();
+	    double d8 = st.top();
+	    st.pop();
+	    result = CB(d8, d7, d6, d5, d4, d3, d2, d);
+	  }
+	  else if (token == "Voigtian") {
+	    double d2 = st.top();
+	    st.pop();
+	    double d3 = st.top();
+	    st.pop();
+	    double d4 = st.top();
+	    st.pop();
+	    double d5 = st.top();
+	    st.pop();
+	    result = Voigtian(d5, d4, d3, d2, d);
 	  }
 	  else result = -1.0;
 	  // Push result onto stack         
@@ -734,6 +783,27 @@ std::list<std::string> Expr::Tokenize( const std::string& expression )
   
   return tokens;    
 }  
+
+double Expr::CB(double x, double N, double a, double n, double m, double s, double sl, double c){
+  double PDF = 0.0;
+  if (((x) - m)/s > -a){
+    PDF = exp((-pow(((x)-m),2))/(2*pow(s,2)));
+  }
+  else{
+    double A = pow(n/fabs(a),n) * exp(-pow(a,2)/2);
+    double B = (n/fabs(a)) - fabs(a);
+    PDF = A * pow(B-(((x)-m)/s),-n);
+  }
+  PDF = PDF * N;
+  PDF = PDF + sl * x + c;
+  
+  return PDF;
+    
+}
+
+double Expr::Voigtian(double x, double N, double m, double s, double a){
+  return N*TMath::Voigt(x - m, s, a, 4);
+}
 
 boost::python::list Expr::Tokenize_py( const std::string& expression ){
   list<string> tokens = Tokenize(expression);

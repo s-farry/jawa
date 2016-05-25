@@ -48,7 +48,7 @@ class Var2D : public JawaObj{
   Var* GetVar1();
   Var* GetVar2();
 
-  
+
   int GetBins1();
   double GetVar1Lo();
   double GetVar1Hi();

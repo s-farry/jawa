@@ -27,6 +27,7 @@ class Expr : public JawaObj {
   Expr operator|(const Expr& rhs);
   Expr operator>(const Expr& rhs);
   Expr operator<(const Expr& rhs);
+  double operator()(double *x, double *p);
 
   string GetExpr();
   string GetExpr() const;
@@ -61,6 +62,11 @@ class Expr : public JawaObj {
   double RPNtoDouble( )          ;
   double RPNtoDouble( std::vector<double>& input )          ;
 
+  double CB(double x, double N, double a, double n, double m, double s, double sl, double c);
+  double Voigtian(double x, double N, double m, double s, double a);
+
+
+
   #ifdef WITHPYTHON
   //Python functions
   boost::python::list getRPN_py(  )    ;
@@ -72,6 +78,7 @@ class Expr : public JawaObj {
   string GetExpr_py();
   double GetVal_py(boost::python::list& input);
   double GetVal3_py();
+
   #endif
 
 
