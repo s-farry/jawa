@@ -88,6 +88,7 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("getTokens", &Expr::getTokens_py)
       .def("getRPN"    , &Expr::getRPN_py)
       .def("infixToRPN", &Expr::infixToRPN_py)
+      .def("CB", &Expr::CB)
       ;
     
     class_<Template, bases<JawaObj> >("Template", init<string>())

@@ -63,6 +63,9 @@ class Expr : public JawaObj {
   double RPNtoDouble( std::vector<double>& input )          ;
 
   double CB(double x, double N, double a, double n, double m, double s, double sl, double c);
+  double Voigtian(double x, double N, double m, double s, double a);
+
+
 
   #ifdef WITHPYTHON
   //Python functions

@@ -23,7 +23,7 @@ class Fit{
   Fit(string name, string func, TH1F* hist = 0);
   TF1* GetTF1();
   Expr* GetExpr();
-  void FitHist(TH1F* hist);
+  void FitHist(TH1F* hist, string opt = "");
   void FitHist();
   void SetParameter(int param, double value);
   void FixParameter(int param, double value);

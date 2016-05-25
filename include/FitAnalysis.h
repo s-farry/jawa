@@ -35,10 +35,12 @@ class FitAnalysis : public JawaObj {
   void SaveToFile();
 
   void Init(Template* a);
-  void FitIt();
+  void FitIt(string opt = "");
 
   //for python
   #ifdef WITHPYTHON
+  void FitIt1_py();
+  void FitIt2_py(string opt);
   #endif
 
 

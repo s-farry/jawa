@@ -48,9 +48,9 @@ void Fit::FitHist(){
   if (m_hist) m_hist->Fit(m_tf1);
 }
 
-void Fit::FitHist(TH1F* hist){
+void Fit::FitHist(TH1F* hist, string opt){
   m_hist = hist;
-  m_hist->Fit(m_tf1);
+  m_hist->Fit(m_tf1, opt.c_str());
 }
 
 void Fit::FitHist_py(PyObject* pyObj){

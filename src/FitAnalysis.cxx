@@ -17,7 +17,6 @@ FitAnalysis::FitAnalysis(string name, string tofit, string func) : JawaObj("FitA
   for (unsigned int i = 0 ; i < m_expr->GetVarNames().size(); ++i) {
     if (m_expr->GetVarNames().at(i) != "x"){
       m_paridx[m_expr->GetVarNames().at(i)] = j;
-      info()<<"Par index: Setting "<<m_expr->GetVarNames().at(i)<<" to "<<j<<endl;
       j++;
     }
   }
@@ -50,7 +49,6 @@ void FitAnalysis::Init(Template* t){
       
       for (std::map<string, double>::iterator ip = m_initvals.begin(); ip != m_initvals.end(); ++ip) 
 	{
-	  info()<<"setting "<<(*ip).first<<"( "<<m_paridx[(*ip).first]<<" ) to "<<(*ip).second<<endl;;
 	  f->SetParameter(m_paridx[(*ip).first], (*ip).second);
 	}
       for (std::map<string, double>::iterator ip = m_fixvals.begin(); ip != m_fixvals.end(); ++ip) 
@@ -63,7 +61,8 @@ void FitAnalysis::Init(Template* t){
       m_fits[(*iv).second->GetName1()].push_back(f);
       m_hists[(*iv).second->GetName1()].push_back((TH1F*)h->ProjectionY(s.str().c_str(), i+1,i+1));
     }
-    for (unsigned int i = 0 ; i < m_expr->GetVarNames().size() - 1; ++i){
+    for (unsigned int i = 0 ; i < m_expr->GetVarNames().size(); ++i){
+      if (m_expr->GetVarNames().at(i) == "x") continue;
       ostringstream s;
       s<<m_name<<"_"<<m_expr->GetVarNames().at(i)<<"_"<<(*iv).second->GetName1();
       vector<double> binedges = Utils::GetBinEdgesX(h);
@@ -72,17 +71,20 @@ void FitAnalysis::Init(Template* t){
   }
 }
 
-void FitAnalysis::FitIt(){
+void FitAnalysis::FitIt(string opt){
   std::map<string, vector<TH1F*> >::iterator ih;
   for (ih = m_hists.begin(); ih != m_hists.end(); ++ih){
     vector<TH1F*> hists = (*ih).second;
     for (unsigned int i = 0 ; i < hists.size() ; ++i){
-      m_fits[(*ih).first].at(i)->FitHist(hists.at(i));
-      for (unsigned int j = 0 ; j < m_expr->GetVarNames().size() - 1; ++j){
-	double par = m_fits[(*ih).first].at(i)->GetParameter(j);
-	double err = m_fits[(*ih).first].at(i)->GetParError(j);
-	m_parhists[(*ih).first].at(j)->SetBinContent(i+1, par);
-	m_parhists[(*ih).first].at(j)->SetBinError(i+1, err);
+      m_fits[(*ih).first].at(i)->FitHist(hists.at(i), opt);
+      int k = 0;
+      for (unsigned int j = 0 ; j < m_expr->GetVarNames().size(); ++j){
+	if (m_expr->GetVarNames().at(j) == "x") continue;
+	double par = m_fits[(*ih).first].at(i)->GetParameter(k);
+	double err = m_fits[(*ih).first].at(i)->GetParError(k);
+	m_parhists[(*ih).first].at(k)->SetBinContent(i+1, par);
+	m_parhists[(*ih).first].at(k)->SetBinError(i+1, err);
+	k++;
       }
     }
   }
@@ -114,4 +116,5 @@ void FitAnalysis::SaveToFile(){
 
 
 // for python
-
+void FitAnalysis::FitIt1_py(){ FitIt() };
+void FitAnalysis::FitIt2_py(string opt) { FitIt(opt) };
