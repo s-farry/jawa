@@ -561,10 +561,14 @@ void Template::FillVars(){
     double tree_w = m_trees.at(ti)->GetWeight();
     int nentries = m_maxevts == -1 ? l->GetN() : min((int)l->GetN(), m_maxevts);
 
+    info()<<"Looping over "<<nentries<<" events in tree"<<endl;
     // Loop  over all entries in entrylist
     for (int jentry = 0 ; jentry < nentries ; ++jentry) {
 
-      if (jentry%10000==0 && m_outputevts) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
+      if ((jentry%10000==0 || jentry == (nentries -1)) && m_outputevts) {
+	//info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
+	progress(double(jentry+1)/nentries, 70.0);
+      }
 
       int entry = l->GetEntry(jentry);
       t->GetEntry(entry);

@@ -386,7 +386,8 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("SetVal",   &FitAnalysis::SetVal)
       .def("FixVal",   &FitAnalysis::FixVal)
       .def("SetRange", &FitAnalysis::SetRange)
-      .def("FitIt",    &FitAnalysis::FitIt)
+      .def("FitIt",    &FitAnalysis::FitIt1_py)
+      .def("FitIt",    &FitAnalysis::FitIt2_py)
       .def("Init",     &FitAnalysis::Init)
       .def("SaveToFile", &FitAnalysis::SaveToFile);
     
