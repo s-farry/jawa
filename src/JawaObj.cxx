@@ -37,7 +37,7 @@ void JawaObj::verbose(const char* msg){
 }
 
 void JawaObj::progress(double progress, double width){
-  std::cout<< "[";
+  std::cout<< GetTime()<<" INFO [";
   int pos = width * progress;
   for (int i = 0 ; i < width; ++i){
     if (i < pos) std::cout << "=";

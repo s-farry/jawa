@@ -51,6 +51,11 @@ namespace Utils{
     title<<data->GetTitle()<<"_"<<name<<"_eff_corr_"<<varybin;
     ostringstream efftitle;
     efftitle<<data->GetTitle()<<"_"<<name<<"_eff_"<<varybin;
+    cout<<efftitle.str()<<endl;
+    cout<<"A: "<<eff_hist->GetBinContent(1)<<" "<<eff_hist->GetBinContent(2)<<" "<<eff_hist->GetBinContent(3)<<" "<<
+      eff_hist->GetBinContent(4)<<" "<<eff_hist->GetBinContent(5)<<" "<<eff_hist->GetBinContent(6)<<" "<<
+      eff_hist->GetBinContent(7)<<" "<<eff_hist->GetBinContent(8)<<" "<<eff_hist->GetBinContent(9)<<" "<<
+      eff_hist->GetBinContent(10)<<endl;
     TH3F* eff_corr = (TH3F*)data->Clone(title.str().c_str());
 
     if (varybin == 999 ){
@@ -64,13 +69,17 @@ namespace Utils{
       }
     }
     else if (varybin != 0 && varybin <= eff_hist->GetNbinsX()){
-      double err = varybin > 0 ? eff->GetErrorYhigh(abs(varybin-1)) : -1*eff->GetErrorYlow(abs(varybin-1));
+      double err = varybin > 0 ? eff->GetErrorYhigh(abs(varybin)-1) : -1*eff->GetErrorYlow(abs(varybin)-1);
       //double errlo = eff->GetErrorYlow(varybin);
       //double err = errhi > errlo ? errhi : -errlo;
+      //cout<<"VARYBIN: "<<varybin<<" ERR: "<<err< " "<<eff->GetErrorYhigh(abs(varybin-1))<<" "<<-1*eff->GetErrorYlow(abs(varybin-1))<<endl;
       eff_hist->SetBinContent(abs(varybin), eff_hist->GetBinContent(abs(varybin)) + err);
     }
-
-
+    cout<<"B: "<<eff_hist->GetBinContent(1)<<" "<<eff_hist->GetBinContent(2)<<" "<<eff_hist->GetBinContent(3)<<" "<<
+      eff_hist->GetBinContent(4)<<" "<<eff_hist->GetBinContent(5)<<" "<<eff_hist->GetBinContent(6)<<" "<<
+      eff_hist->GetBinContent(7)<<" "<<eff_hist->GetBinContent(8)<<" "<<eff_hist->GetBinContent(9)<<" "<<
+      eff_hist->GetBinContent(10)<<endl;
+    
     //note z axis should be final variable and x, y should be in same bins as graph
 
     for (int i = 0 ; i < data->GetXaxis()->GetNbins() ; ++i){
@@ -79,12 +88,17 @@ namespace Utils{
 	  vector<double> effs;
 	  effs.push_back(eff_hist->GetBinContent(i+1));
 	  effs.push_back(eff_hist->GetBinContent(j+1));
+	  if (f->GetVal(effs) < 0) cout<<"WHAT THE HELL "<<f->GetVal(effs)<<" "<<eff_hist->GetBinContent(i+1)<<" "<<
+				     eff_hist->GetBinContent(j+1)<<" "<<i+1<<" "<<j+1<<" "<<k+1<<endl;
 	  eff_corr->SetBinContent(i+1,j+1,k+1, eff_corr->GetBinContent(i+1,j+1,k+1) / f->GetVal(effs));	  
 	}
       }
     }
+    
     TH1D* final_eff = data->ProjectionZ(efftitle.str().c_str());
     TH1D* denom     = eff_corr->ProjectionZ();
+    final_eff->Sumw2();
+    denom->Sumw2();
     final_eff->Divide(denom);
 
     denom->Delete();
@@ -268,6 +282,8 @@ namespace Utils{
 			 abs(p.second.at(j*2+1)->GetBinContent(i+1) - central->GetBinContent(i+1)))
 	  /central->GetBinContent(i + 1);
 	a.push_back(err);
+	if (err > 0.1) cout<<err<<" "<<central->GetBinContent(i+1)<<" "<<p.second.at(j*2)->GetBinContent(i+1)<<
+			 " "<<p.second.at(j*2+1)->GetBinContent(i+1)<<" "<<i<<" "<<j<<endl;
 	//total.at(i) =total.at(i) + err*err;
       }
       errs.push_back(a);
