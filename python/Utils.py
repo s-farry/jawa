@@ -2,6 +2,10 @@ from os import sys
 from ROOT import *
 from math import sqrt
 
+class Bunch:
+        def __init__(self, **kwds):
+                self.__dict__.update(kwds)
+
 def normalise_to_min(hist):
     min_width = -1.0
     for i in range(hist.GetXaxis().GetNbins()):
