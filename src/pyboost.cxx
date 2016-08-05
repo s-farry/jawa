@@ -10,6 +10,7 @@ BOOST_PYTHON_MODULE(Jawa)
     def("GetLumiError",  &Utils::GetLumiError_py      );
     def("RemoveErrors",  &Utils::RemoveErrors_py );
     def("GetWeightSum",  &Utils::GetWeightSum_py );
+    def("GetWeightSum",  &Utils::GetWeightSum2_py );
     def("geteff"      ,  &Utils::geteff_py       );
     def("geteff"      ,  &Utils::geteff2_py      );
     def("geteff"      ,  &Utils::geteff3_py                   );
@@ -23,6 +24,7 @@ BOOST_PYTHON_MODULE(Jawa)
     def("saveTGraphErrs"    ,  &Utils::saveTGraphErrs_py      );
     def("tgraph2hist"       ,  &Utils::tgraph2hist_py         );
     def("saveAsTree"        ,  &Utils::saveAsTree_py          );
+    def("standard_deviation",  &Utils::standard_deviation_py);
     
     class_<JawaObj>("JawaObj", init<>() )
       .def(init<string, string>() )
@@ -30,7 +32,6 @@ BOOST_PYTHON_MODULE(Jawa)
       .add_property("Verbose",  &JawaObj::GetVerbose, &JawaObj::SetVerbose)
       ;
     
-
     class_<std::vector<double> >("vect")
       .def(vector_indexing_suite<std::vector<double> >())
       ;
@@ -117,7 +118,8 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("Add3DVars",  &Template::Add3DVars_py)
       .def("ApplyCut",   &Template::ApplyCut)
       .def("FillVars",   &Template::FillVars)
-      .def("SaveToFile", &Template::SaveToFile)
+      .def("SaveToFile", &Template::SaveToFile1_py)
+      .def("SaveToFile", &Template::SaveToFile2_py)
       .def("IsVerbose",  &Template::IsVerbose)
       .def("GetName",    &Template::GetName)
       .def("Reweight",   &Template::Reweight1_py)

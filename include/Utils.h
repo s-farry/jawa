@@ -20,7 +20,7 @@
 #include <Tree.h>
 #include <TRandom3.h>
 #include "Minuit2/Minuit2Minimizer.h"
-#include "Math/Functor.h"
+//#include "Math/Functor.h"
 #include <iostream>
 
 using namespace std;
@@ -71,6 +71,7 @@ namespace Utils{
   //void FCN_func(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag);
 
   double GetWeightSum(TTree* t, string w, string cut);
+  vector<double> GetWeightSum(TTree* t, vector<string> w, string cut);
   void saveAsTree(string fileName, vector<string> varNames, string output);
 
 
@@ -86,6 +87,7 @@ namespace Utils{
   boost::python::list getEffErrMatrix3_py(string name, PyObject* data, PyObject* eff, string s, bool correlated);
 
   double GetWeightSum_py(PyObject* py, string w, string cut);
+  boost::python::list GetWeightSum2_py(PyObject* py, boost::python::list& weights, string cut);
   void RemoveErrors_py(PyObject* pyObj);
   double GetSum_py(PyObject* t, string leaf);
   double GetLumi_py(PyObject* f);

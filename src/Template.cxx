@@ -792,6 +792,15 @@ void Template::SaveToFile(){
   f->Close();
   info()<<"Wrote to "<<m_name<<".root"<<endl;
 }
+void Template::SaveToFile(string output){
+  TFile* f = new TFile(output.c_str(),"RECREATE");
+  
+  SaveToCurrentFile();
+  //f->Write();
+  gROOT->cd();
+  f->Close();
+  info()<<"Wrote to "<<output<<endl;
+}
 
 TH1F* Template::GetHist(string name){
   if (m_variables.find(name) != m_variables.end()){
@@ -1221,6 +1230,7 @@ boost::python::list Template::GetVariables_py(){
   }
   return l;
 }
-
+void Template::SaveToFile1_py(){ SaveToFile(); }
+void Template::SaveToFile2_py(string output) {SaveToFile(output);}
 
 #endif

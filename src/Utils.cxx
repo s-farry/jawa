@@ -714,6 +714,27 @@ namespace Utils{
     return sum;
 
   }
+
+  vector<double> GetWeightSum(TTree* t, vector<string> weights, string cut){
+    t->Draw(">>e", cut.c_str() , "entrylist");
+    vector<double> vals(weights.size(), 0.0);
+    vector<double> sums(weights.size(), 0.0);
+    TEntryList* l = (TEntryList*)gDirectory->Get("e");
+    t->SetBranchStatus("*",0);
+    for (unsigned int i = 0 ; i < weights.size() ; ++i){
+      t->SetBranchStatus(weights.at(i).c_str(),1);
+      t->SetBranchAddress(weights.at(i).c_str(), &vals.at(i));
+    }
+    int nentries = l->GetN();
+    for (int i = 0; i < nentries; ++i){
+      int entry = l->GetEntry(i);
+      t->GetEntry(entry);
+      for (int j = 0 ; j < (int)weights.size() ; ++j) sums.at(j) += vals.at(j);
+    }
+    t->SetBranchStatus("*",1);
+    return sums;
+
+  }
   double GetSum(TTree* t, string leaf){
     double sum = 0;
     double d;
@@ -1015,6 +1036,16 @@ namespace Utils{
   double GetWeightSum_py(PyObject* pyObj, string w, string cut){
     TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
     return GetWeightSum(t, w, cut);
+  }
+  
+  boost::python::list GetWeightSum2_py(PyObject* pyObj, boost::python::list& weights, string cut){
+    TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+    vector<string> ws;
+    for (int i = 0 ; i < len(weights); ++i) ws.push_back(boost::python::extract<string>(weights[i]));
+    vector<double> sums = GetWeightSum(t, ws, cut);
+    boost::python::list lOut;
+    for (int j = 0 ; j < (int)sums.size() ; ++j) lOut.append(sums.at(j));
+    return lOut;
   }
   double GetSum_py(PyObject* pyf, string leaf){
     TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyf));

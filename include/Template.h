@@ -55,6 +55,7 @@ class Template : public JawaObj {
   void SetSelCut(TCut* cut);
   TCut* GetSelCut();
   void SaveToFile();
+  void SaveToFile(string output);
   virtual void SaveToCurrentFile();
   bool IsFixed();
   Var* GetVar(string name);
@@ -155,6 +156,8 @@ class Template : public JawaObj {
   void NormaliseToMC1_py(double xsec, double acc, double Lumi, double nEvts, bool fixed);
   void NormaliseToMC2_py(double xsec, double acc, double Lumi, double nEvts);
   PyObject* GetSelCut_py();
+  void SaveToFile1_py();
+  void SaveToFile2_py(string output);
   #endif
   
  protected:
