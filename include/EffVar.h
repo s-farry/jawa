@@ -29,7 +29,6 @@ class EffVar : public Var {
   TH1F* GetBkgTotHist();
   TH1F* GetBkgPassHist();
   TH1F* GetMeanTotHist();
-  TH1F* GetMeanPassHist();
 
   PyObject* GetTotHist_py();
   PyObject* GetPassHist_py();
@@ -37,14 +36,12 @@ class EffVar : public Var {
   void MakeTGraph();
   void MakeEffHist(bool ClopperPearsonError = true);
 
-  void FillVar(bool pass, double v_pltvar, double v_var, double efflo, double effhi, double weight = 1);
-  void FillVar(bool pass, double v_pltvar, int i_var, double efflo, double effhi, double weight = 1);
-  void FillVar(bool pass, double v_pltvar, float v_var, double efflo, double effhi, double weight = 1);
-  void FillVar(string type, double v_pltvar, double v_var, double efflo, double effhi, double weight = 1);
-  void FillVar(string type, double v_pltvar, float v_var, double efflo, double effhi, double weight = 1);
-  void FillVar(string type, double v_pltvar, int i_var, double efflo, double effhi, double weight = 1);
-
-  void MakeHists(string name, int npltbins, double pltrangelow, double pltrangehi, bool reweight = false);
+  void FillVar(bool pass, double v_var, double weight = 1);
+  void FillVar(bool pass, int i_var   , double weight = 1);
+  void FillVar(bool pass, float v_var , double weight = 1);
+  //void FillVar(string type, double v_pltvar, double v_var, double efflo, double effhi, double weight = 1);
+  //void FillVar(string type, double v_pltvar, float v_var, double efflo, double effhi, double weight = 1);
+  //void FillVar(string type, double v_pltvar, int i_var, double efflo, double effhi, double weight = 1);
 
   void AddSystematic(double pc);
   void AddInvSystematic(double pc);
@@ -53,7 +50,6 @@ class EffVar : public Var {
 
 
   void FillBkgHists(double lo, double hi);
-  void FillMeanHists();
   void Normalise(double N);
 
   void AddSystematic1(double pc);

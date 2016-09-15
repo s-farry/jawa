@@ -336,7 +336,6 @@ vector< vector< pair<double, double> > > Tune::getVals(Tree* tree, Expr* var, Va
 }
 
 void Tune::tune(){
-
   fillVals();
   
   ROOT::Minuit2::Minuit2Minimizer fitter;
@@ -533,8 +532,6 @@ void Tune::ReweightMC(ReweightVar* rwvar){
 void Tune::ReweightData(ReweightVar* rwvar){
   m_data_rwvars.push_back(rwvar);
 }
-
-
 void Tune::SetSDFactor(double s){
   m_sdfac = s;
 }

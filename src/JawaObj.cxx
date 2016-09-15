@@ -85,7 +85,7 @@ ostream& JawaObj::msg(string logname, OutputLevel o){
   ostream& null_stream = *m_null;
   if (o > m_outputlevel) return null_stream;
   ostream& stream = cout;
-  stream<<GetTime()<<" "<<logname_out<<" : "<<output<<" : "<<name<<": ";
+  stream<<GetTime()<<" "<<logname_out<<" \t "<<output<<" \t "<<name<<"\t ";
   return stream;
 }
 
