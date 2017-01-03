@@ -46,7 +46,7 @@ MWTemplate::MWTemplate(string name, MWTemplate* A, MWTemplate* B) : Template(nam
       }
       if (histA && histB){
 	string title(histA->GetTitle());
-	title += "_combined";
+	title += "_"+name+"_combined";
 	TH1F* histC = (TH1F*)histA->Clone(title.c_str());
 	histC->Add(histA);
 	varmap.insert(pair<string, TH1F*>((*imm).first, histC));
@@ -118,7 +118,7 @@ void MWTemplate::FillVars(){
     for (Long64_t jentry = 0 ; jentry < nentries ; jentry++) {
       map<string, double> weights;
 
-      if (jentry%10000==0 && m_outputevts) cout<<"Entry "<<jentry<<" of "<<nentries<<endl;
+      if (jentry%10000==0 && m_outputevts) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
       int entry = m_entryLists.at(ti)->GetEntry(jentry);
       t->GetEntry(entry);
 
@@ -191,7 +191,10 @@ void MWTemplate::AddWeight(string wName, string weightname) {
     Var* var = (*iv).second;
     TH1F* varhist0 = var->GetHist();
     string varhist0_name = varhist0->GetName();
-    m_varhists[name][wName] = ((TH1F*)varhist0->Clone( (varhist0_name + wName).c_str() ));
+    TH1F* newH = (TH1F*)varhist0->Clone( (varhist0_name + wName).c_str());
+    newH->SetTitle((varhist0_name + wName).c_str());
+    //m_varhists[name][wName] = ((TH1F*)varhist0->Clone( (varhist0_name + wName).c_str() ));
+    m_varhists[name][wName] = newH;
   }
   for (std::map<string, Var2D*>::iterator iv = m_2Dvariables.begin() ; iv != m_2Dvariables.end() ; ++iv ){
     string name = (*iv).first;
@@ -249,15 +252,21 @@ void MWTemplate::SaveToCurrentFile(){
 }
 
 void MWTemplate::SaveToFile(){
-  cout<<"Name is "<<m_name<<" (MWTemplate)"<<endl;
-  cout<<"Saving "<<m_name<<" to file"<<endl;
   TFile* f = new TFile((m_name+".root").c_str(),"RECREATE");
   
   SaveToCurrentFile();
-  cout<<"Written"<<endl;
   //f->Write();
   gROOT->cd();
   f->Close();
+}
+
+void MWTemplate::SaveToFile(string output){
+  TFile* f = new TFile(output.c_str(),"RECREATE");
+  SaveToCurrentFile();
+  //f->Write();
+  gROOT->cd();
+  f->Close();
+  info()<<"Wrote to "<<output<<endl;
 }
 
 TH1F* MWTemplate::GetWeightHist(string var, string wname){
@@ -350,3 +359,6 @@ PyObject* MWTemplate::GetWeight2DHist_py(string var, string wname){
 }
 std::map<string, std::map<string, TH1F*> > MWTemplate::GetWeightHists(){ return m_varhists;}
 std::map<string, std::map<string, TH2F*> > MWTemplate::Get2DWeightHists(){return m_2dvarhists;}
+
+void MWTemplate::SaveToFile1_py(){ SaveToFile(); }
+void MWTemplate::SaveToFile2_py(string output) {SaveToFile(output);}

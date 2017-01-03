@@ -27,10 +27,14 @@ using namespace std;
 typedef vector< vector< double > > matrix;
 
 namespace Utils{
-
-
   enum VaryType{AllUp = 999, AllDown = -999, None = 0};
-  
+
+  struct weight {
+    double val;
+    double err;
+    int bin;
+  };
+
   void saveMatrix(string name, matrix A);
   void saveTH1F(string name, TH1F* h);
   void saveTGraph(string name, TGraph* g);

@@ -115,7 +115,7 @@ class EfficiencyClass: public JawaObj {
   void SetBranches(Tree* t);
   void PrintVars();
   void FreeBranches(Tree* t);
-  double FillVars(bool pass, Tree* t);
+  pair<Utils::weight,Utils::weight> FillVars(bool pass, Tree* t);
   string GetRootName(const char* file);
   void AddFits(TObjArray* hists, TObjArray* fits);
   void AddFits(TObjArray* hists, TObjArray* fitssig, TObjArray* fitsbkg);
@@ -136,7 +136,11 @@ class EfficiencyClass: public JawaObj {
   void Reweight(string var1, string var2, TH1F* hist, string form = "");
   void Reweight(string var1, string var2, string var3, string var4, TH2F* hist, string form = "");
 
+  void ReweightEff(string var1, string var2, TH2F* hist);
+
+
   std::vector<ReweightVar*> m_reweightvariables;
+  std::vector<ReweightVar*> m_reweighteffvariables;
 
 
   string m_fitopt;
@@ -168,15 +172,9 @@ class EfficiencyClass: public JawaObj {
 
   bool VarExists(string var);
 
-  bool   m_reweight;
-  bool   m_reweight_func;
-  bool   m_reweight_map;
-  bool   m_reweight_bin;
   std::map<int, double> m_reweightmap;
-  TF1*   m_reweight_tf1;
-  TH1F*  m_reweight_hist;
-  string m_reweightvar;
   bool   m_fillbkg;
+  bool   m_scaleerrs;
 
   void Run();
 
@@ -194,6 +192,8 @@ class EfficiencyClass: public JawaObj {
   void Reweight3_py(string leaf);
   void Reweight4_py(string var1, string var2, PyObject* th2f, string form);
   void Reweight5_py(string var1, string var2, string var3, string var4, PyObject* th2f, string form);
+
+  void ReweightEff_py(string var1, string var2, PyObject* th2f);
   
  public:
   
@@ -232,7 +232,9 @@ class EfficiencyClass: public JawaObj {
   void SetVerbose(bool verbose);
   bool GetVerbose();
   void AddTree(TTree* tree);
+  void AddTrees(std::vector<TTree*> tree);
   void AddTree_py(PyObject* tree);
+  void AddTrees_py(boost::python::list& ns);
   void SetSelectionCut(TCut cut);
   void SetSelectionCut_py(PyObject* cut);
   std::pair<TF1*,TF1*> FitHistogram(TH1F* massplot, double lo, double hi, string opt = "Z0_CB");
@@ -245,9 +247,17 @@ class EfficiencyClass: public JawaObj {
   void SetVariables(std::map<string, EffVar*>);
   void SetEffRange(double lo, double hi);
   Eff GetTotEff();
+
+  void SetScaleErr(bool scaleerr);
+  bool GetScaleErr();
+
   //double as they can be weighted
   double m_Ntot;
   double m_Npass;
+  
+  TObjArray* m_Npass_rweff_varyhi;
+  TObjArray* m_Npass_rweff_varylo;
+
   
 
 };

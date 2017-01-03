@@ -28,6 +28,7 @@ class MWTemplate : public Template {
 
   virtual void SaveToCurrentFile();
   void SaveToFile();
+  void SaveToFile(string output);
 
   void FillVars();
   void AddWeight(string wName, string weightname);
@@ -43,8 +44,11 @@ class MWTemplate : public Template {
   void ScaleWeight(string w, double s);
 
 
+  void SaveToFile1_py();
+  void SaveToFile2_py(string output);
  private:
   std::map<string, std::map<string, TH1F*> > m_varhists;
   std::map<string, std::map<string, TH2F*> > m_2dvarhists;
   std::map<string, ReweightVar*> m_mwreweightvars;
+  std::map<string, double> m_weightedEvts;
 };

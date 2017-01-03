@@ -13,7 +13,6 @@
 #include <TF1.h>
 #include <TEntryList.h>
 #include <TRandom3.h>
-#include <Utils.h>
 
 using namespace std;
 
@@ -36,7 +35,13 @@ EffVar::EffVar(string name, string var, std::vector<double> edges, string prefix
 
   m_totBkgFits = new TObjArray();
   m_passBkgFits = new TObjArray();
-  
+
+  m_rweff_varyhi_passhists = new TObjArray();
+  m_rweff_varylo_passhists = new TObjArray();
+
+  //m_rweff_varyhi_effgraphs = new TObjArray();
+  //m_rweff_varylo_effgraphs = new TObjArray();
+
   m_totCBFits->SetOwner(true);
   m_passCBFits->SetOwner(true);
 
@@ -74,7 +79,15 @@ EffVar::EffVar(string name, string var, int nbins, double lo, double hi, string 
 
   m_totBkgFits = new TObjArray();
   m_passBkgFits = new TObjArray();
-  
+
+
+  m_rweff_varyhi_passhists = new TObjArray();
+  m_rweff_varylo_passhists = new TObjArray();
+
+  //m_rweff_varyhi_effgraphs = new TObjArray();
+  //m_rweff_varylo_effgraphs = new TObjArray();
+
+
   m_totCBFits->SetOwner(true);
   m_passCBFits->SetOwner(true);
 
@@ -114,6 +127,13 @@ EffVar::EffVar(string name, TGraphAsymmErrors* effgraph)
   m_totBkgFits  = new TObjArray();
   m_passBkgFits = new TObjArray();
 
+
+  m_rweff_varyhi_passhists = new TObjArray();
+  m_rweff_varylo_passhists = new TObjArray();
+
+  //m_rweff_varyhi_effgraphs = new TObjArray();
+  //m_rweff_varylo_effgraphs = new TObjArray();
+
   m_tothist  = 0;
   m_passhist = 0;
   m_failhist = 0;
@@ -140,6 +160,12 @@ EffVar::EffVar(string name, TFile* f, string prefix): Var(name){
 
   m_totBkgFits = new TObjArray();
   m_passBkgFits = new TObjArray();
+
+  m_rweff_varyhi_passhists = new TObjArray();
+  m_rweff_varylo_passhists = new TObjArray();
+
+  //m_rweff_varyhi_effgraphs = new TObjArray();
+  //m_rweff_varylo_effgraphs = new TObjArray();
 
   m_systematic = false;
 
@@ -193,29 +219,44 @@ EffVar::EffVar(EffVar* varA, EffVar* varB, string prefix): Var(varA->GetName(), 
       m_totBkgFits         = new TObjArray();
       m_passBkgFits        = new TObjArray();
       
-      //m_prefix             = prefix;
+      m_rweff_varyhi_passhists = new TObjArray();
+      m_rweff_varylo_passhists = new TObjArray();
+      
+      //m_rweff_varyhi_effgraphs = new TObjArray();
+      //m_rweff_varylo_effgraphs = new TObjArray();
+
+      m_prefix             = prefix;
 
       m_effgraph = new TGraphAsymmErrors(m_nbins);
       
-      if ( prefix != "" ) prefix = prefix+"/";
+      if ( m_prefix != "" ) m_prefix = m_prefix+"/";
       
       vector<double> edges = GetBinEdges(varA->GetTotHist());
 
-      m_tothist = new TH1F((prefix+m_name+"_tot").c_str(), m_name.c_str(), m_nbins, &edges[0]);
-      m_passhist = new TH1F((prefix+m_name+"_pass").c_str(), (m_name+"_pass").c_str(), m_nbins, &edges[0]);
-      m_failhist = new TH1F((prefix+m_name+"_fail").c_str(), (m_name+"_fail").c_str(), m_nbins, &edges[0]);
+      m_tothist = new TH1F((m_prefix+m_name+"_tot").c_str(), m_name.c_str(), m_nbins, &edges[0]);
+      m_passhist = new TH1F((m_prefix+m_name+"_pass").c_str(), (m_name+"_pass").c_str(), m_nbins, &edges[0]);
+      m_failhist = new TH1F((m_prefix+m_name+"_fail").c_str(), (m_name+"_fail").c_str(), m_nbins, &edges[0]);
 
-      m_bkgtot  = new TH1F((prefix+m_name+"_bkgtot").c_str() , (m_name+"_bkgtot").c_str()  , m_nbins, &edges[0]);
-      m_bkgpass = new TH1F((prefix+m_name+"_bkgpass").c_str(), (m_name+"_bkgpass").c_str() , m_nbins, &edges[0]);
+      m_bkgtot  = new TH1F((m_prefix+m_name+"_bkgtot").c_str() , (m_name+"_bkgtot").c_str()  , m_nbins, &edges[0]);
+      m_bkgpass = new TH1F((m_prefix+m_name+"_bkgpass").c_str(), (m_name+"_bkgpass").c_str() , m_nbins, &edges[0]);
 
       m_type = varA->m_type;
       m_systematic = false;
-      
-      TH1F* hist = (TH1F*)varA->m_tothists->At(0);
 
-      int npltbins       = hist->GetNbinsX();
-      double pltrangelow = hist->GetXaxis()->GetXmin();
-      double pltrangehi  = hist->GetXaxis()->GetXmax();
+      /*
+
+      for (int i = 0 ; i < varA->m_reweighteffuperrs->GetEntries() ; ++ i){
+	TH1F* varA_up = (TH1F*)varA->m_reweighteffuperrs->At(i);
+	TH1F* varA_lo = (TH1F*)varA->m_reweighteffloerrs->At(i);
+	TH1F* varB_up = (TH1F*)varB->m_reweighteffuperrs->At(i);
+	TH1F* varB_lo = (TH1F*)varB->m_reweighteffloerrs->At(i);
+
+
+  	
+      }
+
+      */
+
 
       //Loop over tot and pass hists and add together
       for (signed int i = 0; i < m_nbins; ++i){
@@ -239,27 +280,35 @@ EffVar::EffVar(EffVar* varA, EffVar* varB, string prefix): Var(varA->GetName(), 
 	string id_fail    = (m_prefix+"_"+m_name+"_"+m_var+"_"+low+"_"+high+"_fail");
 	string title_fail = (m_prefix+"_"+low+"<"+m_var+"<"+high+"_fail");
 	
-	TH1F* hist_tot = new TH1F(id_tot.c_str(), title_tot.c_str(), npltbins,pltrangelow,pltrangehi);
-	TH1F* hist_pass = new TH1F(id_pass.c_str(), title_pass.c_str(), npltbins,pltrangelow,pltrangehi);
-	TH1F* hist_fail = new TH1F(id_fail.c_str(), title_fail.c_str(), npltbins,pltrangelow,pltrangehi);
-	
-	hist_tot->Add((TH1F*)varA->m_tothists->At(i));
-	hist_tot->Add((TH1F*)varB->m_tothists->At(i));
-	
-	hist_pass->Add((TH1F*)varA->m_passhists->At(i));
-	hist_pass->Add((TH1F*)varB->m_passhists->At(i));
-	
-	hist_fail->Add((TH1F*)varA->m_failhists->At(i));
-	hist_fail->Add((TH1F*)varB->m_failhists->At(i));
-
-	m_tothists->Add(hist_tot);
-	m_passhists->Add(hist_pass);
-	m_failhists->Add(hist_fail);
-	
 	m_tothist->SetBinContent(i+1, varA->m_tothist->GetBinContent(i+1) + varB->m_tothist->GetBinContent(i+1));
 	m_passhist->SetBinContent(i+1, varA->m_passhist->GetBinContent(i+1) + varB->m_passhist->GetBinContent(i+1));
 	m_failhist->SetBinContent(i+1, varA->m_failhist->GetBinContent(i+1) + varB->m_failhist->GetBinContent(i+1));
 	
+      }
+
+      if (varA->GetEffRWVaryHiPassHists() && varB->GetEffRWVaryHiPassHists() &&
+	  varA->GetEffRWVaryHiPassHists()->GetEntries() == varB->GetEffRWVaryHiPassHists()->GetEntries()){
+	for (signed int i = 0 ; i < varA->GetEffRWVaryHiPassHists()->GetEntries() ; ++ i){
+	  TH1F* h  = ((TH1F*)varA->GetEffRWVaryHiPassHists()->At(i));
+	  TH1F* h2 = ((TH1F*)varB->GetEffRWVaryHiPassHists()->At(i));
+	  ostringstream s;
+	  s<<h->GetName()<<"_combined";
+	  TH1F* h3 = (TH1F*)h->Clone(s.str().c_str());
+	  h3->Add(h2);
+	  m_rweff_varyhi_passhists->Add(h3);
+	}
+      }
+      if (varA->GetEffRWVaryLoPassHists() && varB->GetEffRWVaryLoPassHists() &&
+	  varA->GetEffRWVaryLoPassHists()->GetEntries() == varB->GetEffRWVaryLoPassHists()->GetEntries()){
+	for (signed int i = 0 ; i < varA->GetEffRWVaryLoPassHists()->GetEntries() ; ++ i){
+	  TH1F* h  = ((TH1F*)varA->GetEffRWVaryLoPassHists()->At(i));
+	  TH1F* h2 = ((TH1F*)varB->GetEffRWVaryLoPassHists()->At(i));
+	  ostringstream s;
+	  s<<h->GetName()<<"_combined";
+	  TH1F* h3 = (TH1F*)h->Clone(s.str().c_str());
+	  h3->Add(h2);
+	  m_rweff_varylo_passhists->Add(h3);
+	}
       }
       
     }
@@ -307,6 +356,18 @@ void EffVar::FillBkgHists(double lo, double hi){
   }
 }
 
+void EffVar::AddEffScaleVaryHists(TH2F* scales){
+  for (int i = 0 ; i < scales->GetNbinsX() ; ++i){
+    for (int j = 0 ; j < scales->GetNbinsY() ; ++j ){
+      ostringstream ssup, sslo;
+      ssup<<m_prefix<<m_name<<"_varyup_tot_"<<i<<"_"<<j;
+      sslo<<m_prefix<<m_name<<"_varydown_tot_"<<i<<"_"<<j;
+      m_rweff_varyhi_passhists->Add(m_passhist->Clone(ssup.str().c_str()));
+      m_rweff_varylo_passhists->Add(m_passhist->Clone(sslo.str().c_str()));
+    }
+  }
+}
+
 void EffVar::MakeTGraph(){
   TGraphAsymmErrors* graph = new TGraphAsymmErrors(m_passhist,m_tothist);
   //m_effgraph = (TGraphAsymmErrors*)graph->Clone();
@@ -327,6 +388,15 @@ void EffVar::MakeTGraph(){
       m_effgraph->GetPoint(i, x, y);
     }
   }
+  //cout<<m_reweighteffuperrs<<" "<<m_reweighteffuperrs->GetEntries()<<endl;
+  /*
+  for (int i = 0 ; i < m_reweighteffuperrs->GetEntries() ; ++ i ){
+    ((TH1F*)m_rweighteffuperrs->At(i))->Divide(m_tothist);
+  }
+  for (int i = 0 ; i < m_reweighteffloerrs->GetEntries() ; ++ i ){
+    ((TH1F*)m_reweighteffloerrs->At(i))->Divide(m_tothist);
+    }
+  */
 }
 
 void EffVar::MakeEffHist(bool ClopperPearsonError){
@@ -345,29 +415,55 @@ void EffVar::MakeEffHist(bool ClopperPearsonError){
   }
 }
 
+TObjArray* EffVar::GetEffRWVaryHiPassHists(){ return m_rweff_varyhi_passhists; }
+TObjArray* EffVar::GetEffRWVaryLoPassHists(){ return m_rweff_varylo_passhists; }
+//TObjArray* EffVar::GetEffRWVarHiGraphs(){ return m_rweff_varyhi_effgraphs; }
+//TObjArray* EffVar::GetEffRWVarLoGraphs(){ return m_rweff_varylo_effgraphs; }
 
-void EffVar::FillVar(bool pass, float v_var, double weight){
+
+
+void EffVar::FillVar(bool pass, float v_var, double weight, double effw){
   double var = (double)v_var;
-  FillVar(pass, var, weight);
+  FillVar(pass, var, weight, effw);
 }
 
-void EffVar::FillVar(bool pass, double v_var, double weight){
+void EffVar::FillVar(bool pass, double v_var, double weight, double effw ){
   m_tothist->Fill(v_var, weight);
   if ( pass ) {
-    m_passhist->Fill(v_var, weight);
+    m_passhist->Fill(v_var, weight * effw);
   } else {
     m_failhist->Fill(v_var, weight);
   }
 }
 
-void EffVar::FillVar(bool pass, int i_var,  double weight){
+void EffVar::FillVar(bool pass, double v_var, Utils::weight weight, Utils::weight effw ){
+  m_tothist->Fill(v_var, weight.val);
+  if ( pass ) {
+    m_passhist->Fill(v_var, weight.val * effw.val);
+    for (int i = 0 ; i < m_rweff_varyhi_passhists->GetEntries() ; ++ i ){
+      if ( i == effw.bin ){
+	((TH1F*)m_rweff_varyhi_passhists->At(i))->Fill( v_var, weight.val*(effw.val + effw.err) );
+	((TH1F*)m_rweff_varylo_passhists->At(i))->Fill( v_var, weight.val*(effw.val - effw.err) );
+      }
+      else {
+	((TH1F*)m_rweff_varyhi_passhists->At(i))->Fill( v_var, weight.val*effw.val);
+	((TH1F*)m_rweff_varylo_passhists->At(i))->Fill( v_var, weight.val*effw.val);
+      }
+    }
+
+  } else {
+    m_failhist->Fill(v_var, weight.val);
+  }
+}
+
+void EffVar::FillVar(bool pass, int i_var,  double weight, double effw){
   if (strcmp(m_type, "I") != 0) {
     cout<<"-----ERROR - Wrong Type Used"<<endl; 
     return;
   }
   m_tothist->Fill(i_var, weight);
   if ( pass ) {
-    m_passhist->Fill(i_var, weight);
+    m_passhist->Fill(i_var, weight * effw);
   } else m_failhist->Fill(i_var, weight);
 }
 

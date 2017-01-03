@@ -1,6 +1,7 @@
 from os import sys
 from ROOT import *
 from math import sqrt
+from Jawa import GetLumi
 
 class Bunch:
         def __init__(self, **kwds):
@@ -345,6 +346,7 @@ class asymm_details:
         self.tot_asymm_alphas_errlo = 0.0
         #differential plot with scale errors
         self.asymm = c1.GetAsymmetry(c2)
+        self.asymm_stat = c1.GetAsymmetry(c2)
         self.asymm_scales = [p.GetAsymmetry(m) for p, m in zip(scales1, scales2)]
         self.asymm_scaleerrs        = GetSpreadGraph(name+"_scaleerrs", [self.asymm] + self.asymm_scales, addErr = True)  
         self.asymm_scaleerrs_nostat = GetSpreadGraph(name+"_scaleerrs_nostat", [self.asymm] + self.asymm_scales, addErr = False) 
@@ -385,12 +387,13 @@ class asymm_details:
         TParameter(float)(self.name+"_tot_errhi", self.tot_asymm_errhi).Write()
         TParameter(float)(self.name+"_tot_errlo", self.tot_asymm_errlo).Write()
         self.asymm_scaleerrs_nostat.Write(self.name+"_scaleerr")
+        self.asymm_stat.Write(self.name+"_staterrs")
         if (self.asymm_pdferrs_nostat):
-            self.asymm_pdferrs_nostat.Write(self.name+"_pdferr")   
+            self.asymm_pdferrs_nostat.Write(self.name+"_pdferrs")   
         if (self.asymm_alphaserrs_nostat):
-            self.asymm_alphaserrs_nostat.Write(self.name+"_alphaserr")    
+            self.asymm_alphaserrs_nostat.Write(self.name+"_alphaserrs")    
         if (self.asymm_toterrs):
-            self.asymm_toterrs.Write(self.name+"_toterr")             
+            self.asymm_toterrs.Write(self.name+"_toterrs")             
                 
 
 def get_ratio(name, c1, c2):
@@ -477,8 +480,10 @@ class details:
         self.norm_xsec_scales = [h.Clone(h.GetName()+"_norm") for h in scales]
         #normalise
         for h in ([self.norm_xsec] + self.norm_xsec_scales):
-            h.Scale(1/h.Integral())
-        #differential plot with scale errors
+		if h.Integral() > 0:
+			h.Scale(1/h.Integral())
+        #differential plot with scale errorss
+	self.xsec_staterrs         = c.Clone(name+"_staterrs")
         self.xsec_scaleerrs        = GetSpreadGraph(name+"_scaleerrs", [c] + scales, addErr = True)  
         self.xsec_scaleerrs_nostat = GetSpreadGraph(name+"_scaleerrs_nostat", [c] + scales, addErr = False) 
         #normalised differential plot with scale errors
@@ -493,7 +498,8 @@ class details:
             self.norm_xsec_pdfs = [h.Clone(h.GetName()+"_norm") for h in pdfs]
             #normalise
             for h in (self.norm_xsec_pdfs):
-                h.Scale(1/h.Integral())
+		    if h.Integral() > 0:
+			    h.Scale(1/h.Integral())
             self.xsec_pdferrs        = GetPDFGraph(name+"_pdferrs", [c] +  pdfs, addErr = True)  
             self.xsec_pdferrs_nostat = GetPDFGraph(name+"_pdferrs_nostat", [c] + pdfs, addErr = False) 
             self.xsec_toterrs        = combine_graph_errs(name+"_toterrs",
@@ -514,7 +520,8 @@ class details:
             self.norm_xsec_alphas = [h.Clone(h.GetName()+"_norm") for h in alphas]
             #normalise
             for h in (self.norm_xsec_alphas):
-                h.Scale(1/h.Integral())
+		    if h.Integral() > 0:
+			    h.Scale(1/h.Integral())
             self.xsec_toterrs        = combine_graph_errs(name+"_toterrs",
                                                           scale = self.xsec_scaleerrs_nostat,
                                                           pdf = self.xsec_pdferrs_nostat,
@@ -536,6 +543,7 @@ class details:
         TParameter(float)(self.name+"_alphaserr_lo", self.tot_xsec_alphas_errlo).Write()
         TParameter(float)(self.name+"_toterr_hi", self.tot_xsec_errhi).Write()
         TParameter(float)(self.name+"_toterr_lo", self.tot_xsec_errlo).Write()
+        self.xsec_staterrs.Write(self.name+"_staterrs")
         self.xsec_scaleerrs_nostat.Write(self.name+"_scaleerrs")
         #self.norm_xsec_scaleerrs_nostat.Write(self.name+"_norm_scaleerrs")
         if self.xsec_pdferrs:

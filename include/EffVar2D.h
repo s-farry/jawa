@@ -54,6 +54,11 @@ class EffVar2D: public Var2D {
   void Normalise(double N);
 
   TObjArray* GetEffGraphs();
+  TObjArray* GetEffRWVarHiGraphs();
+  TObjArray* GetEffRWVarLoGraphs();
+  TObjArray* GetEffRWVarHiPassHists();
+  TObjArray* GetEffRWVarLoPassHists();
+
 
  protected:
   string m_prefix;
@@ -73,6 +78,13 @@ class EffVar2D: public Var2D {
   TObjArray* m_failhists;
   TH2F* m_meantot;
   TH2F* m_meanpass;
+
+
+  TObjArray* m_rweff_varyhi_passhists;
+  TObjArray* m_rweff_varylo_passhists;
+
+  TObjArray* m_rweff_varyhi_effgraphs;
+  TObjArray* m_rweff_varylo_effgraphs;
 
   
 

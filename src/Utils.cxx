@@ -663,15 +663,17 @@ namespace Utils{
 
   double GetLumi(TFile* f){
     TTree* lumit = (TTree*)f->Get("GetIntegratedLuminosity/LumiTuple");
-    double lumi = 0;
+    double lumi = -1.0;
     double lumi_job;
-    int nentries = lumit->GetEntries();
-    lumit->SetBranchAddress("IntegratedLuminosity", &lumi_job);
-    for (int i = 0 ; i < nentries; ++i){
-      lumit->GetEntry(i);
-      lumi += lumi_job;
+    if (lumit){
+      lumi = 0.0;
+      int nentries = lumit->GetEntries();
+      lumit->SetBranchAddress("IntegratedLuminosity", &lumi_job);
+      for (int i = 0 ; i < nentries; ++i){
+	lumit->GetEntry(i);
+	lumi += lumi_job;
+      }
     }
-    
     //lumit->Draw("IntegratedLuminosity>>lumihist()","","goff");
     //TH1F* lumihist=(TH1F*)gDirectory->Get("lumihist");
     //double Lumi = (double)lumihist->GetMean()*lumihist->GetEntries();
