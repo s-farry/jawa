@@ -12,8 +12,6 @@
 #include <TColor.h>
 #include <TFractionFitter.h>
 #include <TF1.h>
-#include <TPython.h>
-#include <boost/python.hpp>
 #include <Expr.h>
 #include <Var.h>
 #include <Var2D.h>
@@ -22,6 +20,11 @@
 #include "Minuit2/Minuit2Minimizer.h"
 #include "Math/Functor.h"
 #include <iostream>
+
+#ifdef WITHPYTHON
+#include <TPython.h>
+#include <boost/python.hpp>
+#endif
 
 using namespace std;
 typedef vector< vector< double > > matrix;

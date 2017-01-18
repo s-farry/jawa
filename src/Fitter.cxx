@@ -63,35 +63,6 @@ Fitter::Fitter(TH2F* hist, TObjArray* array, vector<string> names, string var) :
   for (unsigned int i = 0; i < names.size(); ++i) m_names[names.at(i)] = i;
 
 }
-Fitter::Fitter(PyObject* hist, PyObject* array, boost::python::list& ns, string var) : JawaObj("Fitter"){
-  m_data  = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(hist));
-  m_2ddata = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(hist));
-  std::string cName(m_data->ClassName());
-  if (cName.find("TH1") == 0){
-    info()<<"Initialising 1D fitter from python: "<<m_data->ClassName()<<endl;
-    m_2ddata = 0;
-    m_2d = false;
-  }
-  else{
-    info()<<"Initialising 2D fitter from python: "<<m_data->ClassName()<<endl;
-    m_data = 0;
-    m_2d = true;
-  }
-
-  m_toFit = (TObjArray*)(TPython::ObjectProxy_AsVoidPtr(array));
-  m_status = 0;
-  m_clo = 0;
-  m_chi = 0;
-  m_lo = 0;
-  m_hi = 0;
-  m_fit = 0;
-  m_exclude = true;
-  m_var = var;
-  for (unsigned int i = 0; i < len(ns); ++i){
-    string name = boost::python::extract<string>(ns[i]);
-    m_names[name] = i;
-  }
-}
 
 /*Fitter::Fitter(PyObject* hist, boost::python::list& array, boost::python::list& ns){
   m_data  = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(hist));
@@ -313,6 +284,36 @@ TH1F* Fitter::GetData(){
 }
 
 #ifdef WITHPYTHON
+Fitter::Fitter(PyObject* hist, PyObject* array, boost::python::list& ns, string var) : JawaObj("Fitter"){
+  m_data  = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(hist));
+  m_2ddata = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(hist));
+  std::string cName(m_data->ClassName());
+  if (cName.find("TH1") == 0){
+    info()<<"Initialising 1D fitter from python: "<<m_data->ClassName()<<endl;
+    m_2ddata = 0;
+    m_2d = false;
+  }
+  else{
+    info()<<"Initialising 2D fitter from python: "<<m_data->ClassName()<<endl;
+    m_data = 0;
+    m_2d = true;
+  }
+
+  m_toFit = (TObjArray*)(TPython::ObjectProxy_AsVoidPtr(array));
+  m_status = 0;
+  m_clo = 0;
+  m_chi = 0;
+  m_lo = 0;
+  m_hi = 0;
+  m_fit = 0;
+  m_exclude = true;
+  m_var = var;
+  for (unsigned int i = 0; i < len(ns); ++i){
+    string name = boost::python::extract<string>(ns[i]);
+    m_names[name] = i;
+  }
+}
+
 PyObject* Fitter::GetTemplates_py(){
   return TPython::ObjectProxy_FromVoidPtr(m_toFit, m_toFit->ClassName());
 }

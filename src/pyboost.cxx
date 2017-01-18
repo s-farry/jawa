@@ -382,6 +382,7 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("PrintParameters", &Fit::PrintParameters)
       .def("SetRange", &Fit::SetRange)
       ;
+    
     class_<FitAnalysis>("FitAnalysis", init<string, string, string>())
       .def("SetVal",   &FitAnalysis::SetVal)
       .def("FixVal",   &FitAnalysis::FixVal)

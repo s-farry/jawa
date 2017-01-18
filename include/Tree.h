@@ -47,7 +47,6 @@ class Tree : public JawaObj{
   double GetWeight();
   void GetEntry(int i);
   TTree* GetTTree();
-  PyObject* GetTTree_py();
   string GetBranchType(string name);
   bool isSet(string name);
   void AddBranches(Expr* e);
@@ -64,9 +63,10 @@ class Tree : public JawaObj{
   #ifdef WITHPYTHON
   boost::python::list getCorrelationMatrix_py(boost::python::list& exprs, Expr* cut);
   //For exposing to python
+  PyObject* GetTTree_py();
   double GetVal_py(string var);
   double GetVal2_py(Expr* e);
-  static bool is_number(const std::string& s);
+  //static bool is_number(const std::string& s);
   double GetStdDev_py(Expr* e, double mean, Expr* cut);
   double GetMean_py(Expr* e, Expr* cut);
   #endif

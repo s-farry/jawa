@@ -48,9 +48,6 @@ TTree* Tree::GetTTree(){
   return m_tree;
 }
 
-PyObject* Tree::GetTTree_py(){
-  return TPython::ObjectProxy_FromVoidPtr(m_tree, m_tree->ClassName());
-}
 
 void Tree::SetBranches(vector<string> variables){
   for (vector<string>::iterator iv = variables.begin() ; iv != variables.end() ; ++iv ){
@@ -238,14 +235,6 @@ string Data::GetType(){
   return type;
 }
 
-double Tree::GetVal_py(string var){
-  return GetVal(var);
-}
-double Tree::GetVal2_py(Expr* e){
-  //Expr* e = boost::python::extract<Expr*>(pyObj);
-  return GetVal(e);
-}
-
 
 void Tree::AddBranches(Expr* e){
   vector<string> varnames = e->GetVarNames();
@@ -303,12 +292,12 @@ int Tree::GetEntries(Expr* e){
 void Tree::SetWeight(double w){
   m_weight = w;
 }
-
+/*
 bool Tree::is_number(const std::string& s){
   //cout<<"checking is number for "<<s<<endl;
   return (strspn( s.c_str(), "-.01234567890") == s.size() );
 }
-
+*/
 double Tree::GetMean(Expr* e, EntryList* l){
   list<int> entries = l->GetList();
   SetBranches(e->GetVarNames());
@@ -383,8 +372,20 @@ vector< vector<double> > Tree::getCorrelationMatrix(vector<Expr*> exprs, Expr* c
 }
 
 
-
+#ifdef WITHPYTHON
 //For python
+double Tree::GetVal_py(string var){
+  return GetVal(var);
+}
+double Tree::GetVal2_py(Expr* e){
+  //Expr* e = boost::python::extract<Expr*>(pyObj);
+  return GetVal(e);
+}
+
+
+PyObject* Tree::GetTTree_py(){
+  return TPython::ObjectProxy_FromVoidPtr(m_tree, m_tree->ClassName());
+}
 
 double Tree::GetMean_py(Expr* e, Expr* cut){return GetMean(e, cut);}
 double Tree::GetStdDev_py(Expr* e, double mean, Expr* cut){return GetStdDev(e, mean, cut);}
@@ -412,3 +413,4 @@ boost::python::list Tree::getCorrelationMatrix_py(boost::python::list& ns, Expr*
   }
   return l;
 }
+#endif

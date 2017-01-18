@@ -104,33 +104,10 @@ double Expr::operator()(double* x, double* p){
   return GetVal(input);
 }
 
-double Expr::GetVal_py(boost::python::list& input){
-  vector<double> dbl_vec;
-  dbl_vec.reserve(len(input));
-  for (unsigned int i = 0; i < len(input); ++i){
-    double d = boost::python::extract<double>(input[i]);
-    dbl_vec.push_back(d);
-  }
-  return GetVal(dbl_vec);
-}
-
-double Expr::GetVal3_py(){
-  return GetVal();
-}
-std::vector<string>& Expr::GetVarNames(){ return m_varnames;}
-boost::python::list Expr::GetVarNames_py(){ 
-  boost::python::list l;
-    for (vector<string>::iterator is = m_varnames.begin(); is != m_varnames.end(); ++is){
-    l.append((*is));
-  }
-
-  return l;
-}
 
 string Expr::GetExpr() const{ return m_varexp;}
 string Expr::GetExpr() {return m_varexp;}
-string Expr::GetExpr_py() {return m_varexp;}
-
+std::vector<string>& Expr::GetVarNames(){ return m_varnames;}
 
 bool Expr::is_number(const std::string& s){
   //cout<<"checking is number for "<<s<<endl;
@@ -208,22 +185,6 @@ boost::python::list Expr::infixToRPN_py(boost::python::list& inputTokens,   cons
   return outputlist;
 
   }*/
-boost::python::list Expr::infixToRPN_py(boost::python::list& inputTokens){
-  std::vector<string> output;
-  std::list<std::string> input;
-  for (unsigned int i = 0; i < len(inputTokens); ++i){
-    string s = boost::python::extract<string>(inputTokens[i]);
-    input.push_back(s);
-  }
-
-  infixToRPN(input, output);
-  boost::python::list outputlist;
-  for (vector<string>::iterator is = output.begin(); is != output.end(); ++is){
-    outputlist.append(*is);
-  }
-  return outputlist;
-
-}
 
 // Convert infix expression format into reverse Polish notation          
 bool Expr::infixToRPN( const std::list<std::string>& inputTokens,     
@@ -805,6 +766,10 @@ double Expr::Voigtian(double x, double N, double m, double s, double a){
   return N*TMath::Voigt(x - m, s, a, 4);
 }
 
+//python files
+#ifdef WITHPYTHON
+
+
 boost::python::list Expr::Tokenize_py( const std::string& expression ){
   list<string> tokens = Tokenize(expression);
   boost::python::list s;
@@ -834,3 +799,49 @@ boost::python::list Expr::getRPN_py( ){
   }
   return s;
 }
+
+
+
+double Expr::GetVal_py(boost::python::list& input){
+  vector<double> dbl_vec;
+  dbl_vec.reserve(len(input));
+  for (unsigned int i = 0; i < len(input); ++i){
+    double d = boost::python::extract<double>(input[i]);
+    dbl_vec.push_back(d);
+  }
+  return GetVal(dbl_vec);
+}
+
+double Expr::GetVal3_py(){
+  return GetVal();
+}
+boost::python::list Expr::GetVarNames_py(){ 
+  boost::python::list l;
+    for (vector<string>::iterator is = m_varnames.begin(); is != m_varnames.end(); ++is){
+    l.append((*is));
+  }
+
+  return l;
+}
+
+string Expr::GetExpr_py() {return m_varexp;}
+
+
+boost::python::list Expr::infixToRPN_py(boost::python::list& inputTokens){
+  std::vector<string> output;
+  std::list<std::string> input;
+  for (unsigned int i = 0; i < len(inputTokens); ++i){
+    string s = boost::python::extract<string>(inputTokens[i]);
+    input.push_back(s);
+  }
+
+  infixToRPN(input, output);
+  boost::python::list outputlist;
+  for (vector<string>::iterator is = output.begin(); is != output.end(); ++is){
+    outputlist.append(*is);
+  }
+  return outputlist;
+
+}
+
+#endif

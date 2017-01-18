@@ -8,8 +8,10 @@
 #include <TH2F.h>
 #include <EffVar.h>
 #include <Eff.h>
-#include <boost/python.hpp>
 #include <Var2D.h>
+#ifdef WITHPYTHON
+#include <boost/python.hpp>
+#endif
 
 using namespace std;
 

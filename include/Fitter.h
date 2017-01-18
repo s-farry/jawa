@@ -21,8 +21,6 @@ class Fitter : public JawaObj {
   Fitter();
   Fitter(TH1F* hist, TObjArray* array, vector<string> names, string var = "");
   Fitter(TH2F* hist, TObjArray* array, vector<string> names, string var = "");
-  Fitter(PyObject* hist, PyObject* array, boost::python::list& l, string var = "");
-  Fitter(PyObject* hist, boost::python::list& array, boost::python::list& l, string var = "");
   //void ConstrainParams();
   //void ConstrainParam(string name, double val, double pc);
   void TFracFit();
@@ -50,6 +48,8 @@ class Fitter : public JawaObj {
   //TFractionFitter* GetFitter();
 #ifdef WITHPYTHON
   //For python
+  Fitter(PyObject* hist, PyObject* array, boost::python::list& l, string var = "");
+  Fitter(PyObject* hist, boost::python::list& array, boost::python::list& l, string var = "");
   PyObject* GetTemplates_py();
   PyObject* GetData_py();
   //PyObject* GetFitter_py();

@@ -11,8 +11,6 @@
 #include <TColor.h>
 #include <TFractionFitter.h>
 #include <TF1.h>
-#include <TPython.h>
-#include <boost/python.hpp>
 #include <Expr.h>
 #include <Var.h>
 #include <Var2D.h>

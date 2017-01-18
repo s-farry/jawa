@@ -445,8 +445,37 @@ void Tune::PrintMeanPars(){
   cout<<m_mean_init<<" "<<m_mean_step<<" "<<m_mean_lolimit<<" "<<m_mean_uplimit<<endl;
 }
 
-//For exposing to python
+double Tune::GetWeight(Tree* tree, vector<ReweightVar*> rwvars){
+  double w = 1.0;
+  for (std::vector<ReweightVar*>::iterator iv = rwvars.begin(); iv!= rwvars.end();++iv){
+    if ((*iv)->GetExprs().size() == 1){
+      Expr* var = (*iv)->GetExpr();
+      double val = tree->GetVal(var);
+      w = w * ((*iv)->GetWeight(val));
+    }
+    else if ((*iv)->GetExprs().size() == 2){
+      double val1 = tree->GetVal((*iv)->GetExprs().at(0));
+      double val2 = tree->GetVal((*iv)->GetExprs().at(1));
+      w = w * ((*iv)->GetWeight(val1, val2));
+    }
+  }
+  return w;
+}
 
+void Tune::ReweightMC(ReweightVar* rwvar){
+  m_mc_rwvars.push_back(rwvar);
+}
+void Tune::ReweightData(ReweightVar* rwvar){
+  m_data_rwvars.push_back(rwvar);
+}
+
+
+void Tune::SetSDFactor(double s){
+  m_sdfac = s;
+}
+
+#ifdef WITHPYTHON
+//For exposing to python
 boost::python::list Tune::GetStdDevs_py(){
   boost::python::list ns;
   for (unsigned int i = 0 ; i < m_data_stddev.size() ; ++i){
@@ -493,14 +522,6 @@ boost::python::list Tune::cholesky_py(boost::python::list& ns){
   return ns2;
 }
 
-boost::python::list Tune::GetDataVec(int j){
-  boost::python::list ns;
-  for (unsigned int i = 0 ; i < m_data_vec[j].size() ; ++i){
-    ns.append(m_data_vec[j][i].first);
-  }
-  return ns;
-}
-
 double Tune::standard_deviation_py(boost::python::list& ns){
   vector< pair<double, double> > vals;
   for (unsigned int i = 0; i < len(ns); ++i){
@@ -510,31 +531,13 @@ double Tune::standard_deviation_py(boost::python::list& ns){
   return standard_deviation(vals);
 }
 
-double Tune::GetWeight(Tree* tree, vector<ReweightVar*> rwvars){
-  double w = 1.0;
-  for (std::vector<ReweightVar*>::iterator iv = rwvars.begin(); iv!= rwvars.end();++iv){
-    if ((*iv)->GetExprs().size() == 1){
-      Expr* var = (*iv)->GetExpr();
-      double val = tree->GetVal(var);
-      w = w * ((*iv)->GetWeight(val));
-    }
-    else if ((*iv)->GetExprs().size() == 2){
-      double val1 = tree->GetVal((*iv)->GetExprs().at(0));
-      double val2 = tree->GetVal((*iv)->GetExprs().at(1));
-      w = w * ((*iv)->GetWeight(val1, val2));
-    }
+boost::python::list Tune::GetDataVec(int j){
+  boost::python::list ns;
+  for (unsigned int i = 0 ; i < m_data_vec[j].size() ; ++i){
+    ns.append(m_data_vec[j][i].first);
   }
-  return w;
-}
-
-void Tune::ReweightMC(ReweightVar* rwvar){
-  m_mc_rwvars.push_back(rwvar);
-}
-void Tune::ReweightData(ReweightVar* rwvar){
-  m_data_rwvars.push_back(rwvar);
+  return ns;
 }
 
 
-void Tune::SetSDFactor(double s){
-  m_sdfac = s;
-}
+#endif

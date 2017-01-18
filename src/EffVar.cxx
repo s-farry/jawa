@@ -278,16 +278,6 @@ TH1F* EffVar::GetMeanTotHist(){return m_meantot;}
 TH1F* EffVar::GetMeanPassHist(){return m_meanpass;}
 
 
-PyObject* EffVar::GetTotHist_py(){
-  TH1F* newCxxObj = new TH1F(*m_tothist);
-  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
-}
-
-PyObject* EffVar::GetPassHist_py(){
-  TH1F* newCxxObj = new TH1F(*m_passhist);
-  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
-}
-
 void EffVar::FillBkgHists(double lo, double hi){
   for (int i = 0 ; i<m_tothists->GetEntries(); ++i){
     TList* funcs_tot  = (TList*)(((TH1F*)m_tothists->At(i))->GetListOfFunctions());
@@ -678,14 +668,6 @@ std::vector<double> EffVar::GetBinEdgesY(TH2F* hist){
   return edges;
 }
 
-boost::python::list EffVar::GetBinEdgesX_py(PyObject* pyObj){
-  TH2F* hist = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  vector<double> edges = GetBinEdgesX(hist);
-  boost::python::object get_iter = boost::python::iterator<std::vector<double> >();
-  boost::python::object iter = get_iter(edges);
-  boost::python::list l(iter);
-  return l;
-}
 
 void EffVar::SetPrefix(string name){ m_prefix = name;}
 
@@ -733,6 +715,30 @@ TObjArray* EffVar::GetPassBkgFits(){return m_passBkgFits;}
 TObjArray* EffVar::GetPassHists(){return m_passhists;}
 TObjArray* EffVar::GetTotHists(){return m_tothists;}
 TObjArray* EffVar::GetFailHists(){return m_failhists;}
+
+#ifdef WITHPYTHON
+
+boost::python::list EffVar::GetBinEdgesX_py(PyObject* pyObj){
+  TH2F* hist = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  vector<double> edges = GetBinEdgesX(hist);
+  boost::python::object get_iter = boost::python::iterator<std::vector<double> >();
+  boost::python::object iter = get_iter(edges);
+  boost::python::list l(iter);
+  return l;
+}
+
+
+PyObject* EffVar::GetTotHist_py(){
+  TH1F* newCxxObj = new TH1F(*m_tothist);
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
+
+PyObject* EffVar::GetPassHist_py(){
+  TH1F* newCxxObj = new TH1F(*m_passhist);
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
+
+#endif
 
 /*
 template<typename T>

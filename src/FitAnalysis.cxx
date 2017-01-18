@@ -20,7 +20,6 @@ FitAnalysis::FitAnalysis(string name, string tofit, string func) : JawaObj("FitA
       j++;
     }
   }
-
 }
 
 void FitAnalysis::SetVal(string par, double val){
@@ -114,7 +113,9 @@ void FitAnalysis::SaveToFile(){
 }
 
 
-
+#ifdef WITHPYTHON
 // for python
 void FitAnalysis::FitIt1_py(){ FitIt() };
 void FitAnalysis::FitIt2_py(string opt) { FitIt(opt) };
+
+#endif

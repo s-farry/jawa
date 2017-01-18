@@ -1,23 +1,48 @@
 AC_INIT([Jawa], [1.0], [bug-automake@gnu.org])
 
-dnl AC_CONFIG_MACRO_DIR([/user2/sfarry/Jawa/m4])
+## Check and block installation into the src/build dir
+if test "$prefix" = "$PWD"; then
+  AC_MSG_ERROR([Installation into the build directory is not supported: use a different --prefix argument])
+fi
+  ## Force default prefix to have a path value rather than NONE
+if test "$prefix" = "NONE"; then
+   prefix=/usr/local
+fi
 
-m4_include([m4/root.m4])
-dnl m4_include([m4/ax_boost_base.m4])
-dnl m4_include([m4/ax_boost_python.m4])
-dnl m4_include([m4/boost.m4])
-dnl m4_include([m4/ax_python.m4])
-m4_include([m4/ax_python_devel.m4])
-m4_include([m4/ax_boost_base.m4])
-m4_include([m4/ax_boost_python.m4])
+AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_MACRO_DIRS([m4])
+AC_PROG_CXX
+LT_INIT([disable-static])
+AM_DISABLE_STATIC
+AM_PROG_LIBTOOL
+AC_LIBTOOL_DLOPEN
+AC_PROG_LIBTOOL
+
+AM_INIT_AUTOMAKE
+AC_ARG_ENABLE([python],
+[  --enable-python    Enable Python],
+[case "${enableval}" in
+  yes) python=true ;;
+  no)  python=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-python]) ;;
+esac],[debug=false])
+AM_CONDITIONAL([WANT_PYTHON], [test x$python = xtrue])
+
+
+## Extend and substitute the default build flags after lib testing
+AM_CPPFLAGS="-I\$(top_srcdir)/include -I\$(top_builddir)/include"
+AC_SUBST(AM_CPPFLAGS)
+AC_SUBST(AM_CXXFLAGS)
 
 AC_PROG_CXX
-dnl AX_PYTHON
-AX_PYTHON_DEVEL
-dnl BOOST_REQUIRE
-dnl AX_BOOST_PYTHON
 
-ROOT_PATH(5.34/07, , AC_MSG_ERROR(Failed: Your ROOT version is too old))
-ROOT_FEATURE([python], ,[AC_MSG_ERROR(Failed: No python with root install)])
+ROOT_PATH(6.00/00, , AC_MSG_ERROR(Failed: Your ROOT version is too old))
+if test x$python = xtrue; then
+   AX_PYTHON_DEVEL	 
+   BOOST_REQUIRE
+   BOOST_PYTHON
+   ROOT_FEATURE([python], ,[AC_MSG_ERROR(Failed: No python with root install)])
+fi
 
-AC_OUTPUT(Makefile)
+AC_OUTPUT(Makefile src/Makefile include/Makefile jawa.pc)
+

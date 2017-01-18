@@ -11,8 +11,6 @@
 #include <TColor.h>
 #include <TFractionFitter.h>
 #include <TF1.h>
-#include <TPython.h>
-#include <boost/python.hpp>
 #include <Expr.h>
 #include <Var.h>
 #include <Tree.h>
@@ -20,6 +18,10 @@
 #include <TRandom3.h>
 #include "Minuit2/Minuit2Minimizer.h"
 #include "Math/Functor.h"
+#ifdef WITHPYTHON
+#include <TPython.h>
+#include <boost/python.hpp>
+#endif
 
 using namespace std;
 
@@ -33,14 +35,9 @@ class Tune : public JawaObj {
   void fillhist(TH1F* h , vector< pair<double, double> >& vals);
   void fillVals();
   void SaveToFile();
-  double standard_deviation_py(boost::python::list& ns);
-  boost::python::list GetStdDevs_py();
-  boost::python::list GetDataVec(int j);
   double cholesky(double *A, int n);
   vector< vector<double> > cholesky( vector< vector<double> > A);
   void printMatrix(vector< vector<double> > A);
-  boost::python::list getCorrelatedRandoms_py(boost::python::list& ns);
-  boost::python::list cholesky_py(boost::python::list& ns);
   vector<double> getCorrelatedRandoms(vector< vector<double> > corrs );
   //void FCN_func(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag);
   double metric(const double* params);
@@ -60,6 +57,15 @@ class Tune : public JawaObj {
   double GetWeight(Tree* tree, vector<ReweightVar>);
   void SetSDFactor(double s);
 
+
+  #ifdef WITHPYTHON
+  boost::python::list GetDataVec(int j);
+  double standard_deviation_py(boost::python::list& ns);
+  boost::python::list GetStdDevs_py();
+  boost::python::list getCorrelatedRandoms_py(boost::python::list& ns);
+  boost::python::list cholesky_py(boost::python::list& ns);
+  #endif
+  
  protected:
   Expr* m_tuneVar;           // name of templates and their location
   Var* m_fVar;               // Templates to be fit

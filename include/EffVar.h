@@ -6,9 +6,12 @@
 #include <TGraphAsymmErrors.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <Var.h>
+
+#ifdef WITHPYTHON
 #include <TPython.h>
 #include <boost/python.hpp>
-#include <Var.h>
+#endif
 
 using namespace std;
 
@@ -31,8 +34,6 @@ class EffVar : public Var {
   TH1F* GetMeanTotHist();
   TH1F* GetMeanPassHist();
 
-  PyObject* GetTotHist_py();
-  PyObject* GetPassHist_py();
   
   void MakeTGraph();
   void MakeEffHist(bool ClopperPearsonError = true);
@@ -64,7 +65,6 @@ class EffVar : public Var {
   static vector<double> GetBinEdgesX(TH2F* hist);
   static vector<double> GetBinEdgesY(TH2F* hist);
   //boost::python::list GetEdges_py();
-  boost::python::list GetBinEdgesX_py(PyObject* pyObj);
   //boost::python::list GetBinEdges_py(PyObject* pyObj);
   TGraphAsymmErrors* GetEffGraph();
   PyObject* GetEffGraph_py();
@@ -79,6 +79,12 @@ class EffVar : public Var {
   TObjArray* GetTotHists();
   TObjArray* GetFailHists();
 
+#ifdef WITHPYTHON
+  PyObject* GetTotHist_py();
+  PyObject* GetPassHist_py();
+  boost::python::list GetBinEdgesX_py(PyObject* pyObj);
+#endif
+  
  protected:
   string m_var;
   TObjArray* m_tothists;
