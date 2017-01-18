@@ -56,6 +56,7 @@ class JawaObj{
   void SetVerbose(bool verbose);
   bool GetVerbose();
   string GetName();
+  void progress(double progress, double width);
 
   //ostream info2();
 

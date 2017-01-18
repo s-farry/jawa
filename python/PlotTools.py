@@ -455,7 +455,7 @@ class PlotObj:
         elif isinstance(self.plot, ROOT.TH1):
             self.split = []
             self.norm = self.plot.Clone(self.name+"_norm")
-            self.norm.Scale(1/self.norm.Integral())
+            if self.norm.Integral() > 0 : self.norm.Scale(1/self.norm.Integral())
             self.normsplit = []
                
     def ApplyStyle(self, xlabel, ylabel, xlims, ylims, ynormlims, ycomplims, offset = 0.0):
@@ -487,7 +487,7 @@ class PlotObj:
                     if ynormlims is not None and len(ynormlims) == 2: 
                         p.GetYaxis().SetRangeUser(ynormlims[0], ynormlims[1])
                     p.GetXaxis().SetTitle(xlabel)
-                    #p.GetYaxis().SetTitle("Rel. Err")
+                    p.GetYaxis().SetTitle(ylabel)
                     p.GetYaxis().SetNdivisions(505)
                     p.GetXaxis().SetLabelSize(0.05)
             for p in self.comparisons:
@@ -536,7 +536,7 @@ class Plot:
           "colors" : None, "linecolors" : None, "markercolors": None,
           #styles
           "fillstyles" : 1001, "linestyles" : 1, "markerstyles" : 0, # colors and styles
-          "extraObjs" : [],
+          "extraObjs" : [], "compObjs" : [],
           "drawOpts" : '', "drawOpts2" : None, "yoffset" : 0.0,
           "style" : True, "forcestyle" : False,
           #
@@ -766,13 +766,19 @@ class Plot:
       if self.properties['legend']: leg.Draw("same")
       for obj in self.properties["extraObjs"]: obj.Draw("same")
 
+
+      # if there are more than one to compare (more than one pad)
+      # insert dummy to have shared title
       if len(self.properties['toCompare']) > 1:
           self.pads[-1].cd()
           h = ROOT.TH1F()
           h.GetXaxis().SetLabelOffset(999)
           h.GetXaxis().SetLabelSize(0)
           h.GetXaxis().SetTitle("")
-          h.GetYaxis().SetTitle('Ratio')
+          if (self.properties['compareAsRatio']):
+              h.GetYaxis().SetTitle('Ratio')
+          else:
+              h.GetYaxis().SetTitle('Diff.')
           h.GetYaxis().SetLabelOffset(999)
           h.SetFillStyle(0)
           h.GetYaxis().CenterTitle()
@@ -819,6 +825,8 @@ class Plot:
                           pp.diffnorm.Draw(pp.drawOpt+drawOpt)
                       else:
                           pp.diff.Draw(pp.drawOpt+drawOpt)
+                  for p in self.properties['compObjs']:
+                      p.Draw("same")
                   
       if '.pdf' not in filename and '.eps' not in filename and '.C' not in filename:
           filenames = [filename + '.pdf', filename+'.eps', filename+'.C', filename+'.png']

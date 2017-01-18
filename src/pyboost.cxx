@@ -10,6 +10,9 @@ BOOST_PYTHON_MODULE(Jawa)
     def("GetLumiError",  &Utils::GetLumiError_py      );
     def("RemoveErrors",  &Utils::RemoveErrors_py );
     def("GetWeightSum",  &Utils::GetWeightSum_py );
+    def("GetWeightSum",  &Utils::GetWeightSum2_py );
+    def("GetWeightHist", &Utils::GetWeightHist_py);
+    def("GetWeightHist2D",&Utils::GetWeightHist2D_py);
     def("geteff"      ,  &Utils::geteff_py       );
     def("geteff"      ,  &Utils::geteff2_py      );
     def("geteff"      ,  &Utils::geteff3_py                   );
@@ -23,6 +26,7 @@ BOOST_PYTHON_MODULE(Jawa)
     def("saveTGraphErrs"    ,  &Utils::saveTGraphErrs_py      );
     def("tgraph2hist"       ,  &Utils::tgraph2hist_py         );
     def("saveAsTree"        ,  &Utils::saveAsTree_py          );
+    def("standard_deviation",  &Utils::standard_deviation_py);
     
     class_<JawaObj>("JawaObj", init<>() )
       .def(init<string, string>() )
@@ -30,7 +34,6 @@ BOOST_PYTHON_MODULE(Jawa)
       .add_property("Verbose",  &JawaObj::GetVerbose, &JawaObj::SetVerbose)
       ;
     
-
     class_<std::vector<double> >("vect")
       .def(vector_indexing_suite<std::vector<double> >())
       ;
@@ -100,24 +103,28 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("AddTree",    &Template::AddTree2_py)
       .def("AddTree",    &Template::AddTree3_py)
       .def("AddTree",    &Template::AddTree4_py)
-      .def("AddTree",    &Template::AddTree5_py)
+      //.def("AddTree",    &Template::AddTree5_py)
       .def("AddTree",    &Template::AddTree6_py)
       .def("AddTree",    &Template::AddTree7_py)
       .def("AddTree",    &Template::AddTree8_py)
       .def("SetSelCut",  &Template::SetSelCut_py)
       .def("GetSelCut",  &Template::GetSelCut_py)
       .def("AddTrees",   &Template::AddTrees_py)
+      .def("AddTrees",   &Template::AddTrees2_py)
+      .def("AddTrees",   &Template::AddTrees3_py)
       .def("AddVar",     &Template::AddVar1_py)
       .def("AddVar",     &Template::AddVar2_py)
       .def("AddVar",     &Template::AddVar3_py)
       .def("AddVars",    &Template::AddVars_py)
+      .def("Add2DVar",   &Template::Add2DVar2_py)
       .def("Add2DVar",   &Template::Add2DVar_py)
       .def("Add2DVars",  &Template::Add2DVars_py)
       .def("Add3DVar",   &Template::Add3DVar_py)
       .def("Add3DVars",  &Template::Add3DVars_py)
       .def("ApplyCut",   &Template::ApplyCut)
       .def("FillVars",   &Template::FillVars)
-      .def("SaveToFile", &Template::SaveToFile)
+      .def("SaveToFile", &Template::SaveToFile1_py)
+      .def("SaveToFile", &Template::SaveToFile2_py)
       .def("IsVerbose",  &Template::IsVerbose)
       .def("GetName",    &Template::GetName)
       .def("Reweight",   &Template::Reweight1_py)
@@ -164,7 +171,8 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("GetWeight2DHist", &MWTemplate::GetWeight2DHist_py)
       .def("ScaleAllWeights", &MWTemplate::ScaleAllWeights)
       .def("PrintWeights", &MWTemplate::PrintWeights)
-      .def("SaveToFile",  &MWTemplate::SaveToFile)
+      .def("SaveToFile",  &MWTemplate::SaveToFile1_py)
+      .def("SaveToFile",  &MWTemplate::SaveToFile2_py)
       ;
 
     class_<Fitter>("Fitter", init<>())
@@ -296,7 +304,6 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("GetPassHist",     &EffVar::GetPassHist_py)
       .def("MakeTGraph",      &EffVar::MakeTGraph)
       .def("MakeEffHist",     &EffVar::MakeEffHist)
-      .def("MakeHists",       &EffVar::MakeHists)
       .def("AddSystematic",   &EffVar::AddSystematic1)
       .def("AddSystematic",   &EffVar::AddSystematic2)
       .def("AddInvSysematic", &EffVar::AddInvSystematic)
@@ -332,10 +339,11 @@ BOOST_PYTHON_MODULE(Jawa)
     
     class_<EfficiencyClass>("EfficiencyClass", init<string>())
       .def(init<string, EfficiencyClass*, EfficiencyClass*>())
+      .def("Run"    ,             &EfficiencyClass::Run)
       .def("AddTree",             &EfficiencyClass::AddTree_py)
+      .def("AddTrees",            &EfficiencyClass::AddTrees_py)
       .def("SetSelectionCut",     &EfficiencyClass::SetSelectionCut_py)
       .def("SetPassCut",          &EfficiencyClass::SetPassCut_py)
-      .def("MakeHists",           &EfficiencyClass::MakeHists)
       .def("AddVar",              &EfficiencyClass::AddVar1_py)
       .def("AddVar",              &EfficiencyClass::AddVar2_py)
       .def("AddVar",              &EfficiencyClass::AddVar3_py)
@@ -344,10 +352,8 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("Add2DVar",            &EfficiencyClass::Add2DVar_py)
       .def("Add2DVars",           &EfficiencyClass::Add2DVars_py)
       .def("AddVars",             &EfficiencyClass::AddVars_py)
-      .def("SetPltRange",         &EfficiencyClass::SetPltRange)
       .def("SetEffRange",         &EfficiencyClass::SetEffRange)
       .def("MakeEntryLists",      &EfficiencyClass::MakeEntryLists)
-      .def("MakeHists",           &EfficiencyClass::MakeHists)
       .def("MakeEfficiencyGraph", &EfficiencyClass::MakeEfficiencyGraph_py)
       .def("PrintEfficiencies",   &EfficiencyClass::PrintEfficiencies)
       .def("SaveToFile",          &EfficiencyClass::SaveToFile)
@@ -370,8 +376,14 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("GetTotHist", &EfficiencyClass::GetTotHist_py)
       .def("GetPassHist", &EfficiencyClass::GetPassHist_py)
       .def("Reweight",   &EfficiencyClass::Reweight1_py)
+      .def("Reweight",   &EfficiencyClass::Reweight2_py)
+      .def("Reweight",   &EfficiencyClass::Reweight3_py)
+      .def("Reweight",   &EfficiencyClass::Reweight4_py)
+      .def("Reweight",   &EfficiencyClass::Reweight5_py)
+      .def("ReweightEff",&EfficiencyClass::ReweightEff_py)
       .def("RemoveErrors", &EfficiencyClass::RemoveErrors)
       .add_property("Verbose",  &EfficiencyClass::GetVerbose, &EfficiencyClass::SetVerbose)
+      .add_property("ScaleErrs",  &EfficiencyClass::GetScaleErr, &EfficiencyClass::SetScaleErr)
       ;
     class_<Fit>("Fit", init<string, string>())
       .def("GetExpr",  &Fit::GetExpr, return_internal_reference<>())
@@ -386,7 +398,8 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("SetVal",   &FitAnalysis::SetVal)
       .def("FixVal",   &FitAnalysis::FixVal)
       .def("SetRange", &FitAnalysis::SetRange)
-      .def("FitIt",    &FitAnalysis::FitIt)
+      .def("FitIt",    &FitAnalysis::FitIt1_py)
+      .def("FitIt",    &FitAnalysis::FitIt2_py)
       .def("Init",     &FitAnalysis::Init)
       .def("SaveToFile", &FitAnalysis::SaveToFile);
     

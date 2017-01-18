@@ -32,11 +32,14 @@ class ReweightVar : public JawaObj{
   double GetWeight(double val);
   double GetWeight(double val1, double val2);
   double GetWeight(double val1, double val2, double val3, double val4);
+  double GetWeightErr(double val1, double val2);
   double GetWeight(int val);
   double GetWeight(float val);
   Expr* GetExpr();
   vector<Expr*> GetExprs();
   string GetWeightName();
+
+  int GetBin(double val1, double val2);
 
  private:
   vector<string> m_names;

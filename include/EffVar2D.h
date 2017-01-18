@@ -39,28 +39,26 @@ class EffVar2D: public Var2D {
   TH2F* GetTotHist();
   TH2F* GetPassHist();
   TH2F* GetFailHist();
-  TH2F* GetMeanTotHist();
-  TH2F* GetMeanPassHist();
   TH2F* Get2DEffGraph();
   PyObject* Get2DEffGraph_py();
   PyObject* GetTotHist_py();
 
-  void FillVar(bool pass, double& v_pltvar, double& v_var1, double& v_var2, double efflo, double effhi, double w=1.0);
-  void FillVar(bool pass, double& v_pltvar, int& v_var1, double& v_var2, double efflo, double effhi, double w);
-  void FillVar(bool pass, double& v_pltvar, double& v_var1, int& v_var2, double efflo, double effhi, double w);
-  void FillVar(bool pass, double& v_pltvar, int& v_var1, int& v_var2, double efflo, double effhi, double w);
-  void FillVar(string type, double& v_pltvar, double& v_var1, double& v_var2, double efflo, double effhi, double w = 1.0);
+  void FillVar(bool pass, double& v_var1, double& v_var2, double w=1.0);
+  void FillVar(bool pass, int& v_var1, double& v_var2, double w);
+  void FillVar(bool pass, double& v_var1, int& v_var2, double w);
+  void FillVar(bool pass, int& v_var1, int& v_var2, double w);
+  //void FillVar(string type, double& v_var1, double& v_var2, double w = 1.0);
   //void FillVar(bool pass, double& v_pltvar, int& i_var, double efflo, double effhi);
   void MakeHists(string name, int npltbins, double pltrangelow, double pltrangehi, bool reweight = false);
 
   void Normalise(double N);
 
-  TObjArray* GetPassHists();
-  TObjArray* GetTotHists();
-  TObjArray* GetPassCBFits();
-  TObjArray* GetTotCBFits();
-  TObjArray* GetFailHists();
   TObjArray* GetEffGraphs();
+  TObjArray* GetEffRWVarHiGraphs();
+  TObjArray* GetEffRWVarLoGraphs();
+  TObjArray* GetEffRWVarHiPassHists();
+  TObjArray* GetEffRWVarLoPassHists();
+
 
  protected:
   string m_prefix;
@@ -80,6 +78,13 @@ class EffVar2D: public Var2D {
   TObjArray* m_failhists;
   TH2F* m_meantot;
   TH2F* m_meanpass;
+
+
+  TObjArray* m_rweff_varyhi_passhists;
+  TObjArray* m_rweff_varylo_passhists;
+
+  TObjArray* m_rweff_varyhi_effgraphs;
+  TObjArray* m_rweff_varylo_effgraphs;
 
   
 
