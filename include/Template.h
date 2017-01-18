@@ -46,6 +46,7 @@ class Template : public JawaObj {
   void AddTree(string name, TTree* t, double w, TCut* cut);
 
   void AddTrees(vector<TTree*>& trees);
+  void AddTrees(vector<TTree*>& trees, double w);
   void AddTrees(vector<TTree*>& trees, vector<TCut*>& cuts);
 
   void ApplyCut();
@@ -55,6 +56,7 @@ class Template : public JawaObj {
   void SetSelCut(TCut* cut);
   TCut* GetSelCut();
   void SaveToFile();
+  void SaveToFile(string output);
   virtual void SaveToCurrentFile();
   bool IsFixed();
   Var* GetVar(string name);
@@ -124,6 +126,7 @@ class Template : public JawaObj {
   Tree* GetTree1_py();
   Tree* GetTree2_py(string name);
   void Add2DVar_py(boost::python::list& var);
+  void Add2DVar2_py(string var1, string var2);
   void Add2DVars_py(boost::python::list& varlist);
   void Add3DVar_py(boost::python::list& var);
   void Add3DVars_py(boost::python::list& varlist);
@@ -143,6 +146,7 @@ class Template : public JawaObj {
   void AddTree8_py(string name, PyObject* py , PyObject* cut);
   void AddTrees_py(boost::python::list& ns);
   void AddTrees2_py(boost::python::list& ns, boost::python::list& ns2);
+  void AddTrees3_py(boost::python::list& ns, double w);
   Var2D* Get2DVar_py(string name1, string name2);
   Var3D* Get3DVar_py(string name1, string name2, string name3);
   void Scale1_py(double scale, bool fixed);
@@ -155,6 +159,8 @@ class Template : public JawaObj {
   void NormaliseToMC1_py(double xsec, double acc, double Lumi, double nEvts, bool fixed);
   void NormaliseToMC2_py(double xsec, double acc, double Lumi, double nEvts);
   PyObject* GetSelCut_py();
+  void SaveToFile1_py();
+  void SaveToFile2_py(string output);
   #endif
   
  protected:

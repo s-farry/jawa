@@ -36,6 +36,24 @@ void JawaObj::verbose(const char* msg){
   output(msg, JawaObj::Verbose);
 }
 
+void JawaObj::progress(double progress, double width){
+  std::cout<< GetTime()<<" INFO [";
+  int pos = width * progress;
+  for (int i = 0 ; i < width; ++i){
+    if (i < pos) std::cout << "=";
+    else if (i == pos) std::cout << ">";
+    else std::cout<<" ";
+  }
+  std::cout<<" ] " << int(progress * 100.0) << "%";
+  if (progress != 1) {
+    std::cout<<"\r";
+  }
+  else{
+    std::cout<<"\n";
+  }
+  std::cout.flush();
+}
+
 string JawaObj::GetTime(){
   time_t rawtime;
   struct tm * timeinfo;
@@ -67,7 +85,7 @@ ostream& JawaObj::msg(string logname, OutputLevel o){
   ostream& null_stream = *m_null;
   if (o > m_outputlevel) return null_stream;
   ostream& stream = cout;
-  stream<<GetTime()<<" "<<logname_out<<" : "<<output<<" : "<<name<<": ";
+  stream<<GetTime()<<" "<<logname_out<<" \t "<<output<<" \t "<<name<<"\t ";
   return stream;
 }
 

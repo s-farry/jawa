@@ -336,7 +336,6 @@ vector< vector< pair<double, double> > > Tune::getVals(Tree* tree, Expr* var, Va
 }
 
 void Tune::tune(){
-
   fillVals();
   
   ROOT::Minuit2::Minuit2Minimizer fitter;
@@ -538,6 +537,5 @@ boost::python::list Tune::GetDataVec(int j){
   }
   return ns;
 }
-
-
 #endif
+

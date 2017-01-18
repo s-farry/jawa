@@ -12,6 +12,8 @@
 #include <TPython.h>
 #include <boost/python.hpp>
 #endif
+#include <Utils.h>
+
 
 using namespace std;
 
@@ -32,29 +34,34 @@ class EffVar : public Var {
   TH1F* GetBkgTotHist();
   TH1F* GetBkgPassHist();
   TH1F* GetMeanTotHist();
-  TH1F* GetMeanPassHist();
+
+  TObjArray* GetEffRWVaryHiGraphs();
+  TObjArray* GetEffRWVaryLoGraphs();
+  TObjArray* GetEffRWVaryHiPassHists();
+  TObjArray* GetEffRWVaryLoPassHists();
+
 
   
   void MakeTGraph();
   void MakeEffHist(bool ClopperPearsonError = true);
 
-  void FillVar(bool pass, double v_pltvar, double v_var, double efflo, double effhi, double weight = 1);
-  void FillVar(bool pass, double v_pltvar, int i_var, double efflo, double effhi, double weight = 1);
-  void FillVar(bool pass, double v_pltvar, float v_var, double efflo, double effhi, double weight = 1);
-  void FillVar(string type, double v_pltvar, double v_var, double efflo, double effhi, double weight = 1);
-  void FillVar(string type, double v_pltvar, float v_var, double efflo, double effhi, double weight = 1);
-  void FillVar(string type, double v_pltvar, int i_var, double efflo, double effhi, double weight = 1);
+  void FillVar(bool pass, double v_var, double weight = 1, double effw = 1.0);
+  void FillVar(bool pass, int i_var   , double weight = 1, double effw = 1.0);
+  void FillVar(bool pass, float v_var , double weight = 1, double effw = 1.0);
 
-  void MakeHists(string name, int npltbins, double pltrangelow, double pltrangehi, bool reweight = false);
+  void FillVar(bool pass, double v_var, Utils::weight weight, Utils::weight effw);
+  //void FillVar(string type, double v_pltvar, double v_var, double efflo, double effhi, double weight = 1);
+  //void FillVar(string type, double v_pltvar, float v_var, double efflo, double effhi, double weight = 1);
+  //void FillVar(string type, double v_pltvar, int i_var, double efflo, double effhi, double weight = 1);
 
   void AddSystematic(double pc);
   void AddInvSystematic(double pc);
   void AddSystematic(std::vector<double> pc);
   void SetPrefix(string name);
 
+  void AddEffScaleVaryHists(TH2F* scales);
 
   void FillBkgHists(double lo, double hi);
-  void FillMeanHists();
   void Normalise(double N);
 
   void AddSystematic1(double pc);
@@ -67,9 +74,7 @@ class EffVar : public Var {
   //boost::python::list GetEdges_py();
   //boost::python::list GetBinEdges_py(PyObject* pyObj);
   TGraphAsymmErrors* GetEffGraph();
-  PyObject* GetEffGraph_py();
   TGraphAsymmErrors* GetSmearedEffGraph();
-  PyObject* GetSmearedEffGraph_py();
 
   TObjArray* GetTotCBFits();
   TObjArray* GetPassCBFits();
@@ -83,6 +88,8 @@ class EffVar : public Var {
   PyObject* GetTotHist_py();
   PyObject* GetPassHist_py();
   boost::python::list GetBinEdgesX_py(PyObject* pyObj);
+  PyObject* GetSmearedEffGraph_py();
+  PyObject* GetEffGraph_py();
 #endif
   
  protected:
@@ -96,6 +103,7 @@ class EffVar : public Var {
   TObjArray* m_passBkgFits;
   TH1F* m_tothist;
   TH1F* m_passhist;
+  TH1F* m_passhist_effrw;
   TH1F* m_failhist;
   TH1F* m_bkgtot;
   TH1F* m_bkgpass;
@@ -106,4 +114,14 @@ class EffVar : public Var {
   const char* m_type;
   bool m_systematic;
 
+  //keep errs for efficiency scaling
+  TObjArray* m_reweighteffuperrs;
+  TObjArray* m_reweighteffloerrs;
+
+
+  TObjArray* m_rweff_varyhi_passhists;
+  TObjArray* m_rweff_varylo_passhists;
+
+  TObjArray* m_rweff_varyhi_effgraphs;
+  TObjArray* m_rweff_varylo_effgraphs;
 };

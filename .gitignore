@@ -1,1 +1,7 @@
 Makefile
+*.so
+*.lo
+*.root
+*~
+*.la
+autom4te.cache

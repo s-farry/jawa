@@ -40,6 +40,8 @@ class Var2D : public JawaObj{
   TH2F* GetFwdHist();
   TH2F* GetBwdHist();
   TH1F* GetCombHist();
+  std::vector<double> GetBinEdges1();
+  std::vector<double> GetBinEdges2();
   void NormaliseToEvts(double evts);
   void NormaliseToMC(double xsec, double acc, double Lumi, double nEvts);
   void Scale(double scale);
@@ -83,6 +85,8 @@ class Var2D : public JawaObj{
   TProfile* m_prof;
   TProfile* m_prof2;
 
+  std::vector<double> m_histbinedges1;
+  std::vector<double> m_histbinedges2;
 
 };
 #endif

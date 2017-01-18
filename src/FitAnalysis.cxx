@@ -117,5 +117,5 @@ void FitAnalysis::SaveToFile(){
 // for python
 void FitAnalysis::FitIt1_py(){ FitIt() };
 void FitAnalysis::FitIt2_py(string opt) { FitIt(opt) };
-
 #endif
+

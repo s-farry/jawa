@@ -50,6 +50,7 @@ Var2D::Var2D(string name , string var1 , int bins1 , double lo1 , double hi1 ,  
   m_hist_bwd->Delete();
   }*/
 
+
 Var2D::Var2D(string name , Var* var1 , Var* var2, string prefix) : JawaObj("Var2D", name){
   m_name1   = var1->GetName();
   m_name2   = var2->GetName();
@@ -77,16 +78,16 @@ Var2D::Var2D(string name , Var* var1 , Var* var2, string prefix) : JawaObj("Var2
   //double fwdbinedges2[m_nbins2+1];
   //double bwdbinedges2[m_nbins2+1];
   
-  std::vector<double> histbinedges1 = Var::GetBinEdges(var1->GetHist());
-  std::vector<double> histbinedges2 = Var::GetBinEdges(var2->GetHist());
+  m_histbinedges1 = Var::GetBinEdges(var1->GetHist());
+  m_histbinedges2 = Var::GetBinEdges(var2->GetHist());
 
-  std::pair<std::vector<string> , std::vector<double> > histbinedges_comb = CombineBinEdges(histbinedges1, histbinedges2);
+  std::pair<std::vector<string> , std::vector<double> > histbinedges_comb = CombineBinEdges(m_histbinedges1, m_histbinedges2);
 
-  m_hist = new TH2F((prefix+name).c_str() , name.c_str() , m_nbins1, &histbinedges1[0], m_nbins2, &histbinedges2[0]);
-  m_prof = new TProfile((prefix+name+"_prof_"+m_name1).c_str() , name.c_str() , m_nbins1, &histbinedges1[0]);
-  m_prof2 = new TProfile((prefix+name+"_prof_"+m_name2).c_str() , name.c_str() , m_nbins2, &histbinedges2[0]);
-  m_hist_fwd = new TH2F((prefix+name+"_fwd").c_str() , name.c_str() , m_nbins1, &histbinedges1[0], m_nbins2, &histbinedges2[0]);
-  m_hist_bwd = new TH2F((prefix+name+"_bwd").c_str() , name.c_str() , m_nbins1, &histbinedges1[0], m_nbins2, &histbinedges2[0]);
+  m_hist = new TH2F((prefix+name).c_str() , name.c_str() , m_nbins1, &m_histbinedges1[0], m_nbins2, &m_histbinedges2[0]);
+  m_prof = new TProfile((prefix+name+"_prof_"+m_name1).c_str() , name.c_str() , m_nbins1, &m_histbinedges1[0]);
+  m_prof2 = new TProfile((prefix+name+"_prof_"+m_name2).c_str() , name.c_str() , m_nbins2, &m_histbinedges2[0]);
+  m_hist_fwd = new TH2F((prefix+name+"_fwd").c_str() , name.c_str() , m_nbins1, &m_histbinedges1[0], m_nbins2, &m_histbinedges2[0]);
+  m_hist_bwd = new TH2F((prefix+name+"_bwd").c_str() , name.c_str() , m_nbins1, &m_histbinedges1[0], m_nbins2, &m_histbinedges2[0]);
   m_hist_comb = new TH1F((prefix+name+"_comb").c_str(), name.c_str() , m_nbins1 + m_nbins2, &histbinedges_comb.second[0]);
   m_hist->Sumw2();
   m_prof->Sumw2();
@@ -108,8 +109,8 @@ Var2D::Var2D(string name , Var2D* varA , Var2D* varB, string prefix) : JawaObj("
     {
       m_name1   = varA->GetName1();
       m_name2   = varA->GetName2();
-      m_varname1  = varA->GetVar1()->GetVar();
-      m_varname2  = varA->GetVar2()->GetVar();
+      m_varname1  = varA->GetVarName1();
+      m_varname2  = varA->GetVarName2();
       m_nbins1  = varA->GetBins1();
       m_nbins2  = varA->GetBins2();
       m_lo1     = varA->GetVar1Lo();
@@ -117,36 +118,39 @@ Var2D::Var2D(string name , Var2D* varA , Var2D* varB, string prefix) : JawaObj("
       m_lo2     = varA->GetVar2Lo();
       m_hi2     = varA->GetVar2Hi();
       
-      std::vector<double> histbinedges1 = Var::GetBinEdges(varA->GetVar1()->GetHist());
-      std::vector<double> histbinedges2 = Var::GetBinEdges(varA->GetVar2()->GetHist());
+      //m_histbinedges1 = Var::GetBinEdges(varA->GetVar1()->GetHist());
+      //m_histbinedges2 = Var::GetBinEdges(varA->GetVar2()->GetHist());
       
-      //m_Var1 = new Var(m_name1, m_varname1, histbinedges1, prefix);
-      //m_Var2 = new Var(m_name2, m_varname2, histbinedges2, prefix);
+      m_histbinedges1 = varA->GetBinEdges1();
+      m_histbinedges2 = varA->GetBinEdges2();
+      
+      //m_Var1 = new Var(m_name1, m_varname1, m_histbinedges1, prefix);
+      //m_Var2 = new Var(m_name2, m_varname2, m_histbinedges2, prefix);
       
       m_prefix = prefix;
 
       if (prefix != "") prefix = prefix+"/";
-      m_hist = new TH2F((prefix+name).c_str() , name.c_str() , m_nbins1 , &histbinedges1[0] , m_nbins2, &histbinedges2[0]);
-      m_prof = new TProfile((prefix+name+"_prof_"+m_name1).c_str(), name.c_str(), m_nbins1, &histbinedges1[0]);
-      m_prof2 = new TProfile((prefix+name+"_prof_"+m_name2).c_str(), name.c_str(), m_nbins2, &histbinedges2[0]);
+      m_hist = new TH2F((prefix+name).c_str() , name.c_str() , m_nbins1 , &m_histbinedges1[0] , m_nbins2, &m_histbinedges2[0]);
+      m_prof = new TProfile((prefix+name+"_prof_"+m_name1).c_str(), name.c_str(), m_nbins1, &m_histbinedges1[0]);
+      m_prof2 = new TProfile((prefix+name+"_prof_"+m_name2).c_str(), name.c_str(), m_nbins2, &m_histbinedges2[0]);
       
       if (prefix != "") prefix = prefix+"/";
       
-      //double histbinedges1[m_nbins1+1];
+      //double m_histbinedges1[m_nbins1+1];
       //double fwdbinedges1[m_nbins1+1];
       //double bwdbinedges1[m_nbins1+1];
       
-      //double histbinedges2[m_nbins2+1];
+      //double m_histbinedges2[m_nbins2+1];
       //double fwdbinedges2[m_nbins2+1];
       //double bwdbinedges2[m_nbins2+1];
       
-      std::pair<std::vector<string> , std::vector<double> > histbinedges_comb = CombineBinEdges(histbinedges1, histbinedges2);
+      std::pair<std::vector<string> , std::vector<double> > histbinedges_comb = CombineBinEdges(m_histbinedges1, m_histbinedges2);
       
-      //m_hist = new TH2F((prefix+name).c_str() , name.c_str() , m_nbins1, &histbinedges1[0], m_nbins2, &histbinedges2[0]);
-      //m_prof = new TProfile((prefix+name+"_prof_"+m_name1).c_str() , name.c_str() , m_nbins1, &histbinedges1[0]);
-      //m_prof2 = new TProfile((prefix+name+"_prof_"+m_name2).c_str() , name.c_str() , m_nbins2, &histbinedges2[0]);
-      //m_hist_fwd = new TH2F((prefix+name+"_fwd").c_str() , name.c_str() , m_nbins1, &histbinedges1[0], m_nbins2, &histbinedges2[0]);
-      //m_hist_bwd = new TH2F((prefix+name+"_bwd").c_str() , name.c_str() , m_nbins1, &histbinedges1[0], m_nbins2, &histbinedges2[0]);
+      //m_hist = new TH2F((prefix+name).c_str() , name.c_str() , m_nbins1, &m_histbinedges1[0], m_nbins2, &m_histbinedges2[0]);
+      //m_prof = new TProfile((prefix+name+"_prof_"+m_name1).c_str() , name.c_str() , m_nbins1, &m_histbinedges1[0]);
+      //m_prof2 = new TProfile((prefix+name+"_prof_"+m_name2).c_str() , name.c_str() , m_nbins2, &m_histbinedges2[0]);
+      //m_hist_fwd = new TH2F((prefix+name+"_fwd").c_str() , name.c_str() , m_nbins1, &m_histbinedges1[0], m_nbins2, &m_histbinedges2[0]);
+      //m_hist_bwd = new TH2F((prefix+name+"_bwd").c_str() , name.c_str() , m_nbins1, &m_histbinedges1[0], m_nbins2, &m_histbinedges2[0]);
       m_hist_comb = new TH1F((prefix+name+"_comb").c_str(), name.c_str() , m_nbins1 + m_nbins2, &histbinedges_comb.second[0]);
       m_hist->Sumw2();
       m_prof->Sumw2();
@@ -268,6 +272,14 @@ TH2F* Var2D::GetFwdHist(){
 TH2F* Var2D::GetBwdHist(){
   return m_hist_bwd;
 }
+
+std::vector<double> Var2D::GetBinEdges1(){
+  return m_histbinedges1;
+}
+std::vector<double> Var2D::GetBinEdges2(){
+  return m_histbinedges2;
+}
+
 
 
 void Var2D::NormaliseHist(bool doX){

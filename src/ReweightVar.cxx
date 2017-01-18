@@ -161,6 +161,48 @@ double ReweightVar::GetWeight(double val1, double val2){
   return w;
 }
 
+double ReweightVar::GetWeightErr(double val1, double val2){
+  double err = 0.0;
+  if (m_weighttype == ReweightVar::Hist2D &&
+      m_2dhists.size() == 1 && m_exprs.size() == 2){
+    if (m_2dhists.at(0)){
+      int bin1 = m_2dhists.at(0)->GetXaxis()->FindBin(val1);
+      int bin2 = m_2dhists.at(0)->GetYaxis()->FindBin(val2);
+      //info()<<"vals are: "<<val1<<" "<<val2<<endl;
+      //info()<<"bins are: "<<bin1<<" "<<bin2<<endl;
+      if (bin1 > 0 && bin1 <= m_2dhists.at(0)->GetNbinsX() &&
+	  bin2 > 0 && bin2 <= m_2dhists.at(0)->GetNbinsY()){
+	err = sqrt(err*err + pow(m_2dhists.at(0)->GetBinError(bin1,bin2),2));
+      }
+    }
+    else info()<<"hist passed is null!"<<endl;
+  }
+  else if (m_weighttype == ReweightVar::Hist1D &&
+	   m_hists.size() == 1 && m_exprs.size() == 2)
+    {
+      if(m_hists.at(0)){
+	int bin1 = m_hists.at(0)->GetXaxis()->FindBin(val1);
+	int bin2 = m_hists.at(0)->GetXaxis()->FindBin(val2);
+	if (!m_form){
+	  err = sqrt(err*err +
+		     pow(m_hists.at(0)->GetBinError(bin1),2) + 
+		     pow(m_hists.at(0)->GetBinError(bin2),2));
+	}
+	else{
+	  std::vector<double> weights;
+	  weights.push_back(m_hists.at(0)->GetBinContent(bin1));
+	  weights.push_back(m_hists.at(0)->GetBinContent(bin2));
+	  err = sqrt(err*err + pow(m_form->GetVal(weights),2));
+	}
+      }
+    }
+  else{
+    info()<<"Could not get 2d weight"<<endl;
+  }
+  //info()<<"returning 2d weight of "<<w<<endl;
+  return err;
+}
+
 double ReweightVar::GetWeight(double val1, double val2, double val3, double val4){
   double w = 1.0;
   if (m_weighttype == ReweightVar::Hist2D &&
@@ -207,4 +249,25 @@ vector<Expr*> ReweightVar::GetExprs(){
 }
 Expr* ReweightVar::GetExpr(){
   return m_exprs.at(0);
+}
+
+int ReweightVar::GetBin(double val1, double val2){
+
+  int bin1 = -1, bin2 = 0, nbins2 = 0;
+
+  if (m_2dhists.at(0)){
+    double xlo = m_2dhists.at(0)->GetXaxis()->GetBinLowEdge(1);
+    double ylo = m_2dhists.at(0)->GetYaxis()->GetBinLowEdge(1);
+    double xhi = m_2dhists.at(0)->GetXaxis()->GetBinUpEdge(m_2dhists.at(0)->GetXaxis()->GetNbins());
+    double yhi = m_2dhists.at(0)->GetXaxis()->GetBinUpEdge(m_2dhists.at(0)->GetYaxis()->GetNbins());
+
+    if (val1 >= xlo && val1 <= xhi && val2 >=ylo && val2 <= yhi){
+      bin1 = m_2dhists.at(0)->GetXaxis()->FindBin(val1) -1;
+      bin2 = m_2dhists.at(0)->GetYaxis()->FindBin(val2) -1;
+      nbins2 = m_2dhists.at(0)->GetYaxis()->GetNbins();
+    }
+  }
+
+  return (bin2*nbins2 + bin1);
+
 }

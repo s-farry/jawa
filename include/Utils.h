@@ -18,7 +18,7 @@
 #include <Tree.h>
 #include <TRandom3.h>
 #include "Minuit2/Minuit2Minimizer.h"
-#include "Math/Functor.h"
+//#include "Math/Functor.h"
 #include <iostream>
 
 #ifdef WITHPYTHON
@@ -30,10 +30,14 @@ using namespace std;
 typedef vector< vector< double > > matrix;
 
 namespace Utils{
-
-
   enum VaryType{AllUp = 999, AllDown = -999, None = 0};
-  
+
+  struct weight {
+    double val;
+    double err;
+    int bin;
+  };
+
   void saveMatrix(string name, matrix A);
   void saveTH1F(string name, TH1F* h);
   void saveTGraph(string name, TGraph* g);
@@ -68,12 +72,14 @@ namespace Utils{
   matrix getVals(Tree* tree, Expr* var, Var* binvar, TCut cut);
   vector<double> getVals(Tree* t, Expr* var, TCut cut);
   TH1F* GetWeightHist(string name, TH1F* histA, TH1F* histB);
+  TH2F* GetWeightHist2D(string name, TH2F* histA, TH2F* histB);
   double GetSum(TTree* t, string leaf);
 
   void RemoveErrors(TGraphAsymmErrors* graph);
   //void FCN_func(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag);
 
   double GetWeightSum(TTree* t, string w, string cut);
+  vector<double> GetWeightSum(TTree* t, vector<string> w, string cut);
   void saveAsTree(string fileName, vector<string> varNames, string output);
 
 
@@ -88,7 +94,11 @@ namespace Utils{
   boost::python::list getEffErrMatrix2_py(string name, PyObject* data, PyObject* eff, string s);
   boost::python::list getEffErrMatrix3_py(string name, PyObject* data, PyObject* eff, string s, bool correlated);
 
+  PyObject* GetWeightHist_py(string name, PyObject* h1, PyObject* h2);
+  PyObject* GetWeightHist2D_py(string name, PyObject* h1, PyObject* h2);
+
   double GetWeightSum_py(PyObject* py, string w, string cut);
+  boost::python::list GetWeightSum2_py(PyObject* py, boost::python::list& weights, string cut);
   void RemoveErrors_py(PyObject* pyObj);
   double GetSum_py(PyObject* t, string leaf);
   double GetLumi_py(PyObject* f);

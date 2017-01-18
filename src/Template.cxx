@@ -185,7 +185,7 @@ Template::Template(string name, Template* A, Template* B) : JawaObj("Template", 
       m_3Dvariables.insert(pair<string, Var3D*>((*iv).first, new Var3D((*iv).first, (*iv).second, variables3DB.at((*iv).first), name)));
     }
   }
-  m_evts = A->GetEvents() + B->GetEvents();
+  m_evts  = A->GetEvents()   + B->GetEvents();
   m_normN = A->GetNormEvts() + B->GetNormEvts();
 }
 
@@ -212,6 +212,10 @@ Tree* Template::GetTree(string name){
 
 void Template::AddTrees(vector<TTree*>& trees){
   for (auto it : trees){ AddTree(it); }
+
+}
+void Template::AddTrees(vector<TTree*>& trees, double w){
+  for (auto it : trees){ AddTree(it, w); }
 
 }
 void Template::AddTrees(vector<TTree*>& trees, vector<TCut*>& cuts){
@@ -561,10 +565,14 @@ void Template::FillVars(){
     double tree_w = m_trees.at(ti)->GetWeight();
     int nentries = m_maxevts == -1 ? l->GetN() : min((int)l->GetN(), m_maxevts);
 
+    info()<<"Looping over "<<nentries<<" events in tree"<<endl;
     // Loop  over all entries in entrylist
     for (int jentry = 0 ; jentry < nentries ; ++jentry) {
 
-      if (jentry%10000==0 && m_outputevts) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
+      if ((jentry%10000==0 || jentry == (nentries -1)) && m_outputevts) {
+	//info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
+	progress(double(jentry+1)/nentries, 70.0);
+      }
 
       int entry = l->GetEntry(jentry);
       t->GetEntry(entry);
@@ -606,7 +614,6 @@ void Template::FillVars(){
 	double output = tree->GetVal(var->GetExpr());
 	var->FillHist(output, w);
 	if (m_fillTree) output_idx.at(tree_idx[(*iv).second->GetName()]) = output;
-	
       }
       verbose()<<"looping through 2d variables"<<endl;
       
@@ -787,6 +794,15 @@ void Template::SaveToFile(){
   gROOT->cd();
   f->Close();
   info()<<"Wrote to "<<m_name<<".root"<<endl;
+}
+void Template::SaveToFile(string output){
+  TFile* f = new TFile(output.c_str(),"RECREATE");
+  
+  SaveToCurrentFile();
+  //f->Write();
+  gROOT->cd();
+  f->Close();
+  info()<<"Wrote to "<<output<<endl;
 }
 
 TH1F* Template::GetHist(string name){
@@ -1029,6 +1045,14 @@ void Template::AddTrees2_py(boost::python::list& ns, boost::python::list& ns2){
     AddTree(t, c);
   }
 }
+void Template::AddTrees3_py(boost::python::list& ns, double w){
+  for (int i = 0; i < len(ns); ++i){
+    boost::python::object obj = ns[i];
+    PyObject* pyObj = obj.ptr();
+    TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+    AddTree(t, w);
+  }
+}
 Var2D* Template::Get2DVar_py(string name1, string name2){
   return Get2DVar(name1, name2);
 }
@@ -1051,6 +1075,9 @@ void Template::Add2DVar_py(boost::python::list& var){
     string var2 = boost::python::extract<string>(var[1]);
     Add2DVar(var1, var2);
   }
+}
+void Template::Add2DVar2_py(string var1, string var2){
+    Add2DVar(var1, var2);
 }
 void Template::Add3DVar_py(boost::python::list& var){
   if (len(var) == 3){
@@ -1217,6 +1244,7 @@ boost::python::list Template::GetVariables_py(){
   }
   return l;
 }
-
+void Template::SaveToFile1_py(){ SaveToFile(); }
+void Template::SaveToFile2_py(string output) {SaveToFile(output);}
 
 #endif

@@ -13,7 +13,6 @@
 #include <TF1.h>
 #include <TEntryList.h>
 #include <TRandom3.h>
-#include <Utils.h>
 
 using namespace std;
 
@@ -36,7 +35,13 @@ EffVar::EffVar(string name, string var, std::vector<double> edges, string prefix
 
   m_totBkgFits = new TObjArray();
   m_passBkgFits = new TObjArray();
-  
+
+  m_rweff_varyhi_passhists = new TObjArray();
+  m_rweff_varylo_passhists = new TObjArray();
+
+  //m_rweff_varyhi_effgraphs = new TObjArray();
+  //m_rweff_varylo_effgraphs = new TObjArray();
+
   m_totCBFits->SetOwner(true);
   m_passCBFits->SetOwner(true);
 
@@ -74,7 +79,15 @@ EffVar::EffVar(string name, string var, int nbins, double lo, double hi, string 
 
   m_totBkgFits = new TObjArray();
   m_passBkgFits = new TObjArray();
-  
+
+
+  m_rweff_varyhi_passhists = new TObjArray();
+  m_rweff_varylo_passhists = new TObjArray();
+
+  //m_rweff_varyhi_effgraphs = new TObjArray();
+  //m_rweff_varylo_effgraphs = new TObjArray();
+
+
   m_totCBFits->SetOwner(true);
   m_passCBFits->SetOwner(true);
 
@@ -114,6 +127,13 @@ EffVar::EffVar(string name, TGraphAsymmErrors* effgraph)
   m_totBkgFits  = new TObjArray();
   m_passBkgFits = new TObjArray();
 
+
+  m_rweff_varyhi_passhists = new TObjArray();
+  m_rweff_varylo_passhists = new TObjArray();
+
+  //m_rweff_varyhi_effgraphs = new TObjArray();
+  //m_rweff_varylo_effgraphs = new TObjArray();
+
   m_tothist  = 0;
   m_passhist = 0;
   m_failhist = 0;
@@ -140,6 +160,12 @@ EffVar::EffVar(string name, TFile* f, string prefix): Var(name){
 
   m_totBkgFits = new TObjArray();
   m_passBkgFits = new TObjArray();
+
+  m_rweff_varyhi_passhists = new TObjArray();
+  m_rweff_varylo_passhists = new TObjArray();
+
+  //m_rweff_varyhi_effgraphs = new TObjArray();
+  //m_rweff_varylo_effgraphs = new TObjArray();
 
   m_systematic = false;
 
@@ -193,29 +219,44 @@ EffVar::EffVar(EffVar* varA, EffVar* varB, string prefix): Var(varA->GetName(), 
       m_totBkgFits         = new TObjArray();
       m_passBkgFits        = new TObjArray();
       
-      //m_prefix             = prefix;
+      m_rweff_varyhi_passhists = new TObjArray();
+      m_rweff_varylo_passhists = new TObjArray();
+      
+      //m_rweff_varyhi_effgraphs = new TObjArray();
+      //m_rweff_varylo_effgraphs = new TObjArray();
+
+      m_prefix             = prefix;
 
       m_effgraph = new TGraphAsymmErrors(m_nbins);
       
-      if ( prefix != "" ) prefix = prefix+"/";
+      if ( m_prefix != "" ) m_prefix = m_prefix+"/";
       
       vector<double> edges = GetBinEdges(varA->GetTotHist());
 
-      m_tothist = new TH1F((prefix+m_name+"_tot").c_str(), m_name.c_str(), m_nbins, &edges[0]);
-      m_passhist = new TH1F((prefix+m_name+"_pass").c_str(), (m_name+"_pass").c_str(), m_nbins, &edges[0]);
-      m_failhist = new TH1F((prefix+m_name+"_fail").c_str(), (m_name+"_fail").c_str(), m_nbins, &edges[0]);
+      m_tothist = new TH1F((m_prefix+m_name+"_tot").c_str(), m_name.c_str(), m_nbins, &edges[0]);
+      m_passhist = new TH1F((m_prefix+m_name+"_pass").c_str(), (m_name+"_pass").c_str(), m_nbins, &edges[0]);
+      m_failhist = new TH1F((m_prefix+m_name+"_fail").c_str(), (m_name+"_fail").c_str(), m_nbins, &edges[0]);
 
-      m_bkgtot  = new TH1F((prefix+m_name+"_bkgtot").c_str() , (m_name+"_bkgtot").c_str()  , m_nbins, &edges[0]);
-      m_bkgpass = new TH1F((prefix+m_name+"_bkgpass").c_str(), (m_name+"_bkgpass").c_str() , m_nbins, &edges[0]);
+      m_bkgtot  = new TH1F((m_prefix+m_name+"_bkgtot").c_str() , (m_name+"_bkgtot").c_str()  , m_nbins, &edges[0]);
+      m_bkgpass = new TH1F((m_prefix+m_name+"_bkgpass").c_str(), (m_name+"_bkgpass").c_str() , m_nbins, &edges[0]);
 
       m_type = varA->m_type;
       m_systematic = false;
-      
-      TH1F* hist = (TH1F*)varA->m_tothists->At(0);
 
-      int npltbins       = hist->GetNbinsX();
-      double pltrangelow = hist->GetXaxis()->GetXmin();
-      double pltrangehi  = hist->GetXaxis()->GetXmax();
+      /*
+
+      for (int i = 0 ; i < varA->m_reweighteffuperrs->GetEntries() ; ++ i){
+	TH1F* varA_up = (TH1F*)varA->m_reweighteffuperrs->At(i);
+	TH1F* varA_lo = (TH1F*)varA->m_reweighteffloerrs->At(i);
+	TH1F* varB_up = (TH1F*)varB->m_reweighteffuperrs->At(i);
+	TH1F* varB_lo = (TH1F*)varB->m_reweighteffloerrs->At(i);
+
+
+  	
+      }
+
+      */
+
 
       //Loop over tot and pass hists and add together
       for (signed int i = 0; i < m_nbins; ++i){
@@ -239,27 +280,35 @@ EffVar::EffVar(EffVar* varA, EffVar* varB, string prefix): Var(varA->GetName(), 
 	string id_fail    = (m_prefix+"_"+m_name+"_"+m_var+"_"+low+"_"+high+"_fail");
 	string title_fail = (m_prefix+"_"+low+"<"+m_var+"<"+high+"_fail");
 	
-	TH1F* hist_tot = new TH1F(id_tot.c_str(), title_tot.c_str(), npltbins,pltrangelow,pltrangehi);
-	TH1F* hist_pass = new TH1F(id_pass.c_str(), title_pass.c_str(), npltbins,pltrangelow,pltrangehi);
-	TH1F* hist_fail = new TH1F(id_fail.c_str(), title_fail.c_str(), npltbins,pltrangelow,pltrangehi);
-	
-	hist_tot->Add((TH1F*)varA->m_tothists->At(i));
-	hist_tot->Add((TH1F*)varB->m_tothists->At(i));
-	
-	hist_pass->Add((TH1F*)varA->m_passhists->At(i));
-	hist_pass->Add((TH1F*)varB->m_passhists->At(i));
-	
-	hist_fail->Add((TH1F*)varA->m_failhists->At(i));
-	hist_fail->Add((TH1F*)varB->m_failhists->At(i));
-
-	m_tothists->Add(hist_tot);
-	m_passhists->Add(hist_pass);
-	m_failhists->Add(hist_fail);
-	
 	m_tothist->SetBinContent(i+1, varA->m_tothist->GetBinContent(i+1) + varB->m_tothist->GetBinContent(i+1));
 	m_passhist->SetBinContent(i+1, varA->m_passhist->GetBinContent(i+1) + varB->m_passhist->GetBinContent(i+1));
 	m_failhist->SetBinContent(i+1, varA->m_failhist->GetBinContent(i+1) + varB->m_failhist->GetBinContent(i+1));
 	
+      }
+
+      if (varA->GetEffRWVaryHiPassHists() && varB->GetEffRWVaryHiPassHists() &&
+	  varA->GetEffRWVaryHiPassHists()->GetEntries() == varB->GetEffRWVaryHiPassHists()->GetEntries()){
+	for (signed int i = 0 ; i < varA->GetEffRWVaryHiPassHists()->GetEntries() ; ++ i){
+	  TH1F* h  = ((TH1F*)varA->GetEffRWVaryHiPassHists()->At(i));
+	  TH1F* h2 = ((TH1F*)varB->GetEffRWVaryHiPassHists()->At(i));
+	  ostringstream s;
+	  s<<h->GetName()<<"_combined";
+	  TH1F* h3 = (TH1F*)h->Clone(s.str().c_str());
+	  h3->Add(h2);
+	  m_rweff_varyhi_passhists->Add(h3);
+	}
+      }
+      if (varA->GetEffRWVaryLoPassHists() && varB->GetEffRWVaryLoPassHists() &&
+	  varA->GetEffRWVaryLoPassHists()->GetEntries() == varB->GetEffRWVaryLoPassHists()->GetEntries()){
+	for (signed int i = 0 ; i < varA->GetEffRWVaryLoPassHists()->GetEntries() ; ++ i){
+	  TH1F* h  = ((TH1F*)varA->GetEffRWVaryLoPassHists()->At(i));
+	  TH1F* h2 = ((TH1F*)varB->GetEffRWVaryLoPassHists()->At(i));
+	  ostringstream s;
+	  s<<h->GetName()<<"_combined";
+	  TH1F* h3 = (TH1F*)h->Clone(s.str().c_str());
+	  h3->Add(h2);
+	  m_rweff_varylo_passhists->Add(h3);
+	}
       }
       
     }
@@ -274,8 +323,6 @@ TH1F* EffVar::GetPassHist(){return m_passhist;}
 TH1F* EffVar::GetFailHist(){return m_failhist;}
 TH1F* EffVar::GetBkgTotHist(){return m_bkgtot;}
 TH1F* EffVar::GetBkgPassHist(){return m_bkgpass;}
-TH1F* EffVar::GetMeanTotHist(){return m_meantot;}
-TH1F* EffVar::GetMeanPassHist(){return m_meanpass;}
 
 
 void EffVar::FillBkgHists(double lo, double hi){
@@ -299,37 +346,17 @@ void EffVar::FillBkgHists(double lo, double hi){
   }
 }
 
-void EffVar::FillMeanHists(){
-  for (int i = 0 ; i<m_tothists->GetEntries(); ++i){
-    TList* funcs_tot  = (TList*)(((TH1F*)m_tothists->At(i))->GetListOfFunctions());
-    TList* funcs_pass = (TList*)(((TH1F*)m_passhists->At(i))->GetListOfFunctions());
-
-    double mean_tot = 0;
-    double mean_pass = 0;
-    double mean_toterr = 0;
-    double mean_passerr = 0;
-
-    if (funcs_tot->GetEntries() == 2 && funcs_pass->GetEntries() == 2){
-      TF1* totfunc_tot  = (TF1*)funcs_tot->At(0);
-      //TF1* bkgfunc_tot  = (TF1*)funcs_tot->At(1);
-
-      TF1* totfunc_pass = (TF1*)funcs_pass->At(0);
-      //TF1* bkgfunc_pass = (TF1*)funcs_pass->At(1);
-
-      mean_tot = totfunc_tot->GetParameter(3);
-      mean_pass = totfunc_pass->GetParameter(3);
-      mean_toterr = totfunc_tot->GetParError(3);
-      mean_passerr = totfunc_pass->GetParError(3);
-
+void EffVar::AddEffScaleVaryHists(TH2F* scales){
+  for (int i = 0 ; i < scales->GetNbinsX() ; ++i){
+    for (int j = 0 ; j < scales->GetNbinsY() ; ++j ){
+      ostringstream ssup, sslo;
+      ssup<<m_prefix<<m_name<<"_varyup_tot_"<<i<<"_"<<j;
+      sslo<<m_prefix<<m_name<<"_varydown_tot_"<<i<<"_"<<j;
+      m_rweff_varyhi_passhists->Add(m_passhist->Clone(ssup.str().c_str()));
+      m_rweff_varylo_passhists->Add(m_passhist->Clone(sslo.str().c_str()));
     }
-    m_meantot->SetBinContent( i+1 , mean_tot );
-    m_meanpass->SetBinContent( i+1 , mean_pass );
-    m_meantot->SetBinError( i+1 , mean_toterr );
-    m_meanpass->SetBinError( i+1 , mean_passerr );
   }
 }
-
-
 
 void EffVar::MakeTGraph(){
   TGraphAsymmErrors* graph = new TGraphAsymmErrors(m_passhist,m_tothist);
@@ -351,6 +378,15 @@ void EffVar::MakeTGraph(){
       m_effgraph->GetPoint(i, x, y);
     }
   }
+  //cout<<m_reweighteffuperrs<<" "<<m_reweighteffuperrs->GetEntries()<<endl;
+  /*
+  for (int i = 0 ; i < m_reweighteffuperrs->GetEntries() ; ++ i ){
+    ((TH1F*)m_rweighteffuperrs->At(i))->Divide(m_tothist);
+  }
+  for (int i = 0 ; i < m_reweighteffloerrs->GetEntries() ; ++ i ){
+    ((TH1F*)m_reweighteffloerrs->At(i))->Divide(m_tothist);
+    }
+  */
 }
 
 void EffVar::MakeEffHist(bool ClopperPearsonError){
@@ -369,187 +405,56 @@ void EffVar::MakeEffHist(bool ClopperPearsonError){
   }
 }
 
+TObjArray* EffVar::GetEffRWVaryHiPassHists(){ return m_rweff_varyhi_passhists; }
+TObjArray* EffVar::GetEffRWVaryLoPassHists(){ return m_rweff_varylo_passhists; }
+//TObjArray* EffVar::GetEffRWVarHiGraphs(){ return m_rweff_varyhi_effgraphs; }
+//TObjArray* EffVar::GetEffRWVarLoGraphs(){ return m_rweff_varylo_effgraphs; }
 
-void EffVar::FillVar(bool pass, double v_pltvar, float v_var, double efflo, double effhi, double weight){
+
+
+void EffVar::FillVar(bool pass, float v_var, double weight, double effw){
   double var = (double)v_var;
-  FillVar(pass, v_pltvar, var, efflo, effhi, weight);
-
-
+  FillVar(pass, var, weight, effw);
 }
 
-void EffVar::FillVar(bool pass, double v_pltvar, double v_var, double efflo, double effhi, double weight){
-  /*if (m_type != "D") {
-    cout<<"-----ERROR - Wrong Type Used"<<endl;
-    return;
-    }*/
-  bool inRange = (v_var >= m_lo && v_var < m_hi);
-  if ( inRange ){
-    //------------ Fill the mass histograms within the 
-    //------------- Calculate bin and fill the individual mass histograms
-    //int bin = floor((v_var - m_lo ) * m_nbins/( m_hi - m_lo));
-    int bin = m_tothist->FindBin(v_var) - 1;
-    ((TH1F*)m_tothists->At(bin))->Fill(v_pltvar);
-    if (pass) {
-      ((TH1F*)m_passhists->At(bin))->Fill(v_pltvar);
-    } else ((TH1F*)m_failhists->At(bin))->Fill(v_pltvar);
+void EffVar::FillVar(bool pass, double v_var, double weight, double effw ){
+  m_tothist->Fill(v_var, weight);
+  if ( pass ) {
+    m_passhist->Fill(v_var, weight * effw);
+  } else {
+    m_failhist->Fill(v_var, weight);
   }
-  //------------ Fill the total histograms within the efficiency range specified
-  if (v_pltvar >= efflo && v_pltvar < effhi) 
-    {
-      m_tothist->Fill(v_var, weight);
-      if ( pass ) {
-	m_passhist->Fill(v_var, weight);
-      } else {
-	m_failhist->Fill(v_var, weight);
+}
+
+void EffVar::FillVar(bool pass, double v_var, Utils::weight weight, Utils::weight effw ){
+  m_tothist->Fill(v_var, weight.val);
+  if ( pass ) {
+    m_passhist->Fill(v_var, weight.val * effw.val);
+    for (int i = 0 ; i < m_rweff_varyhi_passhists->GetEntries() ; ++ i ){
+      if ( i == effw.bin ){
+	((TH1F*)m_rweff_varyhi_passhists->At(i))->Fill( v_var, weight.val*(effw.val + effw.err) );
+	((TH1F*)m_rweff_varylo_passhists->At(i))->Fill( v_var, weight.val*(effw.val - effw.err) );
+      }
+      else {
+	((TH1F*)m_rweff_varyhi_passhists->At(i))->Fill( v_var, weight.val*effw.val);
+	((TH1F*)m_rweff_varylo_passhists->At(i))->Fill( v_var, weight.val*effw.val);
       }
     }
+
+  } else {
+    m_failhist->Fill(v_var, weight.val);
+  }
 }
 
-void EffVar::FillVar(bool pass, double v_pltvar, int i_var, double efflo, double effhi, double weight){
+void EffVar::FillVar(bool pass, int i_var,  double weight, double effw){
   if (strcmp(m_type, "I") != 0) {
     cout<<"-----ERROR - Wrong Type Used"<<endl; 
     return;
   }
-  bool inRange = (i_var >= m_lo && i_var < m_hi);
-  if ( inRange ){
-    //------------- Calculate bin and fill the individual mass histograms
-    //int bin = floor((i_var - m_lo ) * m_nbins/( m_hi - m_lo));
-    int bin = m_tothist->FindBin(i_var) - 1;
-
-    ((TH1F*)m_tothists->At(bin))->Fill(v_pltvar);
-    if (pass) {
-      ((TH1F*)m_passhists->At(bin))->Fill(v_pltvar);
-    } else ((TH1F*)m_failhists->At(bin))->Fill(v_pltvar);
-    
-  }
-  //------------ Fill the total histograms within the efficiency range specified
-  if (v_pltvar >= efflo && v_pltvar < effhi) 
-    {
-      m_tothist->Fill(i_var, weight);
-      if ( pass ) {
-	m_passhist->Fill(i_var, weight);
-      } else m_failhist->Fill(i_var, weight);
-    }
-}
-
-void EffVar::FillVar(string type, double v_pltvar, double v_var, double efflo, double effhi, double weight){
-  if ( strcmp(m_type, "D") != 0) {
-    cout<<"-----ERROR - Wrong Type Used"<<endl;
-    return;
-  }
-  bool inRange = (v_var >= m_lo && v_var < m_hi);
-  if ( inRange ){
-    //------------ Fill the total histograms within the efficiency range specified
-    if (v_pltvar >= efflo && v_pltvar < effhi) 
-      {
-	  
-	//------------- Calculate bin and fill the individual mass histograms
-	//int bin = floor((v_var - m_lo ) * m_nbins/( m_hi - m_lo));
-	int bin = m_tothist->FindBin(v_var) - 1;
-
-	if ( type.compare("tot") == 0 ){
-	  m_tothist->Fill(v_var, weight);
-	  ((TH1F*)m_tothists->At(bin))->Fill(v_pltvar);
-	}
-	else if ( type.compare("pass") == 0 ) {
-	  m_passhist->Fill(v_var, weight);
-	  ((TH1F*)m_passhists->At(bin))->Fill(v_pltvar);
-	}
-	else if ( type.compare("fail") == 0 ) {
-	  m_failhist->Fill(v_var, weight);
-	  ((TH1F*)m_failhists->At(bin))->Fill(v_pltvar);
-	}
-	
-      }
-  }
-}
-
-
-void EffVar::FillVar(string type, double v_pltvar, int i_var, double efflo, double effhi, double weight){
-  if ( strcmp(m_type, "I") != 0) {
-    cout<<"-----ERROR - Wrong Type Used"<<endl; 
-    return;
-  }
-  bool inRange = (i_var >= m_lo && i_var < m_hi);
-  if ( inRange ){
-    //------------ Fill the total histograms within the efficiency range specified
-    if (v_pltvar >= efflo && v_pltvar < effhi) 
-      {
-	  
-	//------------- Calculate bin and fill the individual mass histograms
-	//int bin = floor((i_var - m_lo ) * m_nbins/( m_hi - m_lo));
-	int bin = m_tothist->FindBin(i_var) - 1;
-
-	if ( type == "tot" ){
-	  m_tothist->Fill(i_var, weight);
-	  ((TH1F*)m_tothists->At(bin))->Fill(v_pltvar);
-	}
-	else if ( type == "pass" ) {
-	  m_passhist->Fill(i_var, weight);
-	  ((TH1F*)m_passhists->At(bin))->Fill(v_pltvar);
-	}
-	else if ( type == "fail" ) {
-	  m_failhist->Fill(i_var, weight);
-	  ((TH1F*)m_failhists->At(bin))->Fill(v_pltvar);
-	}
-	
-      }
-  }
-
-}
-
-void EffVar::MakeHists(string name, int npltbins, double pltrangelow, double pltrangehi, bool reweight){
-    for ( int i = 0 ; i < m_nbins ; ++i ){
-      double lo = m_lo + i * (m_hi - m_lo)/m_nbins;
-      double hi = m_lo + (i + 1 ) * (m_hi - m_lo)/m_nbins;
-      
-      ostringstream loss, hiss;
-
-      //Work out precision required using bin sizes
-      int binsize = (m_hi - m_lo) / m_nbins;
-
-      if (binsize > 0.01)
-	{
-	  loss << std::fixed << std::setprecision(2) << lo;
-	  hiss << std::fixed << std::setprecision(2) << hi;
-	}
-      if (binsize > 0.001)
-	{
-	  loss << std::fixed << std::setprecision(3) << lo;
-	  hiss << std::fixed << std::setprecision(3) << hi;
-	}
-      else {
-	  loss << std::fixed << std::setprecision(4) << lo;
-	  hiss << std::fixed << std::setprecision(4) << hi;
-      }
-      string low  = loss.str();
-      string high = hiss.str();
-      
-      string id_tot    = (name+"_"+m_name+"_"+m_var+"_"+low+"_"+high+"_tot");
-      string title_tot = (name+"_"+low+"<"+m_var+"<"+high+"_tot");
-      
-      string id_pass    = (name+"_"+m_name+"_"+m_var+"_"+low+"_"+high+"_pass");
-      string title_pass = (name+"_"+low+"<"+m_var+"<"+high+"_pass");
-      
-      string id_fail    = (name+"_"+m_name+"_"+m_var+"_"+low+"_"+high+"_fail");
-      string title_fail = (name+"_"+low+"<"+m_var+"<"+high+"_fail");
-
-      m_tothists->Add(new TH1F(id_tot.c_str(), title_tot.c_str(), npltbins,pltrangelow,pltrangehi));
-      m_passhists->Add(new TH1F(id_pass.c_str(), title_pass.c_str(), npltbins,pltrangelow,pltrangehi));
-      m_failhists->Add(new TH1F(id_fail.c_str(), title_fail.c_str(), npltbins,pltrangelow,pltrangehi));
-
-      if (reweight){
-	((TH1F*)m_tothists->At(i))->Sumw2();
-	((TH1F*)m_passhists->At(i))->Sumw2();
-	((TH1F*)m_failhists->At(i))->Sumw2();
-
-      }
-    }
-    if (reweight){
-      m_tothist->Sumw2();
-      m_passhist->Sumw2();
-      m_failhist->Sumw2();
-    }
+  m_tothist->Fill(i_var, weight);
+  if ( pass ) {
+    m_passhist->Fill(i_var, weight * effw);
+  } else m_failhist->Fill(i_var, weight);
 }
 
 void EffVar::Normalise(double N){
@@ -581,7 +486,7 @@ void EffVar::AddSystematic(double pc){
       }
     }
     m_systematic = true;
-  }  else cout<<"Systematic already added to "<<m_name<<": Skipping"<<endl;
+  }  else info()<<"Systematic already added to "<<m_name<<": Skipping"<<endl;
 
 }
 
