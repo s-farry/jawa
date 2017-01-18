@@ -653,14 +653,37 @@ namespace Utils{
     TH1F* hist = new TH1F(name.c_str(), name.c_str(), histA->GetNbinsX(), histA->GetBinLowEdge(1), histA->GetBinLowEdge(histA->GetXaxis()->GetLast() + 1));
     if (histA->GetNbinsX() == histB->GetNbinsX() && histA->GetBinLowEdge(0) == histB->GetBinLowEdge(0) &&
         histA->GetBinLowEdge(histA->GetXaxis()->GetLast() +1) == histB->GetBinLowEdge(histB->GetXaxis()->GetLast() + 1)){
-      for (int i = 0; i < histA->GetNbinsX()+1; ++i){
-	if (histB->GetBinContent(i) == 0) hist->SetBinContent(i, 1);
+      for (int i = 0; i < histA->GetNbinsX()+2; ++i){
+	if (histB->GetBinContent(i) == 0 || histA->GetBinContent(i) == 0) hist->SetBinContent(i, 1);
 	else hist->SetBinContent(i, histA->GetBinContent(i)/histB->GetBinContent(i)*histB->Integral()/histA->Integral());
       }
     }
     return hist;
   }
 
+  TH2F* GetWeightHist2D(string name, TH2F* histA, TH2F* histB){
+    TH2F* hist = new TH2F(name.c_str(), name.c_str(), histA->GetXaxis()->GetNbins(), 
+			  histA->GetXaxis()->GetBinLowEdge(1), 
+			  histA->GetXaxis()->GetBinLowEdge(histA->GetXaxis()->GetLast() + 1),
+			  histA->GetYaxis()->GetNbins(), histA->GetYaxis()->GetBinLowEdge(1),
+			  histA->GetYaxis()->GetBinLowEdge(histA->GetYaxis()->GetLast() + 1));
+    if (histA->GetNbinsX() == histB->GetNbinsX() && histA->GetXaxis()->GetBinLowEdge(0) == histB->GetXaxis()->GetBinLowEdge(0) &&
+	histA->GetXaxis()->GetBinLowEdge(histA->GetXaxis()->GetLast() +1) == histB->GetXaxis()->GetBinLowEdge(histB->GetXaxis()->GetLast() + 1)){
+      for (int i = 0; i < histA->GetXaxis()->GetNbins()+2; ++i){
+	for (int j = 0 ; j < histA->GetYaxis()->GetNbins() + 2; ++j){
+	  if (histB->GetBinContent(i,j) == 0 || histA->GetBinContent(i,j) == 0) hist->SetBinContent(i,j, 1);
+	  else {
+	    double bina = histA->GetBinContent(i,j);
+	    double binb = histB->GetBinContent(i,j);
+	    hist->SetBinContent(i,j, (bina/binb)*histB->Integral()/histA->Integral());
+	    hist->SetBinError(i,j, (bina/binb)*((sqrt(bina) + sqrt(binb) / (sqrt(bina*binb)))));
+	  }
+	}
+      }
+    }
+    return hist;
+  }
+  
   double GetLumi(TFile* f){
     TTree* lumit = (TTree*)f->Get("GetIntegratedLuminosity/LumiTuple");
     double lumi = -1.0;
@@ -1040,6 +1063,21 @@ namespace Utils{
     return GetWeightSum(t, w, cut);
   }
   
+  PyObject* GetWeightHist_py(string name, PyObject* h1, PyObject* h2){
+    TH1F* histA = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(h1));
+    TH1F* histB = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(h2));
+    TH1F* hist = GetWeightHist(name, histA, histB);
+    return TPython::ObjectProxy_FromVoidPtr(hist, hist->ClassName());
+  }
+  
+  PyObject* GetWeightHist2D_py(string name, PyObject* h1, PyObject* h2){
+    TH2F* histA = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(h1));
+    TH2F* histB = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(h2));
+    TH2F* hist = GetWeightHist2D(name, histA, histB);
+    return TPython::ObjectProxy_FromVoidPtr(hist, hist->ClassName());
+  }
+
+
   boost::python::list GetWeightSum2_py(PyObject* pyObj, boost::python::list& weights, string cut){
     TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
     vector<string> ws;

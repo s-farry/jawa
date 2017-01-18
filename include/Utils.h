@@ -69,6 +69,7 @@ namespace Utils{
   matrix getVals(Tree* tree, Expr* var, Var* binvar, TCut cut);
   vector<double> getVals(Tree* t, Expr* var, TCut cut);
   TH1F* GetWeightHist(string name, TH1F* histA, TH1F* histB);
+  TH2F* GetWeightHist2D(string name, TH2F* histA, TH2F* histB);
   double GetSum(TTree* t, string leaf);
 
   void RemoveErrors(TGraphAsymmErrors* graph);
@@ -89,6 +90,9 @@ namespace Utils{
   boost::python::list getEffErrMatrix_py(string name, PyObject* data, PyObject* eff);
   boost::python::list getEffErrMatrix2_py(string name, PyObject* data, PyObject* eff, string s);
   boost::python::list getEffErrMatrix3_py(string name, PyObject* data, PyObject* eff, string s, bool correlated);
+
+  PyObject* GetWeightHist_py(string name, PyObject* h1, PyObject* h2);
+  PyObject* GetWeightHist2D_py(string name, PyObject* h1, PyObject* h2);
 
   double GetWeightSum_py(PyObject* py, string w, string cut);
   boost::python::list GetWeightSum2_py(PyObject* py, boost::python::list& weights, string cut);

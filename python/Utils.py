@@ -7,6 +7,15 @@ class Bunch:
         def __init__(self, **kwds):
                 self.__dict__.update(kwds)
 
+
+def get_max(hists, norm = False):
+	ymax = 0
+	for h in hists:
+		hmax = h.GetBinContent(h.GetMaximumBin())
+		if norm and h.Integral() > 0: hmax = hmax / h.Integral()
+		if hmax > ymax: ymax = hmax
+	return ymax
+
 def normalise_to_min(hist):
     min_width = -1.0
     for i in range(hist.GetXaxis().GetNbins()):

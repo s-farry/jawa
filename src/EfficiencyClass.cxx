@@ -75,14 +75,14 @@ EfficiencyClass::EfficiencyClass( string name , EfficiencyClass* classA , Effici
 
   for (int i = 0 ; i < classA->m_Npass_rweff_varyhi->GetEntries() ; ++i){
     ostringstream a, b;
-    a<<m_Npass_rweff_varyhi->GetName()<<"_combined";
-    b<<m_Npass_rweff_varylo->GetName()<<"_combined";
+    a<<((TParameter<double>*)(classA->m_Npass_rweff_varyhi)->At(i))->GetName()<<"_combined";
+    b<<((TParameter<double>*)(classA->m_Npass_rweff_varylo)->At(i))->GetName()<<"_combined";
     double val1 = ((TParameter<double>*)classA->m_Npass_rweff_varyhi->At(i))->GetVal();
     double val2 = ((TParameter<double>*)classB->m_Npass_rweff_varyhi->At(i))->GetVal();
     m_Npass_rweff_varyhi->Add(new TParameter<double>(a.str().c_str(), val1+val2));
     double val3 = ((TParameter<double>*)classA->m_Npass_rweff_varylo->At(i))->GetVal();
     double val4 = ((TParameter<double>*)classB->m_Npass_rweff_varylo->At(i))->GetVal();
-    m_Npass_rweff_varylo->Add(new TParameter<double>(a.str().c_str(), val3+val4));
+    m_Npass_rweff_varylo->Add(new TParameter<double>(b.str().c_str(), val3+val4));
   }
 
   m_Ntot = totN;
@@ -403,15 +403,19 @@ void EfficiencyClass::SaveToFile(const char* file){
   TParameter<double>* toteff_errhi = new TParameter<double>("TotalEffErrHi", m_toteff.GetEffErrHi() );
   TParameter<double>* toteff_errlo = new TParameter<double>("TotalEffErrLo", m_toteff.GetEffErrLo() );
 
+  TParameter<double>* Npass = new TParameter<double>("Npass", m_Npass);
+  TParameter<double>* Ntot  = new TParameter<double>("Ntot", m_Ntot);
+
   f->cd();
   toteff->Write();
   toteff_errhi->Write();
   toteff_errlo->Write();
-
-  TParameter<double>("Npass", m_Npass).Write();
-  TParameter<double>("Ntot", m_Ntot).Write();
+  Npass->Write();
+  Ntot->Write();
 
   if (m_scaleerrs){
+    TParameter<double>* totaleffrwerr = new TParameter<double>("TotalEffRWErr", m_toteffrw_err);
+    totaleffrwerr->Write();
     if (m_Npass_rweff_varyhi) m_Npass_rweff_varyhi->Write("Npass_effrwhi",1);
     if (m_Npass_rweff_varylo) m_Npass_rweff_varylo->Write("Npass_effrwlo",1);
   }
@@ -591,14 +595,14 @@ void EfficiencyClass::FreeBranches(Tree* t){
 }
 
 pair<Utils::weight,Utils::weight> EfficiencyClass::FillVars(bool pass, Tree* t){
-  //Calculate weight
-  double w = 1;
+  //Initialise weights to 1
+  double w = 1.0;
   double w_err = 0.0;
   double effw = 1.0;
   double effw_err = 0.0;
   int effw_bin = -1;
     
-  // Get The Weight
+  // Get The Weights from Reweight Variables
   for (std::vector<ReweightVar*>::iterator iv = m_reweightvariables.begin(); iv!=m_reweightvariables.end();++iv){
     if ((*iv)->GetExprs().size() == 1){
       Expr* e  = (*iv)->GetExprs()[0];
@@ -625,6 +629,8 @@ pair<Utils::weight,Utils::weight> EfficiencyClass::FillVars(bool pass, Tree* t){
       w_err = sqrt(w_err*w_err + pow((*iv)->GetWeightErr(val1,val2),2));
     }
   }
+
+  //Get any efficiency reweight value
   for (std::vector<ReweightVar*>::iterator iv = m_reweighteffvariables.begin(); iv!=m_reweighteffvariables.end();++iv){
     if ((*iv)->GetExprs().size() == 2){
       Expr* e1 = (*iv)->GetExprs().at(0);
@@ -638,18 +644,18 @@ pair<Utils::weight,Utils::weight> EfficiencyClass::FillVars(bool pass, Tree* t){
   }
 
   Utils::weight eff_weight, scale_weight;
+  eff_weight.val = effw;
+  eff_weight.err = effw_err;
+  eff_weight.bin = effw_bin;
+  scale_weight.val = w;
+  scale_weight.err = w_err;
+
   for (std::map<string, EffVar*>::iterator ei = m_variables.begin(); ei != m_variables.end(); ++ei){
     EffVar* evar = ei->second;
     if (!m_scaleerrs){
       evar->FillVar(pass, t->GetVal(evar->GetExpr()), w, effw);
     }
     else{
-      eff_weight.val = effw;
-      eff_weight.err = effw_err;
-      eff_weight.bin = effw_bin;
-      scale_weight.val = w;
-      scale_weight.err = w_err;
-      //scale_weight.bin = w_bin;
       evar->FillVar(pass, t->GetVal(evar->GetExpr()), scale_weight, eff_weight );
     }
   }
@@ -660,6 +666,7 @@ pair<Utils::weight,Utils::weight> EfficiencyClass::FillVars(bool pass, Tree* t){
     double val2 = t->GetVal(evar->GetVar2()->GetExpr());
     evar->FillVar(pass, val1, val2, w);
   }
+  //return the weights for use in rest of program
   pair<Utils::weight, Utils::weight> weights(scale_weight, eff_weight);
   return weights;
 }
@@ -691,7 +698,6 @@ void EfficiencyClass::LoopEntries(){
   double totN = 0;
   double passN = 0;
 
-  info()<<"before the loop"<<endl;
 
   for(unsigned int i = 0; i < m_trees.size(); i++){
     
@@ -705,7 +711,6 @@ void EfficiencyClass::LoopEntries(){
     Long64_t nentries = totList->GetN();
     bool pass = false;
     //Long64_t nbytes = 0, nb = 0;
-    info()<<"before event loop"<<endl;
     for (Long64_t jentry=0; jentry<nentries;jentry++) {
       pass = false;
       Int_t entry = totList->GetEntry(jentry);
@@ -721,13 +726,12 @@ void EfficiencyClass::LoopEntries(){
 
       pair<Utils::weight,Utils::weight> weights = FillVars(pass, t);
       totN = totN + weights.first.val;
+      //info()<<weights.first.val<<" "<<weights.second.val<<endl;
+
       if (pass) {
 	passN = passN + weights.first.val*weights.second.val;
 	if (m_scaleerrs){
 	  int bin = weights.second.bin;
-	  info()<<"about to increment values"<<endl;
-	  info()<<"bin is "<<bin<<endl;
-	  info()<<"available entries is: "<<m_Npass_rweff_varyhi->GetEntries()<<endl;
 	  for (int i = 0 ; i < m_Npass_rweff_varyhi->GetEntries() ; ++i){
 	    double valhi = ((TParameter<double>*)m_Npass_rweff_varyhi->At(i))->GetVal(); 
 	    double vallo = ((TParameter<double>*)m_Npass_rweff_varylo->At(i))->GetVal(); 
@@ -740,7 +744,6 @@ void EfficiencyClass::LoopEntries(){
 	      ((TParameter<double>*)m_Npass_rweff_varylo->At(i))->SetVal(vallo + weights.first.val*(weights.second.val));
 	    }
 	  }
-	  info()<<"values incremented"<<endl;
 	}
       }
     }
@@ -783,6 +786,15 @@ void EfficiencyClass::MakeEfficiencyGraph(){
     EffVar2D* evar = ei->second;
     evar->MakeEffHist();
     evar->MakeTGraphs();
+  }
+
+  if (m_scaleerrs){
+    m_toteffrw_err = 0;
+    for (int i = 0 ; i < m_Npass_rweff_varyhi->GetEntries() ; ++i ){
+      double effhi = ((TParameter<double>*)m_Npass_rweff_varyhi->At(i))->GetVal() / m_Ntot;
+      double efflo = ((TParameter<double>*)m_Npass_rweff_varylo->At(i))->GetVal() / m_Ntot;
+      m_toteffrw_err += max (abs(effhi - m_Npass/m_Ntot), abs(efflo - m_Npass/m_Ntot));
+    }
   }
   verbose()<<"leaving"<<endl;
 }

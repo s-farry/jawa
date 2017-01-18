@@ -487,7 +487,7 @@ class PlotObj:
                     if ynormlims is not None and len(ynormlims) == 2: 
                         p.GetYaxis().SetRangeUser(ynormlims[0], ynormlims[1])
                     p.GetXaxis().SetTitle(xlabel)
-                    #p.GetYaxis().SetTitle("Rel. Err")
+                    p.GetYaxis().SetTitle(ylabel)
                     p.GetYaxis().SetNdivisions(505)
                     p.GetXaxis().SetLabelSize(0.05)
             for p in self.comparisons:

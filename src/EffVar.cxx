@@ -496,7 +496,7 @@ void EffVar::AddSystematic(double pc){
       }
     }
     m_systematic = true;
-  }  else cout<<"Systematic already added to "<<m_name<<": Skipping"<<endl;
+  }  else info()<<"Systematic already added to "<<m_name<<": Skipping"<<endl;
 
 }
 

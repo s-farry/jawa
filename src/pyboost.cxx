@@ -11,6 +11,8 @@ BOOST_PYTHON_MODULE(Jawa)
     def("RemoveErrors",  &Utils::RemoveErrors_py );
     def("GetWeightSum",  &Utils::GetWeightSum_py );
     def("GetWeightSum",  &Utils::GetWeightSum2_py );
+    def("GetWeightHist", &Utils::GetWeightHist_py);
+    def("GetWeightHist2D",&Utils::GetWeightHist2D_py);
     def("geteff"      ,  &Utils::geteff_py       );
     def("geteff"      ,  &Utils::geteff2_py      );
     def("geteff"      ,  &Utils::geteff3_py                   );
@@ -108,10 +110,13 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("SetSelCut",  &Template::SetSelCut_py)
       .def("GetSelCut",  &Template::GetSelCut_py)
       .def("AddTrees",   &Template::AddTrees_py)
+      .def("AddTrees",   &Template::AddTrees2_py)
+      .def("AddTrees",   &Template::AddTrees3_py)
       .def("AddVar",     &Template::AddVar1_py)
       .def("AddVar",     &Template::AddVar2_py)
       .def("AddVar",     &Template::AddVar3_py)
       .def("AddVars",    &Template::AddVars_py)
+      .def("Add2DVar",   &Template::Add2DVar2_py)
       .def("Add2DVar",   &Template::Add2DVar_py)
       .def("Add2DVars",  &Template::Add2DVars_py)
       .def("Add3DVar",   &Template::Add3DVar_py)

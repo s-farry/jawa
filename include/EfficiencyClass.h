@@ -210,6 +210,8 @@ class EfficiencyClass: public JawaObj {
 
   
   Eff m_toteff;
+  double m_toteffrw_err;
+
 
   TH1F* m_tot;
   TH1F* m_pass;
