@@ -146,10 +146,6 @@ EffVar::EffVar(string name, TGraphAsymmErrors* effgraph)
 
 }
 
-EffVar::EffVar(string name, PyObject* pyObj, string prefix): Var(name){
-  TFile* f = (TFile*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  EffVar(name, f, prefix);
-}
 EffVar::EffVar(string name, TFile* f, string prefix): Var(name){
   TObjArray* totalhists = (TObjArray*)f->Get((name+"/TotalHists").c_str());
   TObjArray* passhists  = (TObjArray*)f->Get((name+"/PassHists").c_str());
@@ -585,11 +581,6 @@ TGraphAsymmErrors* EffVar::GetEffGraph(){
   return m_effgraph;
 }
 
-PyObject* EffVar::GetEffGraph_py(){
-  TGraphAsymmErrors* newCxxObj = new TGraphAsymmErrors(*m_effgraph);
-  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
-}
-
 TGraphAsymmErrors* EffVar::GetSmearedEffGraph(){
   TRandom3 r(0);
   TGraphAsymmErrors* graph = (TGraphAsymmErrors*)m_effgraph->Clone();
@@ -604,12 +595,6 @@ TGraphAsymmErrors* EffVar::GetSmearedEffGraph(){
   return graph;
 }
 
-PyObject* EffVar::GetSmearedEffGraph_py(){
-  TGraphAsymmErrors* newCxxObj = GetSmearedEffGraph();
-  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
-}
-
-
 void EffVar::AddSystematic1(double pc) {return AddSystematic(pc);}
 void EffVar::AddSystematic2(std::vector<double> pc) {return AddSystematic(pc);}
 
@@ -623,6 +608,15 @@ TObjArray* EffVar::GetFailHists(){return m_failhists;}
 
 #ifdef WITHPYTHON
 
+PyObject* EffVar::GetSmearedEffGraph_py(){
+  TGraphAsymmErrors* newCxxObj = GetSmearedEffGraph();
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
+
+EffVar::EffVar(string name, PyObject* pyObj, string prefix): Var(name){
+  TFile* f = (TFile*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  EffVar(name, f, prefix);
+}
 boost::python::list EffVar::GetBinEdgesX_py(PyObject* pyObj){
   TH2F* hist = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
   vector<double> edges = GetBinEdgesX(hist);
@@ -640,6 +634,11 @@ PyObject* EffVar::GetTotHist_py(){
 
 PyObject* EffVar::GetPassHist_py(){
   TH1F* newCxxObj = new TH1F(*m_passhist);
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
+
+PyObject* EffVar::GetEffGraph_py(){
+  TGraphAsymmErrors* newCxxObj = new TGraphAsymmErrors(*m_effgraph);
   return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
 }
 

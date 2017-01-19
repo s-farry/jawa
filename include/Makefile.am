@@ -1,1 +1,1 @@
-pkginclude_HEADERS = JawaObj.h AnalysisClass.h	EfficiencyClass.h FitAnalysis.h ReweightVar.h Tune2D.h Var3D.h Eff.h EntryList.h Fitter.h Template.h Utils.h pyboost.h EffVar.h Expr.h JawaObj.h Tree.h Var.h EffVar2D.h Fit.h MWTemplate.h Tune.h Var2D.h
+pkginclude_HEADERS = JawaObj.h AnalysisClass.h	EfficiencyClass.h FitAnalysis.h ReweightVar.h Tune2D.h Var3D.h Eff.h EntryList.h Fitter.h Template.h Utils.h pyboost.h EffVar.h Expr.h Tree.h Var.h EffVar2D.h Fit.h MWTemplate.h Tune.h Var2D.h

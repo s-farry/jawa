@@ -10,7 +10,7 @@ if test "$prefix" = "NONE"; then
 fi
 
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_MACRO_DIRS([m4])
+AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_CXX
 LT_INIT([disable-static])
 AM_DISABLE_STATIC
@@ -38,9 +38,9 @@ AC_PROG_CXX
 
 ROOT_PATH(6.00/00, , AC_MSG_ERROR(Failed: Your ROOT version is too old))
 if test x$python = xtrue; then
+   dnl BOOST_REQUIRE
    AX_PYTHON_DEVEL	 
-   BOOST_REQUIRE
-   BOOST_PYTHON
+   AX_BOOST_PYTHON
    ROOT_FEATURE([python], ,[AC_MSG_ERROR(Failed: No python with root install)])
 fi
 
