@@ -4,4 +4,9 @@ Makefile
 *.root
 *~
 *.la
+*.pc
+*.deps
+*.libs
 autom4te.cache
+config
+libtool
