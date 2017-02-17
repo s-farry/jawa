@@ -201,7 +201,9 @@ class EfficiencyClass: public JawaObj {
   void SetVerbose(bool verbose);
   bool GetVerbose();
   void AddTree(TTree* tree);
-  void AddTrees(std::vector<TTree*> tree);
+  void AddTree(TTree* tree, double w);
+  void AddTrees(std::vector<TTree*> tree );
+  void AddTrees(std::vector<TTree*> tree, double w);
   void SetSelectionCut(TCut cut);
   std::pair<TF1*,TF1*> FitHistogram(TH1F* massplot, double lo, double hi, string opt = "Z0_CB");
   void StripTree(TCut cut);
@@ -212,6 +214,7 @@ class EfficiencyClass: public JawaObj {
   void SetVariables(std::map<string, EffVar*>);
   void SetEffRange(double lo, double hi);
   Eff GetTotEff();
+  double GetTotEffRWErr();
 
   void SetScaleErr(bool scaleerr);
   bool GetScaleErr();
@@ -246,9 +249,13 @@ class EfficiencyClass: public JawaObj {
   double GetCorrectedEfficiency2_py(string var, PyObject* t, string leaf);
   boost::python::list GetCorrectedEfficiency3_py(string var, boost::python::list& hists, bool smear);
   double GetTotEff_py();
+  double GetTotEffErrLo_py();
+  double GetTotEffErrHi_py();
   void SetTree_py(PyObject* tree);
   void AddTree_py(PyObject* tree);
+  void AddTree2_py(PyObject* tree, double w);
   void AddTrees_py(boost::python::list& ns);
+  void AddTrees2_py(boost::python::list& ns, double w);
   void SetSelectionCut_py(PyObject* cut);
 
   

@@ -436,7 +436,6 @@ void EffVar::FillVar(bool pass, double v_var, Utils::weight weight, Utils::weigh
 	((TH1F*)m_rweff_varylo_passhists->At(i))->Fill( v_var, weight.val*effw.val);
       }
     }
-
   } else {
     m_failhist->Fill(v_var, weight.val);
   }

@@ -252,21 +252,24 @@ Expr* ReweightVar::GetExpr(){
 }
 
 int ReweightVar::GetBin(double val1, double val2){
-
+  std::cout<<"getting bin"<<std::endl;
   int bin1 = -1, bin2 = 0, nbins2 = 0;
 
   if (m_2dhists.at(0)){
+    std::cout<<"not null"<<std::endl;
     double xlo = m_2dhists.at(0)->GetXaxis()->GetBinLowEdge(1);
     double ylo = m_2dhists.at(0)->GetYaxis()->GetBinLowEdge(1);
     double xhi = m_2dhists.at(0)->GetXaxis()->GetBinUpEdge(m_2dhists.at(0)->GetXaxis()->GetNbins());
-    double yhi = m_2dhists.at(0)->GetXaxis()->GetBinUpEdge(m_2dhists.at(0)->GetYaxis()->GetNbins());
+    double yhi = m_2dhists.at(0)->GetYaxis()->GetBinUpEdge(m_2dhists.at(0)->GetYaxis()->GetNbins());
 
+    std::cout<<xlo<<" - "<<xhi<<": "<<val1<<" "<<ylo<<" - "<<yhi<<": "<<val2<<std::endl;
     if (val1 >= xlo && val1 <= xhi && val2 >=ylo && val2 <= yhi){
       bin1 = m_2dhists.at(0)->GetXaxis()->FindBin(val1) -1;
       bin2 = m_2dhists.at(0)->GetYaxis()->FindBin(val2) -1;
       nbins2 = m_2dhists.at(0)->GetYaxis()->GetNbins();
     }
   }
+  std::cout<<"got bin"<<std::endl;
 
   return (bin2*nbins2 + bin1);
 

@@ -266,6 +266,10 @@ PyObject* EffVar2D::GetTotHist_py(){
   TH2F* newCxxObj = (TH2F*)m_tothist->Clone();
   return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
 }
+PyObject* EffVar2D::GetPassHist_py(){
+  TH2F* newCxxObj = (TH2F*)m_passhist->Clone();
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
 
 void EffVar2D::MakeEffHist(bool ClopperPearsonError){
   for ( int i = 0 ; i < m_nbins1+2 ; ++i ){

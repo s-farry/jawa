@@ -16,10 +16,16 @@ Fit::Fit(  ){
 }
 
 
-Fit::Fit(string name, string func, TH1F* hist ){
-  m_name = name;
+Fit::Fit(string name, string func, TH1F* hist ) : JawaObj("Fit", name) {
   m_expr = new Expr(func);
-  m_tf1 = new TF1((name+"_fit").c_str(), *m_expr, 20000, 70000, m_expr->GetVarNames().size() - 1);
+  double lo = -1.0;
+  double hi = 1.0;
+  if (hist){
+    lo = hist->GetXaxis()->GetBinLowEdge(1);
+    hi = hist->GetXaxis()->GetBinUpEdge(hist->GetXaxis()->GetNbins());
+  }
+
+  m_tf1 = new TF1((name+"_fit").c_str(), *m_expr, lo, hi ,m_expr->GetVarNames().size() - 1);
   m_hist = hist;
   std::vector<string> vars = m_expr->GetVarNames();
   int j = 0;
@@ -60,9 +66,11 @@ void Fit::FitHist_py(PyObject* pyObj){
 
 void Fit::SetParameter(int param, double value){
   if (m_tf1) m_tf1->SetParameter(param, value);
+  //else warning()<<"couldn't set parameter "<<param<<endl;
 }
 void Fit::FixParameter(int param, double value){
   if (m_tf1) m_tf1->FixParameter(param, value);
+  //else warning()<<"couldn't fix parameter "<<param<<endl;
 }
 double Fit::GetParameter(int param){
   double par = -1;

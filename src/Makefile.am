@@ -6,5 +6,5 @@ libJawa_la_LIBADD = @LIBS@ -L@ROOTLIBDIR@ @ROOTLIBS@ -lPyROOT -lMinuit -lMinuit2
 if WANT_PYTHON
 libJawa_la_SOURCES += pyboost.cxx
 libJawa_la_CXXFLAGS += @PYTHON_CPPFLAGS@ @BOOST_CPPFLAGS@ -DWITHPYTHON
-libJawa_la_LIBADD += @BOOST_LDFLAGS@ -l@BOOST_PYTHON_LIB@
+libJawa_la_LIBADD   += @BOOST_LDFLAGS@ -l@BOOST_PYTHON_LIB@
 endif

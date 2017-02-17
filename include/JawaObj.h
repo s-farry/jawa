@@ -43,6 +43,7 @@ class JawaObj{
   ostream& info    ();
   ostream& verbose ();
   ostream& debug   ();
+  ostream& warning ();
   ostream& GetStream();
   string GetTime();
   

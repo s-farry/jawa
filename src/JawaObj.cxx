@@ -89,9 +89,10 @@ ostream& JawaObj::msg(string logname, OutputLevel o){
   return stream;
 }
 
-ostream& JawaObj::info(){return msg("INFO", JawaObj::Info);}
-ostream& JawaObj::verbose(){return msg("VERBOSE", JawaObj::Verbose);}
-ostream& JawaObj::debug(){return msg("DEBUG", JawaObj::Debug);}
+ostream& JawaObj::info()   { return msg("INFO", JawaObj::Info);       }
+ostream& JawaObj::verbose(){ return msg("VERBOSE", JawaObj::Verbose); }
+ostream& JawaObj::debug()  { return msg("DEBUG", JawaObj::Debug);     }
+ostream& JawaObj::warning(){ return msg("WARNING", JawaObj::Info);    }
 
 ostream& JawaObj::GetStream(){ return cout;}
 

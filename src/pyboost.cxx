@@ -13,6 +13,8 @@ BOOST_PYTHON_MODULE(Jawa)
     def("GetWeightSum",  &Utils::GetWeightSum2_py );
     def("GetWeightHist", &Utils::GetWeightHist_py);
     def("GetWeightHist2D",&Utils::GetWeightHist2D_py);
+    def("GetRatioHist" , &Utils::GetRatioHist_py);
+    def("GetRatioHist2D",&Utils::GetRatioHist2D_py);
     def("geteff"      ,  &Utils::geteff_py       );
     def("geteff"      ,  &Utils::geteff2_py      );
     def("geteff"      ,  &Utils::geteff3_py                   );
@@ -27,6 +29,7 @@ BOOST_PYTHON_MODULE(Jawa)
     def("tgraph2hist"       ,  &Utils::tgraph2hist_py         );
     def("saveAsTree"        ,  &Utils::saveAsTree_py          );
     def("standard_deviation",  &Utils::standard_deviation_py);
+    def("MakeEffHist"       ,  &Utils::MakeEffHist_py );
     
     class_<JawaObj>("JawaObj", init<>() )
       .def(init<string, string>() )
@@ -333,6 +336,7 @@ BOOST_PYTHON_MODULE(Jawa)
       .def(init<string, PyObject*, optional<string> >())
       .def(init<string, string, optional<string> >())
       .def("GetTotHist",    &EffVar2D::GetTotHist_py)
+      .def("GetPassHist",   &EffVar2D::GetPassHist_py)
       .def("Get2DEffGraph", &EffVar2D::Get2DEffGraph_py)
       .def("GetName",       &EffVar2D::GetName)
       ;
@@ -341,7 +345,9 @@ BOOST_PYTHON_MODULE(Jawa)
       .def(init<string, EfficiencyClass*, EfficiencyClass*>())
       .def("Run"    ,             &EfficiencyClass::Run)
       .def("AddTree",             &EfficiencyClass::AddTree_py)
+      .def("AddTree",             &EfficiencyClass::AddTree2_py)
       .def("AddTrees",            &EfficiencyClass::AddTrees_py)
+      .def("AddTrees",            &EfficiencyClass::AddTrees2_py)
       .def("SetSelectionCut",     &EfficiencyClass::SetSelectionCut_py)
       .def("SetPassCut",          &EfficiencyClass::SetPassCut_py)
       .def("AddVar",              &EfficiencyClass::AddVar1_py)
@@ -373,6 +379,9 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("GetCorrectedEfficiency", &EfficiencyClass::GetCorrectedEfficiency2_py)
       .def("GetCorrectedEfficiency", &EfficiencyClass::GetCorrectedEfficiency3_py)
       .def("GetTotEff", &EfficiencyClass::GetTotEff_py)
+      .def("GetTotEffErrLo", &EfficiencyClass::GetTotEffErrLo_py)
+      .def("GetTotEffErrHi", &EfficiencyClass::GetTotEffErrHi_py)
+      .def("GetTotEffRWErr", &EfficiencyClass::GetTotEffRWErr)
       .def("GetTotHist", &EfficiencyClass::GetTotHist_py)
       .def("GetPassHist", &EfficiencyClass::GetPassHist_py)
       .def("Reweight",   &EfficiencyClass::Reweight1_py)
@@ -396,13 +405,22 @@ BOOST_PYTHON_MODULE(Jawa)
       ;
     
     class_<FitAnalysis>("FitAnalysis", init<string, string, string>())
-      .def("SetVal",   &FitAnalysis::SetVal)
+      .def("SetVal",   &FitAnalysis::SetVal1_py)
+      .def("SetVal",   &FitAnalysis::SetVal2_py)
       .def("FixVal",   &FitAnalysis::FixVal)
       .def("SetRange", &FitAnalysis::SetRange)
       .def("FitIt",    &FitAnalysis::FitIt1_py)
       .def("FitIt",    &FitAnalysis::FitIt2_py)
       .def("Init",     &FitAnalysis::Init)
-      .def("SaveToFile", &FitAnalysis::SaveToFile);
+      .def("SetToMean",&FitAnalysis::SetToMean)
+      .def("SetToEntries",&FitAnalysis::SetToEntries)
+      .def("SetToMax",&FitAnalysis::SetToMax)
+      .def("SetToRMS",&FitAnalysis::SetToRMS)
+      .def("GetHist", &FitAnalysis::GetHist_py)
+      .def("GetHist", &FitAnalysis::GetHist2_py)
+      .def("GetParHist", &FitAnalysis::GetParHist_py)
+      .def("SaveToFile", &FitAnalysis::SaveToFile1_py)
+      .def("SaveToFile", &FitAnalysis::SaveToFile2_py)
+      ;
     
-
 }
