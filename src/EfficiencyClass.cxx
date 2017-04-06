@@ -708,7 +708,6 @@ void EfficiencyClass::LoopEntries(){
 	    double valhi = ((TParameter<double>*)m_Npass_rweff_varyhi->At(i))->GetVal(); 
 	    double vallo = ((TParameter<double>*)m_Npass_rweff_varylo->At(i))->GetVal(); 
 	    if (bin == i ){
-	      std::cout<<"adding to bin"<<std::endl;
 	      ((TParameter<double>*)m_Npass_rweff_varyhi->At(i))->SetVal(valhi + weights.first.val*(weights.second.val + weights.second.err));
 	      ((TParameter<double>*)m_Npass_rweff_varylo->At(i))->SetVal(vallo + weights.first.val*(weights.second.val - weights.second.err));
 	    }

@@ -329,7 +329,8 @@ BOOST_PYTHON_MODULE(Jawa)
       .def("GetDataVec",  &Tune::GetDataVec)
       .def("getCorrelatedRandoms", &Tune::getCorrelatedRandoms_py)
       .def("cholesky", &Tune::cholesky_py)
-      .def("SaveToFile", &Tune::SaveToFile)
+      .def("SaveToFile", &Tune::SaveToFile1_py)
+      .def("SaveToFile", &Tune::SaveToFile2_py)
       ;
 
     class_<EffVar2D, bases<Var2D> >("EffVar2D", init<string, EffVar*, EffVar*, optional<string> >())

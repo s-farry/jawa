@@ -30,11 +30,12 @@ class Tune : public JawaObj {
   Tune();
   Tune(string name);
   Tune(string name, Tree* data, Tree* mc, Expr* tuneVar, Var* fVar = 0, string cut = "");
+  Tune(string name, Expr* tuneVar, Var* fVar = 0, string cut = "");
   void tune();
   vector< pair<double, double> > smear_vals(vector< pair<double, double> >& vals, double mean, double sigma);
   void fillhist(TH1F* h , vector< pair<double, double> >& vals);
   void fillVals();
-  void SaveToFile();
+  void SaveToFile(string filename="");
   double cholesky(double *A, int n);
   vector< vector<double> > cholesky( vector< vector<double> > A);
   void printMatrix(vector< vector<double> > A);
@@ -57,6 +58,9 @@ class Tune : public JawaObj {
   double GetWeight(Tree* tree, vector<ReweightVar>);
   void SetSDFactor(double s);
 
+  void AddDataTree(Tree* t);
+  void AddMCTree(Tree* t);
+
 
   #ifdef WITHPYTHON
   boost::python::list GetDataVec(int j);
@@ -64,14 +68,16 @@ class Tune : public JawaObj {
   boost::python::list GetStdDevs_py();
   boost::python::list getCorrelatedRandoms_py(boost::python::list& ns);
   boost::python::list cholesky_py(boost::python::list& ns);
+  void SaveToFile1_py();
+  void SaveToFile2_py(string filename);
   #endif
   
  protected:
   Expr* m_tuneVar;           // name of templates and their location
   Var* m_fVar;               // Templates to be fit
 
-  Tree* m_data;
-  Tree* m_mc;
+  std::vector<Tree*> m_data;
+  std::vector<Tree*> m_mc;
   TCut m_cut;
   TH1F* m_res_sigma;
   TH1F* m_res_mean;
@@ -103,8 +109,8 @@ class Tune : public JawaObj {
 
   double standard_deviation(vector< pair<double, double> >& vals, double max = -1);
   double get_mean(vector< pair<double, double > >& vals);
-  vector< vector< pair<double, double> > > getVals(Tree* tree, Expr* expr, Var* var, TCut cut="", vector<ReweightVar*> rwvars = vector<ReweightVar*>(0));
-  vector< pair<double, double> > getVals(Tree* tree, Expr* expr, TCut cut="");
+  vector< vector< pair<double, double> > > getVals(std::vector<Tree*> tree, Expr* expr, Var* var, TCut cut="", vector<ReweightVar*> rwvars = vector<ReweightVar*>(0));
+  vector< pair<double, double> > getVals(std::vector<Tree*> tree, Expr* expr, TCut cut="");
   double GetWeight(Tree* tree, vector<ReweightVar*> rwvars);
 
   double m_mean_init;
