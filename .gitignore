@@ -1,1 +1,12 @@
 Makefile
+*.so
+*.lo
+*.root
+*~
+*.la
+*.pc
+*.deps
+*.libs
+autom4te.cache
+config
+libtool

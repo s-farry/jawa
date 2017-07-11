@@ -47,6 +47,27 @@ Tune2D::Tune2D(string name, Tree* data, Tree* mc, Expr* tuneVar, Var2D* fVar, st
 }
 
 
+Tune2D::Tune2D(string name, Expr* tuneVar, Var2D* fVar, string cut) : Tune(name, tuneVar, 0, cut){
+
+  m_data_array = new TObjArray();
+  m_mc_array = new TObjArray();
+  m_mc_corr_array = new TObjArray();
+
+  m_2DfVar = fVar;
+  vector<double> binedges_x = Utils::GetBinEdgesX(fVar->GetHist());
+  vector<double> binedges_y = Utils::GetBinEdgesY(fVar->GetHist());
+  m_2Dres_sigma = new TH2F((name + "_sigma_2D").c_str(), (name+"_sigma").c_str(), binedges_x.size() - 1,
+			   &binedges_x[0], binedges_y.size() - 1, &binedges_y[0]);
+  m_2Dres_mean  = new TH2F((name + "_mean_2D").c_str() , (name+"_mean").c_str() , binedges_x.size() - 1,
+			   &binedges_x[0], binedges_y.size() - 1, &binedges_y[0]);
+  m_2Dstddev    = new TH2F((name + "_stddev_2D").c_str() , (name+"_stddev").c_str() , binedges_x.size() - 1,
+			   &binedges_x[0], binedges_y.size() - 1, &binedges_y[0]);
+
+  m_data_2Dstddev = vector< vector<double> >(binedges_x.size() - 1, vector<double>(binedges_y.size() - 1, 0.0));
+
+}
+
+
 
 void Tune2D::fill2DVals(){
   if (m_2DfVar){
@@ -63,55 +84,57 @@ void Tune2D::fill2DVals(){
   }
 }
 
-vector< vector< vector< pair<double, double> > > > Tune2D::getVals(Tree* tree, Expr* var, Var2D* binvar, TCut cut, vector<ReweightVar*> rwvars){
-  TTree* t = tree->GetTTree();
-  if (!t) {
-    info()<<"Tree passed is null"<<endl;
-  }
-  t->Draw(">>myList", cut , "entrylist");
-  TEntryList* list = (TEntryList*)gDirectory->Get("myList");
-  t->SetBranchStatus("*",0);
-  tree->SetBranches(var->GetVarNames());
-  tree->SetBranches(binvar->GetVar1()->GetExpr()->GetVarNames());
-  tree->SetBranches(binvar->GetVar2()->GetExpr()->GetVarNames());
-
-  //Set names for reweighted variables for data
-  for (std::vector<ReweightVar*>::iterator iv = rwvars.begin(); iv!= rwvars.end();++iv){
-    vector<Expr*> rwnames = (*iv)->GetExprs();
-    for (unsigned int i = 0 ; i < rwnames.size() ; ++i) tree->SetBranches(rwnames.at(i)->GetVarNames());
-  }
-  
-  Long64_t nentries = list->GetN();
-  
+vector< vector< vector< pair<double, double> > > > Tune2D::getVals(std::vector<Tree*> tree, Expr* var, Var2D* binvar, TCut cut, vector<ReweightVar*> rwvars){
+    
   vector<double> bin_edges_x = binvar->GetVar1()->GetEdges();
   vector<double> bin_edges_y = binvar->GetVar2()->GetEdges();
   int xbins = bin_edges_x.size() - 1;
   int ybins = bin_edges_y.size() - 1;
-  //int totbins = (bin_edges_x.size() - 1) * (bin_edges_y.size() - 1);
-
+    
   vector< vector< vector< pair<double, double> > > > vals (xbins, vector< vector< pair<double, double> > >(ybins, vector< pair<double, double> >(0))); 
-  
-  for (Long64_t jentry = 0 ; jentry < nentries ; jentry++) {
-    if (jentry%10000==0) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
-    int entry = list->GetEntry(jentry);
-    tree->GetEntry(entry);
-    double xval = tree->GetVal(binvar->GetVar1()->GetExpr());
-    double yval = tree->GetVal(binvar->GetVar2()->GetExpr());
-
-    if ( xval >= bin_edges_x[0] && xval < bin_edges_x[bin_edges_x.size() - 1]
-	 && yval >= bin_edges_y[0] && yval < bin_edges_y[bin_edges_y.size() - 1]){
-      int xbin = binvar->GetVar1()->GetHist()->FindBin(xval);
-      int ybin = binvar->GetVar2()->GetHist()->FindBin(yval);
-      double val = tree->GetVal(var);
-      double w = 1.0;
-      if (rwvars.size() > 0) w = w * GetWeight(tree, rwvars);
-      //cout<<"Filling : ("<<xbin<<","<<ybin<<") with "<<val<<" for "<<xval<<", "<<yval<<endl;
-      //int bin = (ybin - 1)*(bin_edges_y.size() - 1) + (xbin - 1);
-      vals[ xbin - 1 ][ ybin - 1 ].push_back(pair<double, double>(val, w));
+  for (auto it : tree){
+    TTree* t = it->GetTTree();
+    if (!t) {
+      info()<<"Tree passed is null"<<endl;
     }
+    t->Draw(">>myList", cut , "entrylist");
+    TEntryList* list = (TEntryList*)gDirectory->Get("myList");
+    t->SetBranchStatus("*",0);
+    it->SetBranches(var->GetVarNames());
+    it->SetBranches(binvar->GetVar1()->GetExpr()->GetVarNames());
+    it->SetBranches(binvar->GetVar2()->GetExpr()->GetVarNames());
+    
+    //Set names for reweighted variables for data
+    for (std::vector<ReweightVar*>::iterator iv = rwvars.begin(); iv!= rwvars.end();++iv){
+    vector<Expr*> rwnames = (*iv)->GetExprs();
+    for (unsigned int i = 0 ; i < rwnames.size() ; ++i) it->SetBranches(rwnames.at(i)->GetVarNames());
+    }
+    
+    Long64_t nentries = list->GetN();
+    
+    for (Long64_t jentry = 0 ; jentry < nentries ; jentry++) {
+      progress(double(jentry+1)/nentries, 70.0);
+      //if (jentry%10000==0) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
+      int entry = list->GetEntry(jentry);
+      it->GetEntry(entry);
+      double xval = it->GetVal(binvar->GetVar1()->GetExpr());
+      double yval = it->GetVal(binvar->GetVar2()->GetExpr());
+      
+      if ( xval >= bin_edges_x[0] && xval < bin_edges_x[bin_edges_x.size() - 1]
+	   && yval >= bin_edges_y[0] && yval < bin_edges_y[bin_edges_y.size() - 1]){
+	int xbin = binvar->GetVar1()->GetHist()->FindBin(xval);
+	int ybin = binvar->GetVar2()->GetHist()->FindBin(yval);
+	double val = it->GetVal(var);
+	double w = 1.0;
+	if (rwvars.size() > 0) w = w * GetWeight(it, rwvars);
+	//cout<<"Filling : ("<<xbin<<","<<ybin<<") with "<<val<<" for "<<xval<<", "<<yval<<endl;
+	//int bin = (ybin - 1)*(bin_edges_y.size() - 1) + (xbin - 1);
+	vals[ xbin - 1 ][ ybin - 1 ].push_back(pair<double, double>(val, w));
+      }
 
+    }
+    t->SetBranchStatus("*",1);
   }
-  t->SetBranchStatus("*",1);
   return vals;
 }
 
@@ -187,8 +210,9 @@ void Tune2D::tune(){
   
 } 
 
-void Tune2D::SaveToFile(){
-  string fName = m_name + ".root";
+void Tune2D::SaveToFile(string filename){
+  string fName = filename;
+  if (fName == "") fName = m_name + ".root";
   TFile f(fName.c_str(),"RECREATE");
   m_data_array->Write("data", 1);
   m_mc_array->Write("mc", 1);
@@ -199,3 +223,9 @@ void Tune2D::SaveToFile(){
   f.Close();
   
 }
+
+#ifdef WITHPYTHON
+void Tune2D::SaveToFile1_py(){ SaveToFile(); }
+void Tune2D::SaveToFile2_py(string filename){ SaveToFile(filename); }
+#endif
+

@@ -40,8 +40,8 @@ Tune::Tune(string name): JawaObj("Tune", name), m_r3(0){
 }
 
 Tune::Tune(string name, Tree* data, Tree* mc, Expr* tuneVar, Var* fVar, string cut) : JawaObj("Tune",name), m_r3(0) {
-  m_data = data;
-  m_mc = mc;
+  m_data.push_back(data);
+  m_mc.push_back(mc);
   m_tuneVar = tuneVar;
   m_cut = TCut(cut.c_str());
   m_sdfac = 3;
@@ -78,6 +78,45 @@ Tune::Tune(string name, Tree* data, Tree* mc, Expr* tuneVar, Var* fVar, string c
 
 }
 
+Tune::Tune(string name, Expr* tuneVar, Var* fVar, string cut) : JawaObj("Tune",name), m_r3(0) {
+  m_tuneVar = tuneVar;
+  m_cut = TCut(cut.c_str());
+  m_sdfac = 3;
+
+  m_mean_init       =  0.00  ;
+  m_mean_step       =  0.0005;
+  m_mean_lolimit    = -0.05  ;
+  m_mean_uplimit    =  0.05  ;
+
+  m_sigma_init      =  0.00  ;
+  m_sigma_step      =  0.0005;
+  m_sigma_lolimit   =  0.00  ;
+  m_sigma_uplimit   =  0.05  ;
+
+  m_precision = 0.0001;
+  m_tolerance = 0.0001;
+
+  m_data_array = new TObjArray();
+  m_mc_array = new TObjArray();
+  m_mc_corr_array = new TObjArray();
+
+  if (fVar) {
+    m_fVar = fVar;
+    vector<double> binedges = fVar->GetEdges();
+    m_res_sigma = new TH1F((name + "_sigma").c_str(), (name+"_sigma").c_str(), binedges.size() - 1, &binedges[0]);
+    m_res_mean  = new TH1F((name + "_mean").c_str() , (name+"_mean").c_str() , binedges.size() - 1, &binedges[0]);
+    m_stddev    = new TH1F((name + "_stddev").c_str() , (name+"_stddev").c_str() , binedges.size() - 1, &binedges[0]);
+  }
+  else{
+    m_res_sigma = new TH1F((name + "_sigma").c_str(), (name+"_sigma").c_str(), 1, 0, 1);
+    m_res_mean  = new TH1F((name + "_mean").c_str() , (name+"_mean").c_str() , 1, 0, 1);
+    m_stddev    = new TH1F((name + "_stddev").c_str() , (name+"_stddev").c_str() , 1, 0, 1);
+  }
+
+}
+
+void Tune::AddDataTree(Tree* t){m_data.push_back(t);}
+void Tune::AddMCTree(Tree* t){m_mc.push_back(t);}
 
 vector<double> Tune::getCorrelatedRandoms(vector< vector<double> > corrs ){
   vector< vector<double> > chol = cholesky(corrs);
@@ -110,8 +149,10 @@ vector<double> Tune::getRandoms(vector< vector<double> > corrs ){
 vector< pair<double, double> > Tune::smear_vals(vector< pair<double, double> > & vals, double mean, double sigma){
     vector<pair<double, double > > smeared_vals;
     for (vector< pair<double, double > >::iterator iv = vals.begin(); iv != vals.end(); ++iv){
-      double sm = m_r3.Gaus(mean,sigma);
-      smeared_vals.push_back(pair<double, double>((*iv).first+sm, (*iv).second));
+      double sm = m_r3.Gaus(mean,abs(sigma));
+      // if it's positive, just smear, if it's negative try to "unsmear"
+      // i.e. val - sign(val)*sm - written in unclear way...
+      smeared_vals.push_back(pair<double, double>(sigma > 0 ? (*iv).first+sm : (*iv).first*(1 - (sm / abs((*iv).first))), (*iv).second));
     }
     return smeared_vals;
 }
@@ -272,66 +313,67 @@ void Tune::printMatrix(vector< vector<double> > A){
 }
 
 
-vector< pair<double, double> > Tune::getVals(Tree* t, Expr* var, TCut cut){
-  t->GetTTree()->Draw(">>myList", cut , "entrylist");
-  TEntryList* list = (TEntryList*)gDirectory->Get("myList");
-  t->GetTTree()->SetBranchStatus("*",0);
-  t->SetBranches(var->GetVarNames());
-
-
-  //t->SetBranchStatus(var.c_str(), 1);
-  //double d_var;
-  //t->SetBranchAddress(var.c_str(), &d_var);
- 
+vector< pair<double, double> > Tune::getVals(std::vector<Tree*> t, Expr* var, TCut cut){
   vector< pair<double, double> > vals; 
+  for (auto it: t){
+    it->GetTTree()->Draw(">>myList", cut , "entrylist");
+    TEntryList* list = (TEntryList*)gDirectory->Get("myList");
+    it->GetTTree()->SetBranchStatus("*",0);
+    it->SetBranches(var->GetVarNames());
 
-  Long64_t nentries = list->GetN();
 
-  for (Long64_t jentry = 0 ; jentry < nentries ; jentry++) {
-    if (jentry%10000==0) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
+    Long64_t nentries = list->GetN();
+
+    for (Long64_t jentry = 0 ; jentry < nentries ; jentry++) {
+      progress(double(jentry+1)/nentries, 70.0);
+      //if (jentry%10000==0) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
       int entry = list->GetEntry(jentry);
-      t->GetEntry(entry);
+      it->GetEntry(entry);
       double w = 1.0;
-      vals.push_back(pair<double, double>(t->GetVal(var), w));
+      vals.push_back(pair<double, double>(it->GetVal(var), w));
+    }
+    it->GetTTree()->SetBranchStatus("*",1);
   }
-  t->GetTTree()->SetBranchStatus("*",1);
   return vals;
 }
 
-vector< vector< pair<double, double> > > Tune::getVals(Tree* tree, Expr* var, Var* binvar, TCut cut, vector<ReweightVar*> rwvars){
-  TTree* t = tree->GetTTree();
-  t->Draw(">>myList", cut , "entrylist");
-  TEntryList* list = (TEntryList*)gDirectory->Get("myList");
-  t->SetBranchStatus("*",0);
-  tree->SetBranches(var->GetVarNames());
-  tree->SetBranches(binvar->GetExpr()->GetVarNames());
-  
-  //Set names for reweighted variables
-  for (std::vector<ReweightVar*>::iterator iv = rwvars.begin(); iv!= rwvars.end();++iv){
-    vector<Expr*> rwnames = (*iv)->GetExprs();
-    for (unsigned int i = 0 ; i < rwnames.size(); ++i) tree->SetBranches(rwnames.at(i)->GetVarNames());
-  }
-  
-
-  Long64_t nentries = list->GetN();
-  
+vector< vector< pair<double, double> > > Tune::getVals(std::vector<Tree*> tree, Expr* var, Var* binvar, TCut cut, vector<ReweightVar*> rwvars){
   vector<double> bin_edges = binvar->GetEdges();
   vector< vector< pair<double, double> > > vals (bin_edges.size() - 1, vector< pair<double, double> >(0)); 
-  
-  for (Long64_t jentry = 0 ; jentry < nentries ; jentry++) {
-    if (jentry%10000==0) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
-    int entry = list->GetEntry(jentry);
-    tree->GetEntry(entry);
-    double binval = tree->GetVal(binvar->GetExpr());
-    if (binval >= bin_edges[0] && binval < bin_edges[bin_edges.size() - 1]){
-      int bin = binvar->GetHist()->FindBin(binval);
-      double w = 1.0;
-      if (rwvars.size() > 0) w = w * GetWeight(tree, rwvars);
-      double val = tree->GetVal(var);
-      vals[bin - 1].push_back(pair<double, double>(val, w));
+
+  for (auto it : tree){
+    TTree* t = it->GetTTree();
+    t->Draw(">>myList", cut , "entrylist");
+    TEntryList* list = (TEntryList*)gDirectory->Get("myList");
+    t->SetBranchStatus("*",0);
+    it->SetBranches(var->GetVarNames());
+    it->SetBranches(binvar->GetExpr()->GetVarNames());
+    
+    //Set names for reweighted variables
+    for (std::vector<ReweightVar*>::iterator iv = rwvars.begin(); iv!= rwvars.end();++iv){
+      vector<Expr*> rwnames = (*iv)->GetExprs();
+      for (unsigned int i = 0 ; i < rwnames.size(); ++i) it->SetBranches(rwnames.at(i)->GetVarNames());
     }
+  
+
+    Long64_t nentries = list->GetN();
+    
+    for (Long64_t jentry = 0 ; jentry < nentries ; jentry++) {
+      progress(double(jentry+1)/nentries, 70.0);
+	//if (jentry%10000==0) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
+      int entry = list->GetEntry(jentry);
+      it->GetEntry(entry);
+      double binval = it->GetVal(binvar->GetExpr());
+      if (binval >= bin_edges[0] && binval < bin_edges[bin_edges.size() - 1]){
+	int bin = binvar->GetHist()->FindBin(binval);
+	double w = 1.0;
+	if (rwvars.size() > 0) w = w * GetWeight(it, rwvars);
+	double val = it->GetVal(var);
+	vals[bin - 1].push_back(pair<double, double>(val, w));
+      }
+    }
+    t->SetBranchStatus("*",1);
   }
-  t->SetBranchStatus("*",1);
   return vals;
 }
 
@@ -404,9 +446,9 @@ void Tune::tune(){
     }
 	
 } 
-void Tune::SaveToFile(){
-  
-  string fName = m_name + ".root";
+void Tune::SaveToFile(string filename){
+  string fName = filename;
+  if (fName == "") fName = m_name + ".root";
   TFile f(fName.c_str(),"RECREATE");
   m_data_array->Write("data", 1);
   m_mc_array->Write("mc", 1);
@@ -444,8 +486,37 @@ void Tune::PrintMeanPars(){
   cout<<m_mean_init<<" "<<m_mean_step<<" "<<m_mean_lolimit<<" "<<m_mean_uplimit<<endl;
 }
 
-//For exposing to python
+double Tune::GetWeight(Tree* tree, vector<ReweightVar*> rwvars){
+  double w = 1.0;
+  for (std::vector<ReweightVar*>::iterator iv = rwvars.begin(); iv!= rwvars.end();++iv){
+    if ((*iv)->GetExprs().size() == 1){
+      Expr* var = (*iv)->GetExpr();
+      double val = tree->GetVal(var);
+      w = w * ((*iv)->GetWeight(val));
+    }
+    else if ((*iv)->GetExprs().size() == 2){
+      double val1 = tree->GetVal((*iv)->GetExprs().at(0));
+      double val2 = tree->GetVal((*iv)->GetExprs().at(1));
+      w = w * ((*iv)->GetWeight(val1, val2));
+    }
+  }
+  return w;
+}
 
+void Tune::ReweightMC(ReweightVar* rwvar){
+  m_mc_rwvars.push_back(rwvar);
+}
+void Tune::ReweightData(ReweightVar* rwvar){
+  m_data_rwvars.push_back(rwvar);
+}
+
+
+void Tune::SetSDFactor(double s){
+  m_sdfac = s;
+}
+
+#ifdef WITHPYTHON
+//For exposing to python
 boost::python::list Tune::GetStdDevs_py(){
   boost::python::list ns;
   for (unsigned int i = 0 ; i < m_data_stddev.size() ; ++i){
@@ -492,14 +563,6 @@ boost::python::list Tune::cholesky_py(boost::python::list& ns){
   return ns2;
 }
 
-boost::python::list Tune::GetDataVec(int j){
-  boost::python::list ns;
-  for (unsigned int i = 0 ; i < m_data_vec[j].size() ; ++i){
-    ns.append(m_data_vec[j][i].first);
-  }
-  return ns;
-}
-
 double Tune::standard_deviation_py(boost::python::list& ns){
   vector< pair<double, double> > vals;
   for (unsigned int i = 0; i < len(ns); ++i){
@@ -509,29 +572,14 @@ double Tune::standard_deviation_py(boost::python::list& ns){
   return standard_deviation(vals);
 }
 
-double Tune::GetWeight(Tree* tree, vector<ReweightVar*> rwvars){
-  double w = 1.0;
-  for (std::vector<ReweightVar*>::iterator iv = rwvars.begin(); iv!= rwvars.end();++iv){
-    if ((*iv)->GetExprs().size() == 1){
-      Expr* var = (*iv)->GetExpr();
-      double val = tree->GetVal(var);
-      w = w * ((*iv)->GetWeight(val));
-    }
-    else if ((*iv)->GetExprs().size() == 2){
-      double val1 = tree->GetVal((*iv)->GetExprs().at(0));
-      double val2 = tree->GetVal((*iv)->GetExprs().at(1));
-      w = w * ((*iv)->GetWeight(val1, val2));
-    }
+boost::python::list Tune::GetDataVec(int j){
+  boost::python::list ns;
+  for (unsigned int i = 0 ; i < m_data_vec[j].size() ; ++i){
+    ns.append(m_data_vec[j][i].first);
   }
-  return w;
+  return ns;
 }
+void Tune::SaveToFile1_py(){ SaveToFile(); }
+void Tune::SaveToFile2_py(string filename){ SaveToFile(filename); }
+#endif
 
-void Tune::ReweightMC(ReweightVar* rwvar){
-  m_mc_rwvars.push_back(rwvar);
-}
-void Tune::ReweightData(ReweightVar* rwvar){
-  m_data_rwvars.push_back(rwvar);
-}
-void Tune::SetSDFactor(double s){
-  m_sdfac = s;
-}

@@ -314,16 +314,52 @@ def GetWeightHist(name, histA, histB):
                 hist.SetBinContent(i, (histA.GetBinContent(i)/histB.GetBinContent(i))*(histB.Integral()/histA.Integral()))
     return hist
 
+def GetRatioHist(name, histA, histB):
+    hist = TH1F(name, name, histA.GetNbinsX(), histA.GetBinLowEdge(1), histA.GetBinLowEdge(histA.GetXaxis().GetLast() + 1))
+    if (histA.GetNbinsX() == histB.GetNbinsX() and 
+        histA.GetBinLowEdge(0) == histB.GetBinLowEdge(0) and
+        histA.GetBinLowEdge(histA.GetXaxis().GetLast() +1) == histB.GetBinLowEdge(histB.GetXaxis().GetLast() + 1)):
+        for i in range(histA.GetNbinsX()+1):
+		a = histA.GetBinContent(i)
+		b = histB.GetBinContent(i)
+		aerr = histA.GetBinError(i)
+		berr = histB.GetBinError(i)
+            if (histB.GetBinContent(i) == 0):
+                hist.SetBinContent(i, 1)
+            else:
+                hist.SetBinContent(i, a/b))
+                hist.SetBinError(i, sqrt(pow(aerr/a,2) + pow(berr/b,2))*(a/b)))
+    return hist
+
 def GetWeightHist2D(name, histA, histB):
     hist_norm = histA.Clone(name)
     for i in range(hist_norm.GetXaxis().GetNbins()):
         for j in range(hist_norm.GetYaxis().GetNbins()):
             a = histA.GetBinContent(i+1, j+1)
             b = histB.GetBinContent(i+1, j+1)
+	    aerr = histA.GetBinError(i+1, j+1)
+	    berr = histB.GetBinError(i+1, j+1)
             if b == 0 :
                 hist_norm.SetBinContent(i+1, j+1, 1)
             else:
                 hist_norm.SetBinContent(i+1, j+1, a/b)
+		hist_norm.SetBinError(i+1, j+1, sqrt(pow(aerr/a,2) + pow(berr/b,2))*(a/b))
+    return hist_norm
+
+
+def GetRatioHist2D(name, histA, histB):
+    hist_norm = histA.Clone(name)
+    for i in range(hist_norm.GetXaxis().GetNbins()):
+        for j in range(hist_norm.GetYaxis().GetNbins()):
+            a = histA.GetBinContent(i+1, j+1)
+            b = histB.GetBinContent(i+1, j+1)
+	    aerr = histA.GetBinError(i+1, j+1)
+	    berr = histB.GetBinError(i+1, j+1)
+            if b == 0 :
+                hist_norm.SetBinContent(i+1, j+1, 1)
+            else:
+                hist_norm.SetBinContent(i+1, j+1, a/b)
+		hist_norm.SetBinError(i+1, j+1, sqrt(pow(aerr/a,2) + pow(berr/b,2))*(a/b))
     return hist_norm
 
 def GetMCLumi(name, mcdict):

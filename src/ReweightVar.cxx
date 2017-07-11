@@ -252,14 +252,13 @@ Expr* ReweightVar::GetExpr(){
 }
 
 int ReweightVar::GetBin(double val1, double val2){
-
   int bin1 = -1, bin2 = 0, nbins2 = 0;
 
   if (m_2dhists.at(0)){
     double xlo = m_2dhists.at(0)->GetXaxis()->GetBinLowEdge(1);
     double ylo = m_2dhists.at(0)->GetYaxis()->GetBinLowEdge(1);
     double xhi = m_2dhists.at(0)->GetXaxis()->GetBinUpEdge(m_2dhists.at(0)->GetXaxis()->GetNbins());
-    double yhi = m_2dhists.at(0)->GetXaxis()->GetBinUpEdge(m_2dhists.at(0)->GetYaxis()->GetNbins());
+    double yhi = m_2dhists.at(0)->GetYaxis()->GetBinUpEdge(m_2dhists.at(0)->GetYaxis()->GetNbins());
 
     if (val1 >= xlo && val1 <= xhi && val2 >=ylo && val2 <= yhi){
       bin1 = m_2dhists.at(0)->GetXaxis()->FindBin(val1) -1;

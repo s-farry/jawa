@@ -104,33 +104,10 @@ double Expr::operator()(double* x, double* p){
   return GetVal(input);
 }
 
-double Expr::GetVal_py(boost::python::list& input){
-  vector<double> dbl_vec;
-  dbl_vec.reserve(len(input));
-  for (unsigned int i = 0; i < len(input); ++i){
-    double d = boost::python::extract<double>(input[i]);
-    dbl_vec.push_back(d);
-  }
-  return GetVal(dbl_vec);
-}
-
-double Expr::GetVal3_py(){
-  return GetVal();
-}
-std::vector<string>& Expr::GetVarNames(){ return m_varnames;}
-boost::python::list Expr::GetVarNames_py(){ 
-  boost::python::list l;
-    for (vector<string>::iterator is = m_varnames.begin(); is != m_varnames.end(); ++is){
-    l.append((*is));
-  }
-
-  return l;
-}
 
 string Expr::GetExpr() const{ return m_varexp;}
 string Expr::GetExpr() {return m_varexp;}
-string Expr::GetExpr_py() {return m_varexp;}
-
+std::vector<string>& Expr::GetVarNames(){ return m_varnames;}
 
 bool Expr::is_number(const std::string& s){
   //cout<<"checking is number for "<<s<<endl;
@@ -167,7 +144,8 @@ bool Expr::isFunction( const std::string& token)
     token == "tan" || token == "log" || token == "log10" ||
     token == "min" || token == "max" || token == "cosh" ||
     token == "sinh" || token == "tanh" || token == "exp" ||
-    token == "CB" || token == "Voigtian";
+    token == "CB" || token == "Voigtian" || token == "Gaussian" ||
+    token == "atanh" || token == "ptrel"  ;
 }
 
       
@@ -208,22 +186,6 @@ boost::python::list Expr::infixToRPN_py(boost::python::list& inputTokens,   cons
   return outputlist;
 
   }*/
-boost::python::list Expr::infixToRPN_py(boost::python::list& inputTokens){
-  std::vector<string> output;
-  std::list<std::string> input;
-  for (unsigned int i = 0; i < len(inputTokens); ++i){
-    string s = boost::python::extract<string>(inputTokens[i]);
-    input.push_back(s);
-  }
-
-  infixToRPN(input, output);
-  boost::python::list outputlist;
-  for (vector<string>::iterator is = output.begin(); is != output.end(); ++is){
-    outputlist.append(*is);
-  }
-  return outputlist;
-
-}
 
 // Convert infix expression format into reverse Polish notation          
 bool Expr::infixToRPN( const std::list<std::string>& inputTokens,     
@@ -436,6 +398,7 @@ double Expr::RPNtoDouble( std::vector<double>& input )
 	  else if (token == "tanh") result =  tanh(d);
 	  else if (token == "log") result =  log(d);
 	  else if (token == "log10") result =  log10(d);
+	  else if (token == "atanh") result = atanh(d);
 	  else if (token == "exp") result = exp(d);
 	  else if (token == "min") {
 	    double d2 = st.top();
@@ -475,6 +438,28 @@ double Expr::RPNtoDouble( std::vector<double>& input )
 	    st.pop();
 	    result = Voigtian(d5, d4, d3, d2, d);
 	  }
+	  else if (token == "Gaussian") {
+	    double d2 = st.top();
+	    st.pop();
+	    double d3 = st.top();
+	    st.pop();
+	    double d4 = st.top();
+	    st.pop();
+	    result = Gaussian(d4, d3, d2, d);
+	  }
+	  else if (token == "ptrel") {
+	    double d2 = st.top();
+	    st.pop();
+	    double d3 = st.top();
+	    st.pop();
+	    double d4 = st.top();
+	    st.pop();
+	    double d5 = st.top();
+	    st.pop();
+	    double d6 = st.top();
+	    st.pop();
+	    result = ptrel(d6, d5, d4, d3, d2, d);
+	  }
 	  else result = -1.0;
 	  // Push result onto stack         
 	  //std::ostringstream s;        
@@ -486,6 +471,21 @@ double Expr::RPNtoDouble( std::vector<double>& input )
   return st.top();        
 }          
 
+
+double Expr::ptrel(double x1, double y1, double z1, double x2, double y2, double z2){
+
+
+  //double ptrel = std::sqrt((*ip)->momentum().Vect().mag2() - (jet->momentum().Vect().Dot((*ip)->momentum().Vect())/jet->momentum().Vect().mag2()));
+
+  double amag2 = x1*x1 + y1*y1 + z1*z1;
+  double bmag2 = x2*x2 + y2*y2 + z2*z2;
+  double bdota = x1*x2 + y1*y2 + z1*z2;
+
+  //double pLrel2 = bdota*bdota / bmag2;
+
+
+  return std::sqrt(amag2 - (bdota*bdota/bmag2));
+}
 
 /*
 double Expr::RPNtoDouble( std::vector<double>& input )          
@@ -804,6 +804,13 @@ double Expr::CB(double x, double N, double a, double n, double m, double s, doub
 double Expr::Voigtian(double x, double N, double m, double s, double a){
   return N*TMath::Voigt(x - m, s, a, 4);
 }
+double Expr::Gaussian(double x, double N, double m, double s){
+  return N*TMath::Gaus(x, m, s);
+}
+
+//python files
+#ifdef WITHPYTHON
+
 
 boost::python::list Expr::Tokenize_py( const std::string& expression ){
   list<string> tokens = Tokenize(expression);
@@ -834,3 +841,49 @@ boost::python::list Expr::getRPN_py( ){
   }
   return s;
 }
+
+
+
+double Expr::GetVal_py(boost::python::list& input){
+  vector<double> dbl_vec;
+  dbl_vec.reserve(len(input));
+  for (unsigned int i = 0; i < len(input); ++i){
+    double d = boost::python::extract<double>(input[i]);
+    dbl_vec.push_back(d);
+  }
+  return GetVal(dbl_vec);
+}
+
+double Expr::GetVal3_py(){
+  return GetVal();
+}
+boost::python::list Expr::GetVarNames_py(){ 
+  boost::python::list l;
+    for (vector<string>::iterator is = m_varnames.begin(); is != m_varnames.end(); ++is){
+    l.append((*is));
+  }
+
+  return l;
+}
+
+string Expr::GetExpr_py() {return m_varexp;}
+
+
+boost::python::list Expr::infixToRPN_py(boost::python::list& inputTokens){
+  std::vector<string> output;
+  std::list<std::string> input;
+  for (unsigned int i = 0; i < len(inputTokens); ++i){
+    string s = boost::python::extract<string>(inputTokens[i]);
+    input.push_back(s);
+  }
+
+  infixToRPN(input, output);
+  boost::python::list outputlist;
+  for (vector<string>::iterator is = output.begin(); is != output.end(); ++is){
+    outputlist.append(*is);
+  }
+  return outputlist;
+
+}
+
+#endif

@@ -18,8 +18,6 @@ using namespace std;
 
 MWTemplate::MWTemplate(string name): Template(name){};
 
-MWTemplate::MWTemplate(string name, PyObject* pyt, PyObject* pycut) : Template(name, pyt, pycut){};
-
 MWTemplate::MWTemplate(string name, TTree* t, TCut* cut): Template(name, t, cut){
 };
 
@@ -48,7 +46,7 @@ MWTemplate::MWTemplate(string name, MWTemplate* A, MWTemplate* B) : Template(nam
 	string title(histA->GetTitle());
 	title += "_"+name+"_combined";
 	TH1F* histC = (TH1F*)histA->Clone(title.c_str());
-	histC->Add(histA);
+	histC->Add(histB);
 	varmap.insert(pair<string, TH1F*>((*imm).first, histC));
       }
     }
@@ -69,7 +67,7 @@ MWTemplate::MWTemplate(string name, MWTemplate* A, MWTemplate* B) : Template(nam
 	string title(histA->GetTitle());
 	title += "_combined";
 	TH2F* histC = (TH2F*)histA->Clone(title.c_str());
-	histC->Add(histA);
+	histC->Add(histB);
 	varmap.insert(pair<string, TH2F*>((*imm).first, histC));
       }
     }
@@ -339,6 +337,13 @@ void MWTemplate::ScaleWeight(string w, double s){
 }
 
 
+std::map<string, std::map<string, TH1F*> > MWTemplate::GetWeightHists(){ return m_varhists;}
+std::map<string, std::map<string, TH2F*> > MWTemplate::Get2DWeightHists(){return m_2dvarhists;}
+
+#ifdef WITHPYTHON
+MWTemplate::MWTemplate(string name, PyObject* pyt, PyObject* pycut) : Template(name, pyt, pycut){};
+
+
 PyObject* MWTemplate::GetWeightHist_py(string var, string wname){
   TH1F* h = GetWeightHist(var, wname);
   if (h) {
@@ -357,8 +362,7 @@ PyObject* MWTemplate::GetWeight2DHist_py(string var, string wname){
     return 0;
   }
 }
-std::map<string, std::map<string, TH1F*> > MWTemplate::GetWeightHists(){ return m_varhists;}
-std::map<string, std::map<string, TH2F*> > MWTemplate::Get2DWeightHists(){return m_2dvarhists;}
-
 void MWTemplate::SaveToFile1_py(){ SaveToFile(); }
 void MWTemplate::SaveToFile2_py(string output) {SaveToFile(output);}
+#endif
+

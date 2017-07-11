@@ -35,6 +35,7 @@ EfficiencyClass::EfficiencyClass( string name , EfficiencyClass* classA , Effici
   //cout<<"Combining efficiency classes"<<endl;
   m_verbose       = false;
   m_fillbkg       = false;
+  m_scaleerrs = classA->GetScaleErr() && classB->GetScaleErr();
   
   std::map<string, EffVar*>   classAvars   = classA->m_variables;
   std::map<string, EffVar*>   classBvars   = classB->m_variables;
@@ -210,17 +211,21 @@ void EfficiencyClass::SetTrees(TTree* priTree, TTree* secTree){
 
 }
 
-void EfficiencyClass::AddTree_py(PyObject* pyObj){
-  TTree* tree = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  AddTree(tree);
-}
 void EfficiencyClass::AddTree(TTree* tree){
   tree->SetEntryList(0);
   tree->SetBranchStatus("*",1);
   m_trees.push_back(new Tree("", tree, 1.0));
 }
+void EfficiencyClass::AddTree(TTree* tree, double w){
+  tree->SetEntryList(0);
+  tree->SetBranchStatus("*",1);
+  m_trees.push_back(new Tree("", tree, w));
+}
 void EfficiencyClass::AddTrees(std::vector<TTree*> trees){
   for (unsigned int i = 0 ; i < trees.size() ; ++i) AddTree(trees.at(i));
+}
+void EfficiencyClass::AddTrees(std::vector<TTree*> trees, double w){
+  for (unsigned int i = 0 ; i < trees.size() ; ++i) AddTree(trees.at(i), w);
 }
 Eff EfficiencyClass::GetTotEff(){
   return m_toteff;
@@ -246,36 +251,9 @@ void EfficiencyClass::Add2DVar(string var1, string var2, string name){
  
 }
 
-void EfficiencyClass::Add2DVar_py(string var1, string var2){
-  Add2DVar(var1, var2);
-}
-
-void EfficiencyClass::Add2DVars_py(boost::python::list& ns){
-  for (int i = 0; i < len(ns); ++i){
-    boost::python::list var = (boost::python::list)ns[i];
-    if (len(var) == 2){
-      string var1 = boost::python::extract<string>(var[0]);
-      string var2 = boost::python::extract<string>(var[1]);
-      Add2DVar(var1, var2);
-    }
-    else if (len(var) == 3){
-      string name = boost::python::extract<string>(var[0]);
-      string var1 = boost::python::extract<string>(var[1]);
-      string var2 = boost::python::extract<string>(var[2]);
-      Add2DVar(var1, var2, name);
-    }
-    else{
-      info()<<"Cannot Add 2D Variable - Wrong Dimensions"<<endl;
-    }
-  }
-}
 
 void EfficiencyClass::AddPassVar(const char* var){
   passvars.push_back(var);
-}
-void EfficiencyClass::SetPassCut_py(PyObject* pyObj){
-  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  m_passcut = *cut;
 }
 void EfficiencyClass::SetPassCut(TCut cut){
   m_passcut = cut;
@@ -329,10 +307,6 @@ void EfficiencyClass::AddFits(TObjArray* hists, TObjArray* fitsCB, TObjArray* fi
       hist->GetListOfFunctions()->Add(fitbkg);
     }
   }
-}
-
-void EfficiencyClass::SaveToFile_py(){
-  SaveToFile();
 }
 
 void EfficiencyClass::SaveToFile(const char* file){
@@ -434,10 +408,6 @@ void EfficiencyClass::FillBkgHists(){
   }
 }
 
-void EfficiencyClass::LoadFromFile_py(){
-  LoadFromFile();
-}
-
 void EfficiencyClass::LoadFromFile(const char* file){
   string output = GetRootName(file);
   TFile* f = new TFile(output.c_str());
@@ -490,10 +460,6 @@ void EfficiencyClass::StripTrees(TCut cut){
   //trees.at(1)->SetEntryList(secList);
   entryListTot.push_back(secList);
 
-}
-void EfficiencyClass::SetSelectionCut_py(PyObject* pyObj){
-  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  m_selcut = *cut;
 }
 
 void EfficiencyClass::SetSelectionCut(TCut cut){
@@ -596,12 +562,13 @@ void EfficiencyClass::FreeBranches(Tree* t){
 
 pair<Utils::weight,Utils::weight> EfficiencyClass::FillVars(bool pass, Tree* t){
   //Initialise weights to 1
-  double w = 1.0;
+  double w = t->GetWeight();
   double w_err = 0.0;
   double effw = 1.0;
   double effw_err = 0.0;
   int effw_bin = -1;
-    
+  
+  
   // Get The Weights from Reweight Variables
   for (std::vector<ReweightVar*>::iterator iv = m_reweightvariables.begin(); iv!=m_reweightvariables.end();++iv){
     if ((*iv)->GetExprs().size() == 1){
@@ -643,7 +610,7 @@ pair<Utils::weight,Utils::weight> EfficiencyClass::FillVars(bool pass, Tree* t){
     }
   }
 
-  Utils::weight eff_weight, scale_weight;
+    Utils::weight eff_weight, scale_weight;
   eff_weight.val = effw;
   eff_weight.err = effw_err;
   eff_weight.bin = effw_bin;
@@ -711,6 +678,7 @@ void EfficiencyClass::LoopEntries(){
     Long64_t nentries = totList->GetN();
     bool pass = false;
     //Long64_t nbytes = 0, nb = 0;
+    info()<<"Looping over "<<nentries<<" events in tree"<<endl;
     for (Long64_t jentry=0; jentry<nentries;jentry++) {
       pass = false;
       Int_t entry = totList->GetEntry(jentry);
@@ -718,9 +686,13 @@ void EfficiencyClass::LoopEntries(){
       //Int_t ientry=t->LoadEntry(entry);
       //if (ientry < 0) break;
       //nb = t->GetEntry(entry);   nbytes += nb;
-      if (jentry%10000==0) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
+      //if (jentry%10000==0) info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
       //cout<<"Entry "<<jentry<<" of "<<nentries<<endl;
       
+      if ((jentry%10000==0 || jentry == (nentries -1))) {
+	//info()<<"Entry "<<jentry<<" of "<<nentries<<endl;
+	progress(double(jentry+1)/nentries, 70.0);
+      }
       //See if entry passes
       pass = passList->Contains(entry);
 
@@ -729,7 +701,7 @@ void EfficiencyClass::LoopEntries(){
       //info()<<weights.first.val<<" "<<weights.second.val<<endl;
 
       if (pass) {
-	passN = passN + weights.first.val*weights.second.val;
+	passN = passN + (weights.first.val*weights.second.val);
 	if (m_scaleerrs){
 	  int bin = weights.second.bin;
 	  for (int i = 0 ; i < m_Npass_rweff_varyhi->GetEntries() ; ++i){
@@ -771,9 +743,6 @@ void EfficiencyClass::Normalise(double N){
   }
 }
 
-void EfficiencyClass::MakeEfficiencyGraph_py(){
-  MakeEfficiencyGraph();
-}
 
 void EfficiencyClass::MakeEfficiencyGraph(){
   for (std::map<string, EffVar*>::iterator ei = m_variables.begin(); ei != m_variables.end(); ++ei){
@@ -801,11 +770,11 @@ void EfficiencyClass::MakeEfficiencyGraph(){
 
 std::pair<TF1*,TF1*> EfficiencyClass::FitHistogram(TH1F* massplot, double lo, double hi, string opt){
   if (massplot->GetListOfFunctions()->GetSize() > 0) massplot->GetListOfFunctions()->Clear();
-
+  
   double max = massplot->GetMaximum();
-
+  
   TF1* pol1 = new TF1("poly1", "pol1", lo, hi);
-
+  
   massplot->Fit("poly1","QN");
 
   TF1* gausline = new TF1("gaussline",fitGaussLine, lo, hi, 5);
@@ -814,7 +783,7 @@ std::pair<TF1*,TF1*> EfficiencyClass::FitHistogram(TH1F* massplot, double lo, do
   gausline->SetParName(2, "sigma" );
   gausline->SetParName(3, "c"     );
   gausline->SetParName(4, "slope" );
-
+  
   gausline->SetParameter(0, max);
   if ((int)opt.find("Jpsi")!=-1){
     gausline->SetParameter(1, 3100);
@@ -973,6 +942,7 @@ void EfficiencyClass::Reweight1_py(string var, PyObject* pyObj){
 }
 */
 
+
 int EfficiencyClass::GetBin(double val, TH1F* hist){
   double lo = hist->GetXaxis()->GetXmin();
   double hi = hist->GetXaxis()->GetXmax();
@@ -1030,21 +1000,6 @@ void EfficiencyClass::AddSystematic(string name, std::vector<double> pc){
     m_variables.at(name)->AddSystematic(pc);
   }
   else info()<<"Could not find variable to add systematic"<<endl;
-}
-
-void EfficiencyClass::AddSystematic1_py(string name, double pc){
-  AddSystematic(name, pc);
-}
-void EfficiencyClass::AddSystematic2_py(double pc){
-  AddSystematic(pc);
-}
-void EfficiencyClass::AddSystematic3_py(string name, boost::python::list& ns){
-  std::vector<double> pc;
-  for (int i = 0; i < len(ns); ++i){
-    double val = boost::python::extract<double>(ns[i]);
-    pc.push_back(val);
-  }
-  AddSystematic(name, pc);
 }
 
 void EfficiencyClass::PrintEfficiencies(string name){
@@ -1311,21 +1266,6 @@ double EfficiencyClass::GetCorrectedEfficiency(string var, TTree* t, string leaf
   return eff;
 }
 
-boost::python::list EfficiencyClass::GetCorrectedEfficiency3_py(string var, boost::python::list& h, bool smear){
-  std::vector<TH1F*> hists;
-  for (int i = 0; i < len(h); ++i){
-    boost::python::object obj = h[i];
-    PyObject* pyObj = obj.ptr();
-    TH1F* h1f = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-    hists.push_back(h1f);
-  }
-  std::vector<double> effs = GetCorrectedEfficiency(var, hists, smear);
-  boost::python::object get_iter = boost::python::iterator<std::vector<double> >();
-  boost::python::object iter = get_iter(effs);
-  boost::python::list l(iter);
-  return l;
-}
-
 std::vector<double> EfficiencyClass::GetCorrectedEfficiency(string var, std::vector<TH1F*> hists, bool smear){
   EffVar* v = m_variables.at(var);
   TGraphAsymmErrors* graph = v->GetEffGraph();
@@ -1447,6 +1387,12 @@ void EfficiencyClass::Run(){
   MakeEfficiencyGraph();
 }
 
+
+double EfficiencyClass::GetTotEffRWErr(){
+  return m_toteffrw_err;
+};
+
+#ifdef WITHPYTHON
 void EfficiencyClass::Reweight1_py(string var, PyObject* pyObj){
   
   TH1F* hist = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
@@ -1505,11 +1451,23 @@ void EfficiencyClass::ReweightEff_py(string var1, string var2, PyObject* th2f){
   ReweightEff(var1, var2, hist_2d);
   //}
 }
+
 double EfficiencyClass::GetTotEff_py(){
   double eff = 0.0;
   eff = m_toteff.GetEff();
   return eff;
 }
+double EfficiencyClass::GetTotEffErrLo_py(){
+  double eff = 0.0;
+  eff = m_toteff.GetEffErrLo();
+  return eff;
+}
+double EfficiencyClass::GetTotEffErrHi_py(){
+  double eff = 0.0;
+  eff = m_toteff.GetEffErrHi();
+  return eff;
+}
+
 PyObject* EfficiencyClass::GetTotHist_py(){
   //PyObject* pyObj = Utils::Root2PyObj<TH1F>(m_tot);
   //return pyObj;
@@ -1588,6 +1546,14 @@ void EfficiencyClass::AddTrees_py(boost::python::list& ns){
   }
 }
 
+void EfficiencyClass::AddTrees2_py(boost::python::list& ns, double w){
+  for (int i = 0; i < len(ns); ++i){
+    boost::python::object obj = ns[i];
+    PyObject* pyObj = obj.ptr();
+    TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+    AddTree(t, w);
+  }
+}
 double EfficiencyClass::GetCorrectedEfficiency1_py(string var, PyObject* h){
   TH1F* hist = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(h));
   return GetCorrectedEfficiency(var,hist);
@@ -1598,3 +1564,82 @@ double EfficiencyClass::GetCorrectedEfficiency2_py(string var, PyObject* t, stri
   return GetCorrectedEfficiency(var , tree , leaf);
   
 }
+void EfficiencyClass::AddTree_py(PyObject* pyObj){
+  TTree* tree = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  AddTree(tree);
+}
+void EfficiencyClass::AddTree2_py(PyObject* pyObj, double w){
+  TTree* tree = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  AddTree(tree, w);
+}
+void EfficiencyClass::Add2DVar_py(string var1, string var2){
+  Add2DVar(var1, var2);
+}
+
+void EfficiencyClass::Add2DVars_py(boost::python::list& ns){
+  for (int i = 0; i < len(ns); ++i){
+    boost::python::list var = (boost::python::list)ns[i];
+    if (len(var) == 2){
+      string var1 = boost::python::extract<string>(var[0]);
+      string var2 = boost::python::extract<string>(var[1]);
+      Add2DVar(var1, var2);
+    }
+    else if (len(var) == 3){
+      string name = boost::python::extract<string>(var[0]);
+      string var1 = boost::python::extract<string>(var[1]);
+      string var2 = boost::python::extract<string>(var[2]);
+      Add2DVar(var1, var2, name);
+    }
+    else{
+      info()<<"Cannot Add 2D Variable - Wrong Dimensions"<<endl;
+    }
+  }
+}
+void EfficiencyClass::SetPassCut_py(PyObject* pyObj){
+  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  m_passcut = *cut;
+}
+void EfficiencyClass::SaveToFile_py(){
+  SaveToFile();
+}
+void EfficiencyClass::LoadFromFile_py(){
+  LoadFromFile();
+}
+void EfficiencyClass::SetSelectionCut_py(PyObject* pyObj){
+  TCut* cut = (TCut*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  m_selcut = *cut;
+}
+void EfficiencyClass::MakeEfficiencyGraph_py(){
+  MakeEfficiencyGraph();
+}
+
+void EfficiencyClass::AddSystematic1_py(string name, double pc){
+  AddSystematic(name, pc);
+}
+void EfficiencyClass::AddSystematic2_py(double pc){
+  AddSystematic(pc);
+}
+void EfficiencyClass::AddSystematic3_py(string name, boost::python::list& ns){
+  std::vector<double> pc;
+  for (int i = 0; i < len(ns); ++i){
+    double val = boost::python::extract<double>(ns[i]);
+    pc.push_back(val);
+  }
+  AddSystematic(name, pc);
+}
+boost::python::list EfficiencyClass::GetCorrectedEfficiency3_py(string var, boost::python::list& h, bool smear){
+  std::vector<TH1F*> hists;
+  for (int i = 0; i < len(h); ++i){
+    boost::python::object obj = h[i];
+    PyObject* pyObj = obj.ptr();
+    TH1F* h1f = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+    hists.push_back(h1f);
+  }
+  std::vector<double> effs = GetCorrectedEfficiency(var, hists, smear);
+  boost::python::object get_iter = boost::python::iterator<std::vector<double> >();
+  boost::python::object iter = get_iter(effs);
+  boost::python::list l(iter);
+  return l;
+}
+
+#endif

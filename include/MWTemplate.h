@@ -13,8 +13,10 @@
 #include <Var3D.h>
 #include <ReweightVar.h>
 #include <Tree.h>
-#include <boost/python.hpp>
 #include <Template.h>
+#ifdef WITHPYTHON
+#include <boost/python.hpp>
+#endif
 
 using namespace std;
 
@@ -23,7 +25,6 @@ class MWTemplate : public Template {
   MWTemplate(string name);
   MWTemplate(string name, TTree* t, TCut* cut);
   MWTemplate(string name, TTree* t, TCut* cut, enum EColor color);
-  MWTemplate(string name, PyObject* t, PyObject* cut);
   MWTemplate(string name, MWTemplate* A, MWTemplate* B);
 
   virtual void SaveToCurrentFile();
@@ -37,15 +38,19 @@ class MWTemplate : public Template {
   std::map<string, std::map<string, TH1F*> > GetWeightHists();
   std::map<string, std::map<string, TH2F*> > Get2DWeightHists();
 
-  PyObject* GetWeightHist_py(string var, string wname);
-  PyObject* GetWeight2DHist_py(string var, string wname);
   void ScaleAllWeights(double s);
   void PrintWeights();
   void ScaleWeight(string w, double s);
 
 
+#ifdef WITHPYTHON
+  MWTemplate(string name, PyObject* t, PyObject* cut);
+  PyObject* GetWeightHist_py(string var, string wname);
+  PyObject* GetWeight2DHist_py(string var, string wname);
   void SaveToFile1_py();
   void SaveToFile2_py(string output);
+  #endif
+
  private:
   std::map<string, std::map<string, TH1F*> > m_varhists;
   std::map<string, std::map<string, TH2F*> > m_2dvarhists;

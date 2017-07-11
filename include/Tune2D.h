@@ -11,8 +11,6 @@
 #include <TColor.h>
 #include <TFractionFitter.h>
 #include <TF1.h>
-#include <TPython.h>
-#include <boost/python.hpp>
 #include <Expr.h>
 #include <Var.h>
 #include <Var2D.h>
@@ -29,23 +27,26 @@ class Tune2D : public Tune{
   Tune2D();
   Tune2D(string name);
   Tune2D(string name, Tree* data, Tree* mc, Expr* tuneVar, Var2D* fVar = 0, string cut = "");
+  Tune2D(string name, Expr* tuneVar, Var2D* fVar = 0, string cut = "");
   void tune();
   void fill2DVals();
-  void SaveToFile();
+  void SaveToFile(string filename = "");
 
  private:
   Var2D* m_2DfVar;               // Templates to be fit
-
   vector< vector< vector< pair<double, double> > > > m_data_2Dvec;
   vector< vector< vector< pair<double, double> > > > m_mc_2Dvec;
   vector< vector< double > > m_data_2Dstddev;
-  vector< vector< vector<pair<double, double> > > > getVals(Tree* tree, Expr* expr, Var2D* var, TCut cut="", vector<ReweightVar*> rwvars = vector<ReweightVar*>(0));
-
+  vector< vector< vector<pair<double, double> > > > getVals(std::vector<Tree*> tree, Expr* expr, Var2D* var, TCut cut="", vector<ReweightVar*> rwvars = vector<ReweightVar*>(0));
 
   TH2F* m_2Dres_sigma;
   TH2F* m_2Dres_mean;
   TH2F* m_2Dstddev;
 
+#ifdef WITHPYTHON
+  void SaveToFile1_py();
+  void SaveToFile2_py(string filename);
+#endif
 };
 
 //void FCN_func(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag);

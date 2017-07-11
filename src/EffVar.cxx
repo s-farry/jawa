@@ -146,10 +146,6 @@ EffVar::EffVar(string name, TGraphAsymmErrors* effgraph)
 
 }
 
-EffVar::EffVar(string name, PyObject* pyObj, string prefix): Var(name){
-  TFile* f = (TFile*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  EffVar(name, f, prefix);
-}
 EffVar::EffVar(string name, TFile* f, string prefix): Var(name){
   TObjArray* totalhists = (TObjArray*)f->Get((name+"/TotalHists").c_str());
   TObjArray* passhists  = (TObjArray*)f->Get((name+"/PassHists").c_str());
@@ -325,16 +321,6 @@ TH1F* EffVar::GetBkgTotHist(){return m_bkgtot;}
 TH1F* EffVar::GetBkgPassHist(){return m_bkgpass;}
 
 
-PyObject* EffVar::GetTotHist_py(){
-  TH1F* newCxxObj = new TH1F(*m_tothist);
-  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
-}
-
-PyObject* EffVar::GetPassHist_py(){
-  TH1F* newCxxObj = new TH1F(*m_passhist);
-  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
-}
-
 void EffVar::FillBkgHists(double lo, double hi){
   for (int i = 0 ; i<m_tothists->GetEntries(); ++i){
     TList* funcs_tot  = (TList*)(((TH1F*)m_tothists->At(i))->GetListOfFunctions());
@@ -450,7 +436,6 @@ void EffVar::FillVar(bool pass, double v_var, Utils::weight weight, Utils::weigh
 	((TH1F*)m_rweff_varylo_passhists->At(i))->Fill( v_var, weight.val*effw.val);
       }
     }
-
   } else {
     m_failhist->Fill(v_var, weight.val);
   }
@@ -583,14 +568,6 @@ std::vector<double> EffVar::GetBinEdgesY(TH2F* hist){
   return edges;
 }
 
-boost::python::list EffVar::GetBinEdgesX_py(PyObject* pyObj){
-  TH2F* hist = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
-  vector<double> edges = GetBinEdgesX(hist);
-  boost::python::object get_iter = boost::python::iterator<std::vector<double> >();
-  boost::python::object iter = get_iter(edges);
-  boost::python::list l(iter);
-  return l;
-}
 
 void EffVar::SetPrefix(string name){ m_prefix = name;}
 
@@ -601,11 +578,6 @@ void EffVar::RemoveErrors(){
 
 TGraphAsymmErrors* EffVar::GetEffGraph(){
   return m_effgraph;
-}
-
-PyObject* EffVar::GetEffGraph_py(){
-  TGraphAsymmErrors* newCxxObj = new TGraphAsymmErrors(*m_effgraph);
-  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
 }
 
 TGraphAsymmErrors* EffVar::GetSmearedEffGraph(){
@@ -622,12 +594,6 @@ TGraphAsymmErrors* EffVar::GetSmearedEffGraph(){
   return graph;
 }
 
-PyObject* EffVar::GetSmearedEffGraph_py(){
-  TGraphAsymmErrors* newCxxObj = GetSmearedEffGraph();
-  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
-}
-
-
 void EffVar::AddSystematic1(double pc) {return AddSystematic(pc);}
 void EffVar::AddSystematic2(std::vector<double> pc) {return AddSystematic(pc);}
 
@@ -638,6 +604,44 @@ TObjArray* EffVar::GetPassBkgFits(){return m_passBkgFits;}
 TObjArray* EffVar::GetPassHists(){return m_passhists;}
 TObjArray* EffVar::GetTotHists(){return m_tothists;}
 TObjArray* EffVar::GetFailHists(){return m_failhists;}
+
+#ifdef WITHPYTHON
+
+PyObject* EffVar::GetSmearedEffGraph_py(){
+  TGraphAsymmErrors* newCxxObj = GetSmearedEffGraph();
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
+
+EffVar::EffVar(string name, PyObject* pyObj, string prefix): Var(name){
+  TFile* f = (TFile*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  EffVar(name, f, prefix);
+}
+boost::python::list EffVar::GetBinEdgesX_py(PyObject* pyObj){
+  TH2F* hist = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+  vector<double> edges = GetBinEdgesX(hist);
+  boost::python::object get_iter = boost::python::iterator<std::vector<double> >();
+  boost::python::object iter = get_iter(edges);
+  boost::python::list l(iter);
+  return l;
+}
+
+
+PyObject* EffVar::GetTotHist_py(){
+  TH1F* newCxxObj = new TH1F(*m_tothist);
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
+
+PyObject* EffVar::GetPassHist_py(){
+  TH1F* newCxxObj = new TH1F(*m_passhist);
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
+
+PyObject* EffVar::GetEffGraph_py(){
+  TGraphAsymmErrors* newCxxObj = new TGraphAsymmErrors(*m_effgraph);
+  return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+}
+
+#endif
 
 /*
 template<typename T>

@@ -8,8 +8,10 @@
 #include <TH1F.h>
 #include <TH2F.h>
 #include <EffVar2D.h>
-#include <boost/python.hpp>
 #include <ReweightVar.h>
+#ifdef WITHPYTHON
+#include <boost/python.hpp>
+#endif
 
 using namespace std;
 
@@ -90,19 +92,9 @@ class EfficiencyClass: public JawaObj {
   //void MakeHists();
   void AddVar(string name, string var, int bins, double lo, double hi);
   void AddVar(string name, string var, vector<double> edges);
-  void AddVar1_py(string name, string var, int bins, double lo, double hi);
-  void AddVar2_py(string name, string var, vector<double> edges);
-  void AddVar3_py(string name, string var, int bins, float lo, float hi);
-  void AddVar4_py(string name, string var, boost::python::list& ns);
-  void AddVar5_py(boost::python::list& ns);
-  void AddVars_py(boost::python::list& ns);
+  void FitHists(double lo, double hi);
   void MakeEfficiencyGraph();
-  void MakeEfficiencyGraph_py();
   void LoadFromFile(const char* file="");
-  void LoadFromFile_py();
-  void SaveToFile_py();
-  PyObject* GetTotHist_py();
-  PyObject* GetPassHist_py();
   void SaveToFile(const char* file="");
   void PrintEfficiencies(string name);
   void PrintTwikiEfficiencies(string name);
@@ -120,14 +112,7 @@ class EfficiencyClass: public JawaObj {
   void AddFits(TObjArray* hists, TObjArray* fits);
   void AddFits(TObjArray* hists, TObjArray* fitssig, TObjArray* fitsbkg);
   void Add2DVar(string varA, string varB, string name="");
-  void Add2DVar_py(string varA, string varB);
-  void Add2DVars_py(boost::python::list& ns);
-
-  /*void ReweightVar(string var, std::map<int, double> );
-  void ReweightVar(string var, TF1* func  );
-  void ReweightVar(string var, TH1F* hist );*/
-
-
+  //void ReweightVar(string var, std::map<int, double> );
   void Reweight(string var, TF1* f);
   void Reweight(string var, std::map<int,double> map);
   void Reweight(string var, TH1F* scales);
@@ -160,10 +145,6 @@ class EfficiencyClass: public JawaObj {
   void AddSystematic(string name, double pc);
   void AddSystematic(string name, std::vector<double> pc);
 
-  void AddSystematic2_py(double pc);
-  void AddSystematic1_py(string name, double pc);
-  void AddSystematic3_py(string name, boost::python::list& ns);
-
   void FillBkgHists();
 
   int GetBin(double value, TH1F* hist);
@@ -178,23 +159,10 @@ class EfficiencyClass: public JawaObj {
 
   void Run();
 
-  double GetCorrectedEfficiency1_py(string var, PyObject* h);
-  double GetCorrectedEfficiency2_py(string var, PyObject* t, string leaf);
-  boost::python::list GetCorrectedEfficiency3_py(string var, boost::python::list& hists, bool smear);
-
   double GetCorrectedEfficiency(string var, TH1F* h);
   double GetCorrectedEfficiency(string var, TTree* t, string name);
   std::vector<double> GetCorrectedEfficiency(string var, std::vector<TH1F*> hists, bool smear = false);
-  double GetTotEff_py();
 
-  void Reweight1_py(string var, PyObject* tf1);
-  void Reweight2_py(string var1, string var2, PyObject* th2f);
-  void Reweight3_py(string leaf);
-  void Reweight4_py(string var1, string var2, PyObject* th2f, string form);
-  void Reweight5_py(string var1, string var2, string var3, string var4, PyObject* th2f, string form);
-
-  void ReweightEff_py(string var1, string var2, PyObject* th2f);
-  
  public:
   
  protected:
@@ -229,26 +197,24 @@ class EfficiencyClass: public JawaObj {
   std::vector<Tree*> m_trees;
   void AddPassVar(const char* var);
   void SetTree(TTree* tree);
-  void SetTree_py(PyObject* tree);
   void SetTrees(TTree* priTree, TTree* secTree);
   void SetVerbose(bool verbose);
   bool GetVerbose();
   void AddTree(TTree* tree);
-  void AddTrees(std::vector<TTree*> tree);
-  void AddTree_py(PyObject* tree);
-  void AddTrees_py(boost::python::list& ns);
+  void AddTree(TTree* tree, double w);
+  void AddTrees(std::vector<TTree*> tree );
+  void AddTrees(std::vector<TTree*> tree, double w);
   void SetSelectionCut(TCut cut);
-  void SetSelectionCut_py(PyObject* cut);
   std::pair<TF1*,TF1*> FitHistogram(TH1F* massplot, double lo, double hi, string opt = "Z0_CB");
   void StripTree(TCut cut);
   void StripTrees(TCut cut);
   void SetPassCut(TCut cut);
-  void SetPassCut_py(PyObject* cut);
   void MakeEntryLists();
   std::map<string, EffVar*> GetVariables();
   void SetVariables(std::map<string, EffVar*>);
   void SetEffRange(double lo, double hi);
   Eff GetTotEff();
+  double GetTotEffRWErr();
 
   void SetScaleErr(bool scaleerr);
   bool GetScaleErr();
@@ -256,10 +222,53 @@ class EfficiencyClass: public JawaObj {
   //double as they can be weighted
   double m_Ntot;
   double m_Npass;
+
   
   TObjArray* m_Npass_rweff_varyhi;
   TObjArray* m_Npass_rweff_varylo;
 
+  #ifdef WITHPYTHON
+  void AddVar1_py(string name, string var, int bins, double lo, double hi);
+  void AddVar2_py(string name, string var, vector<double> edges);
+  void AddVar3_py(string name, string var, int bins, float lo, float hi);
+  void AddVar4_py(string name, string var, boost::python::list& ns);
+  void AddVar5_py(boost::python::list& ns);
+  void AddVars_py(boost::python::list& ns);
+  void MakeEfficiencyGraph_py();
+  void SetPassCut_py(PyObject* cut);
+  void LoadFromFile_py();
+  void SaveToFile_py();
+  PyObject* GetTotHist_py();
+  PyObject* GetPassHist_py();
+  void Add2DVar_py(string varA, string varB);
+  void Add2DVars_py(boost::python::list& ns);
+  void AddSystematic2_py(double pc);
+  void AddSystematic1_py(string name, double pc);
+  void AddSystematic3_py(string name, boost::python::list& ns);
+  double GetCorrectedEfficiency1_py(string var, PyObject* h);
+  double GetCorrectedEfficiency2_py(string var, PyObject* t, string leaf);
+  boost::python::list GetCorrectedEfficiency3_py(string var, boost::python::list& hists, bool smear);
+  double GetTotEff_py();
+  double GetTotEffErrLo_py();
+  double GetTotEffErrHi_py();
+  void SetTree_py(PyObject* tree);
+  void AddTree_py(PyObject* tree);
+  void AddTree2_py(PyObject* tree, double w);
+  void AddTrees_py(boost::python::list& ns);
+  void AddTrees2_py(boost::python::list& ns, double w);
+  void SetSelectionCut_py(PyObject* cut);
+
   
+  void Reweight1_py(string var, PyObject* tf1);
+  void Reweight2_py(string var1, string var2, PyObject* th2f);
+  void Reweight3_py(string leaf);
+  void Reweight4_py(string var1, string var2, PyObject* th2f, string form);
+  void Reweight5_py(string var1, string var2, string var3, string var4, PyObject* th2f, string form);
+
+  void ReweightEff_py(string var1, string var2, PyObject* th2f);
+  #endif
+
+
+
 
 };

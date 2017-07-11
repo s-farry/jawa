@@ -8,8 +8,10 @@
 #include <TH2F.h>
 #include <EffVar.h>
 #include <Eff.h>
-#include <boost/python.hpp>
 #include <Var2D.h>
+#ifdef WITHPYTHON
+#include <boost/python.hpp>
+#endif
 
 using namespace std;
 
@@ -42,6 +44,7 @@ class EffVar2D: public Var2D {
   TH2F* Get2DEffGraph();
   PyObject* Get2DEffGraph_py();
   PyObject* GetTotHist_py();
+  PyObject* GetPassHist_py();
 
   void FillVar(bool pass, double& v_var1, double& v_var2, double w=1.0);
   void FillVar(bool pass, int& v_var1, double& v_var2, double w);

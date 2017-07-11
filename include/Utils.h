@@ -12,8 +12,6 @@
 #include <TColor.h>
 #include <TFractionFitter.h>
 #include <TF1.h>
-#include <TPython.h>
-#include <boost/python.hpp>
 #include <Expr.h>
 #include <Var.h>
 #include <Var2D.h>
@@ -22,6 +20,11 @@
 #include "Minuit2/Minuit2Minimizer.h"
 //#include "Math/Functor.h"
 #include <iostream>
+
+#ifdef WITHPYTHON
+#include <TPython.h>
+#include <boost/python.hpp>
+#endif
 
 using namespace std;
 typedef vector< vector< double > > matrix;
@@ -70,15 +73,19 @@ namespace Utils{
   vector<double> getVals(Tree* t, Expr* var, TCut cut);
   TH1F* GetWeightHist(string name, TH1F* histA, TH1F* histB);
   TH2F* GetWeightHist2D(string name, TH2F* histA, TH2F* histB);
+  TH1F* GetRatioHist(string name, TH1F* histA, TH1F* histB);
+  TH2F* GetRatioHist2D(string name, TH2F* histA, TH2F* histB);
   double GetSum(TTree* t, string leaf);
 
   void RemoveErrors(TGraphAsymmErrors* graph);
   //void FCN_func(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag);
 
   double GetWeightSum(TTree* t, string w, string cut);
+  double GetWeightSqSum(TTree* t, string w, string cut);
   vector<double> GetWeightSum(TTree* t, vector<string> w, string cut);
   void saveAsTree(string fileName, vector<string> varNames, string output);
 
+  TH2F* MakeEffHist(string name, TH2F* tot, TH2F* pass);
 
   #ifdef WITHPYTHON
   PyObject* tgraph2hist_py(string name, PyObject* graph);
@@ -93,8 +100,11 @@ namespace Utils{
 
   PyObject* GetWeightHist_py(string name, PyObject* h1, PyObject* h2);
   PyObject* GetWeightHist2D_py(string name, PyObject* h1, PyObject* h2);
+  PyObject* GetRatioHist_py(string name, PyObject* h1, PyObject* h2);
+  PyObject* GetRatioHist2D_py(string name, PyObject* h1, PyObject* h2);
 
   double GetWeightSum_py(PyObject* py, string w, string cut);
+  double GetWeightSqSum_py(PyObject* py, string w, string cut);
   boost::python::list GetWeightSum2_py(PyObject* py, boost::python::list& weights, string cut);
   void RemoveErrors_py(PyObject* pyObj);
   double GetSum_py(PyObject* t, string leaf);
@@ -107,6 +117,7 @@ namespace Utils{
   void saveTH1F_py(string name, PyObject* pyObj);
   void saveTGraph_py(string name, PyObject* pyObj);
   void saveTGraphErrs_py(string name, PyObject* pyObj);
+  PyObject* MakeEffHist_py(string name, PyObject* t, PyObject* p);
 
   template<typename T> boost::python::list vec2PyList(std::vector<T> vect);
   template<typename T> boost::python::list mat2PyList(std::vector< std::vector<T> > mat);

@@ -19,6 +19,7 @@
 #include <TH1.h>
 #include <TMinuit.h>
 #include <TParameter.h>
+#include <TEfficiency.h>
 #include <Utils.h>
 #include <TCanvas.h>
 #ifdef WITHPYTHON
@@ -39,7 +40,10 @@ namespace Utils{
     TH1F* hist = new TH1F(name.c_str(), name.c_str(), N, low, hi);
     for (int i = 0; i < N; ++i){
       graph->GetPoint(i, x, y);
+      double errlo = graph->GetErrorYlow(i);
+      double errhi = graph->GetErrorYhigh(i);
       hist->SetBinContent(i+1,y);
+      hist->SetBinError(i+1,max(errlo, errhi));
     }
     return hist;
   }
@@ -661,6 +665,25 @@ namespace Utils{
     return hist;
   }
 
+  TH1F* GetRatioHist(string name, TH1F* histA, TH1F* histB){
+    TH1F* hist = new TH1F(name.c_str(), name.c_str(), histA->GetNbinsX(), histA->GetBinLowEdge(1), histA->GetBinLowEdge(histA->GetXaxis()->GetLast() + 1));
+    if (histA->GetNbinsX() == histB->GetNbinsX() && histA->GetBinLowEdge(0) == histB->GetBinLowEdge(0) &&
+        histA->GetBinLowEdge(histA->GetXaxis()->GetLast() +1) == histB->GetBinLowEdge(histB->GetXaxis()->GetLast() + 1)){
+      for (int i = 0; i < histA->GetNbinsX()+2; ++i){
+	double a = histA->GetBinContent(i);
+	double b = histB->GetBinContent(i);
+	double aerr = histA->GetBinError(i);
+	double berr = histB->GetBinError(i);
+	if (a == 0 || b == 0) hist->SetBinContent(i, 1);
+	else {
+	  hist->SetBinContent(i, a/b);
+	  hist->SetBinError(i, a/b * sqrt(pow(aerr/a,2) + pow(berr/b,2)));
+	}
+      }
+    }
+    return hist;
+  }
+
   TH2F* GetWeightHist2D(string name, TH2F* histA, TH2F* histB){
     TH2F* hist = new TH2F(name.c_str(), name.c_str(), histA->GetXaxis()->GetNbins(), 
 			  histA->GetXaxis()->GetBinLowEdge(1), 
@@ -677,6 +700,31 @@ namespace Utils{
 	    double binb = histB->GetBinContent(i,j);
 	    hist->SetBinContent(i,j, (bina/binb)*histB->Integral()/histA->Integral());
 	    hist->SetBinError(i,j, (bina/binb)*((sqrt(bina) + sqrt(binb) / (sqrt(bina*binb)))));
+	  }
+	}
+      }
+    }
+    return hist;
+  }
+
+  TH2F* GetRatioHist2D(string name, TH2F* histA, TH2F* histB){
+    TH2F* hist = new TH2F(name.c_str(), name.c_str(), histA->GetXaxis()->GetNbins(), 
+			  histA->GetXaxis()->GetBinLowEdge(1), 
+			  histA->GetXaxis()->GetBinLowEdge(histA->GetXaxis()->GetLast() + 1),
+			  histA->GetYaxis()->GetNbins(), histA->GetYaxis()->GetBinLowEdge(1),
+			  histA->GetYaxis()->GetBinLowEdge(histA->GetYaxis()->GetLast() + 1));
+    if (histA->GetNbinsX() == histB->GetNbinsX() && histA->GetXaxis()->GetBinLowEdge(0) == histB->GetXaxis()->GetBinLowEdge(0) &&
+	histA->GetXaxis()->GetBinLowEdge(histA->GetXaxis()->GetLast() +1) == histB->GetXaxis()->GetBinLowEdge(histB->GetXaxis()->GetLast() + 1)){
+      for (int i = 0; i < histA->GetXaxis()->GetNbins()+2; ++i){
+	for (int j = 0 ; j < histA->GetYaxis()->GetNbins() + 2; ++j){
+	  if (histB->GetBinContent(i,j) == 0 || histA->GetBinContent(i,j) == 0) hist->SetBinContent(i,j, 1);
+	  else {
+	    double bina = histA->GetBinContent(i,j);
+	    double binb = histB->GetBinContent(i,j);
+	    double binaerr = histA->GetBinError(i,j);
+	    double binberr = histB->GetBinError(i,j);
+	    hist->SetBinContent(i,j, (bina/binb));
+	    hist->SetBinError(i,j, (bina/binb)*sqrt(pow(binaerr/bina,2) + pow(binberr/binb,2)));
 	  }
 	}
       }
@@ -722,8 +770,12 @@ namespace Utils{
   }
 
   double GetWeightSum(TTree* t, string w, string cut){
-    t->Draw(">>e", cut.c_str() , "entrylist");
+    if (!t) {
+      cout<<"tree passed is null"<<endl;
+      return 0.0;
+    }
     double val;
+    t->Draw(">>e", cut.c_str() , "entrylist");
     TEntryList* l = (TEntryList*)gDirectory->Get("e");
     t->SetBranchStatus("*",0);
     t->SetBranchStatus(w.c_str(),1);
@@ -740,10 +792,37 @@ namespace Utils{
 
   }
 
+  double GetWeightSqSum(TTree* t, string w, string cut){
+    if (!t) {
+      cout<<"tree passed is null"<<endl;
+      return 0.0;
+    }
+    double val;
+    t->Draw(">>e", cut.c_str() , "entrylist");
+    TEntryList* l = (TEntryList*)gDirectory->Get("e");
+    t->SetBranchStatus("*",0);
+    t->SetBranchStatus(w.c_str(),1);
+    t->SetBranchAddress(w.c_str(), &val);
+    int nentries = l->GetN();
+    double sqsum = 0;
+    for (int i = 0; i < nentries; ++i){
+      int entry = l->GetEntry(i);
+      t->GetEntry(entry);
+      sqsum += (val*val);
+    }
+    t->SetBranchStatus("*",1);
+    return sqsum;
+
+  }
+
   vector<double> GetWeightSum(TTree* t, vector<string> weights, string cut){
+    vector<double> sums(weights.size(), 0.0);
+    if (!t){
+      cout<<"tree passed is null"<<endl;
+      return sums;
+    }
     t->Draw(">>e", cut.c_str() , "entrylist");
     vector<double> vals(weights.size(), 0.0);
-    vector<double> sums(weights.size(), 0.0);
     TEntryList* l = (TEntryList*)gDirectory->Get("e");
     t->SetBranchStatus("*",0);
     for (unsigned int i = 0 ; i < weights.size() ; ++i){
@@ -845,6 +924,26 @@ namespace Utils{
 
   }
 
+  TH2F* MakeEffHist(string name, TH2F* tot, TH2F* pass){
+    TH2F* hEff = (TH2F*)tot->Clone(name.c_str());
+    for ( int i = 0 ; i < tot->GetXaxis()->GetNbins() ; ++i ){
+      for ( int j = 0 ; j < tot->GetYaxis()->GetNbins() ; ++j ){
+	//if (m_name == "ETA_PT") cout<<i<<" "<<j<<endl;
+	
+	double ntot = tot->GetBinContent(i+1,j+1);
+	double npass = pass->GetBinContent(i+1,j+1);
+	double eff = 0, errhi = 0, errlo = 0;
+	if (ntot > 0 && npass > 0){
+	  eff = (double)npass/ntot;
+	  errhi = TEfficiency::ClopperPearson(ntot, npass, 0.68, true) - eff;
+	  errlo = eff - TEfficiency::ClopperPearson(ntot, npass, 0.68, false);
+	}
+	hEff->SetBinContent(i+1,j+1, eff);
+	hEff->SetBinError(i+1, j+1, max(errhi, errlo));
+      }
+    }
+    return hEff;
+  }
 
   #ifdef WITHPYTHON
   PyObject* geteff_py(string name, PyObject* data, PyObject* eff){
@@ -1048,6 +1147,14 @@ namespace Utils{
     return TPython::ObjectProxy_FromVoidPtr(o, o->ClassName());
   }
 
+
+  PyObject* MakeEffHist_py(string name, PyObject* t, PyObject* p){
+    TH2F* tot  = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(t));
+    TH2F* pass = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(p));
+    TH2F* o = MakeEffHist(name, tot, pass);
+    return TPython::ObjectProxy_FromVoidPtr(o, o->ClassName());
+  }
+
   double GetLumi_py(PyObject* pyf){
     TFile* f = (TFile*)(TPython::ObjectProxy_AsVoidPtr(pyf));
     return GetLumi(f);
@@ -1063,6 +1170,11 @@ namespace Utils{
     return GetWeightSum(t, w, cut);
   }
   
+  double GetWeightSqSum_py(PyObject* pyObj, string w, string cut){
+    TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+    return GetWeightSqSum(t, w, cut);
+  }
+  
   PyObject* GetWeightHist_py(string name, PyObject* h1, PyObject* h2){
     TH1F* histA = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(h1));
     TH1F* histB = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(h2));
@@ -1076,7 +1188,19 @@ namespace Utils{
     TH2F* hist = GetWeightHist2D(name, histA, histB);
     return TPython::ObjectProxy_FromVoidPtr(hist, hist->ClassName());
   }
-
+  PyObject* GetRatioHist_py(string name, PyObject* h1, PyObject* h2){
+    TH1F* histA = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(h1));
+    TH1F* histB = (TH1F*)(TPython::ObjectProxy_AsVoidPtr(h2));
+    TH1F* hist = GetRatioHist(name, histA, histB);
+    return TPython::ObjectProxy_FromVoidPtr(hist, hist->ClassName());
+  }
+  
+  PyObject* GetRatioHist2D_py(string name, PyObject* h1, PyObject* h2){
+    TH2F* histA = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(h1));
+    TH2F* histB = (TH2F*)(TPython::ObjectProxy_AsVoidPtr(h2));
+    TH2F* hist = GetRatioHist2D(name, histA, histB);
+    return TPython::ObjectProxy_FromVoidPtr(hist, hist->ClassName());
+  }
 
   boost::python::list GetWeightSum2_py(PyObject* pyObj, boost::python::list& weights, string cut){
     TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));

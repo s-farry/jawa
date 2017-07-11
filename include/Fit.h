@@ -12,9 +12,8 @@
 
 using namespace std;
 
-class Fit{
+class Fit : public JawaObj{
  protected:
-  string m_name;
   Expr* m_expr;
   TF1* m_tf1;
   TH1F* m_hist;

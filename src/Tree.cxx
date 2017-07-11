@@ -48,9 +48,6 @@ TTree* Tree::GetTTree(){
   return m_tree;
 }
 
-PyObject* Tree::GetTTree_py(){
-  return TPython::ObjectProxy_FromVoidPtr(m_tree, m_tree->ClassName());
-}
 
 void Tree::SetBranches(vector<string> variables){
   for (vector<string>::iterator iv = variables.begin() ; iv != variables.end() ; ++iv ){
@@ -85,6 +82,22 @@ void Tree::SetBranch(string name){
   else if ( type == "int"){
     m_output.insert(std::pair<string, Data*>(name, da));
     m_tree->SetBranchAddress(name.c_str() , m_output[name]->i);
+  }
+  else if ( type == "long"){
+    m_output.insert(std::pair<string, Data*>(name, da));
+    m_tree->SetBranchAddress(name.c_str() , m_output[name]->l);
+  }
+  else if ( type == "long64"){
+    m_output.insert(std::pair<string, Data*>(name, da));
+    m_tree->SetBranchAddress(name.c_str() , m_output[name]->l64);
+  }
+  else if ( type == "ulong"){
+    m_output.insert(std::pair<string, Data*>(name, da));
+    m_tree->SetBranchAddress(name.c_str() , m_output[name]->ul);
+  }
+  else if ( type == "ulong64"){
+    m_output.insert(std::pair<string, Data*>(name, da));
+    m_tree->SetBranchAddress(name.c_str() , m_output[name]->ul64);
   }
   else if ( type == "bool" ){
     m_output.insert(std::pair<string, Data*>(name, da));
@@ -170,6 +183,18 @@ double Tree::GetVal(string var){
     else if ( m_output[var]->type == "int" ){
       d = *(m_output[var]->i);
     }
+    else if ( m_output[var]->type == "long" ){
+      d = *(m_output[var]->l);
+    }
+    else if ( m_output[var]->type == "ulong" ){
+      d = *(m_output[var]->ul);
+    }
+    else if ( m_output[var]->type == "long64" ){
+      d = *(m_output[var]->l64);
+    }
+    else if ( m_output[var]->type == "ulong64" ){
+      d = *(m_output[var]->ul64);
+    }
     else if ( m_output[var]->type == "bool" ){
       d = *(m_output[var]->b);
     }
@@ -200,6 +225,10 @@ string Tree::GetBranchType(string name){
   else if (ctype == EDataType::kFloat_t) type="float";
   else if (ctype == EDataType::kBool_t) type="bool";
   else if (ctype == EDataType::kUInt_t) type="uint";
+  else if (ctype == EDataType::kULong_t) type="ulong";
+  else if (ctype == EDataType::kLong_t) type="long";
+  else if (ctype == EDataType::kULong64_t) type="ulong64";
+  else if (ctype == EDataType::kLong64_t) type="long64";
   else type="int"; // ctype == 3
   return type;
 }
@@ -214,7 +243,19 @@ Data::Data(string t){
     u = new unsigned int();
   } else if ( type == "int" ){
     i = new int();
-  } else{
+  }
+  else if ( type == "long" ){
+    l = new long();
+  } 
+  else if ( type == "ulong") {
+    ul = new unsigned long();
+  }
+  else if ( type == "long64" ){
+    l64 = new Long64_t();
+  } 
+  else if ( type == "ulong64") {
+    ul64 = new ULong64_t();
+  }else{
     b = new bool();
   }
 }
@@ -228,7 +269,20 @@ Data::~Data(){
     delete i;
   } else if ( type == "uint" ){
     delete u;
-  } else{
+  } 
+  else if (type == "long"){
+    delete l;
+  }
+  else if (type == "ulong"){
+    delete ul;
+  }
+  else if (type == "long64"){
+    delete l64;
+  }
+  else if (type == "ulong64"){
+    delete ul64;
+  }
+  else{
     delete b;
   }
 }
@@ -236,14 +290,6 @@ Data::~Data(){
 
 string Data::GetType(){
   return type;
-}
-
-double Tree::GetVal_py(string var){
-  return GetVal(var);
-}
-double Tree::GetVal2_py(Expr* e){
-  //Expr* e = boost::python::extract<Expr*>(pyObj);
-  return GetVal(e);
 }
 
 
@@ -303,12 +349,12 @@ int Tree::GetEntries(Expr* e){
 void Tree::SetWeight(double w){
   m_weight = w;
 }
-
+/*
 bool Tree::is_number(const std::string& s){
   //cout<<"checking is number for "<<s<<endl;
   return (strspn( s.c_str(), "-.01234567890") == s.size() );
 }
-
+*/
 double Tree::GetMean(Expr* e, EntryList* l){
   list<int> entries = l->GetList();
   SetBranches(e->GetVarNames());
@@ -383,8 +429,20 @@ vector< vector<double> > Tree::getCorrelationMatrix(vector<Expr*> exprs, Expr* c
 }
 
 
-
+#ifdef WITHPYTHON
 //For python
+double Tree::GetVal_py(string var){
+  return GetVal(var);
+}
+double Tree::GetVal2_py(Expr* e){
+  //Expr* e = boost::python::extract<Expr*>(pyObj);
+  return GetVal(e);
+}
+
+
+PyObject* Tree::GetTTree_py(){
+  return TPython::ObjectProxy_FromVoidPtr(m_tree, m_tree->ClassName());
+}
 
 double Tree::GetMean_py(Expr* e, Expr* cut){return GetMean(e, cut);}
 double Tree::GetStdDev_py(Expr* e, double mean, Expr* cut){return GetStdDev(e, mean, cut);}
@@ -412,3 +470,4 @@ boost::python::list Tree::getCorrelationMatrix_py(boost::python::list& ns, Expr*
   }
   return l;
 }
+#endif
