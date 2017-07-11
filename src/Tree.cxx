@@ -83,6 +83,22 @@ void Tree::SetBranch(string name){
     m_output.insert(std::pair<string, Data*>(name, da));
     m_tree->SetBranchAddress(name.c_str() , m_output[name]->i);
   }
+  else if ( type == "long"){
+    m_output.insert(std::pair<string, Data*>(name, da));
+    m_tree->SetBranchAddress(name.c_str() , m_output[name]->l);
+  }
+  else if ( type == "long64"){
+    m_output.insert(std::pair<string, Data*>(name, da));
+    m_tree->SetBranchAddress(name.c_str() , m_output[name]->l64);
+  }
+  else if ( type == "ulong"){
+    m_output.insert(std::pair<string, Data*>(name, da));
+    m_tree->SetBranchAddress(name.c_str() , m_output[name]->ul);
+  }
+  else if ( type == "ulong64"){
+    m_output.insert(std::pair<string, Data*>(name, da));
+    m_tree->SetBranchAddress(name.c_str() , m_output[name]->ul64);
+  }
   else if ( type == "bool" ){
     m_output.insert(std::pair<string, Data*>(name, da));
     m_tree->SetBranchAddress(name.c_str() , m_output[name]->b);
@@ -167,6 +183,18 @@ double Tree::GetVal(string var){
     else if ( m_output[var]->type == "int" ){
       d = *(m_output[var]->i);
     }
+    else if ( m_output[var]->type == "long" ){
+      d = *(m_output[var]->l);
+    }
+    else if ( m_output[var]->type == "ulong" ){
+      d = *(m_output[var]->ul);
+    }
+    else if ( m_output[var]->type == "long64" ){
+      d = *(m_output[var]->l64);
+    }
+    else if ( m_output[var]->type == "ulong64" ){
+      d = *(m_output[var]->ul64);
+    }
     else if ( m_output[var]->type == "bool" ){
       d = *(m_output[var]->b);
     }
@@ -197,6 +225,10 @@ string Tree::GetBranchType(string name){
   else if (ctype == EDataType::kFloat_t) type="float";
   else if (ctype == EDataType::kBool_t) type="bool";
   else if (ctype == EDataType::kUInt_t) type="uint";
+  else if (ctype == EDataType::kULong_t) type="ulong";
+  else if (ctype == EDataType::kLong_t) type="long";
+  else if (ctype == EDataType::kULong64_t) type="ulong64";
+  else if (ctype == EDataType::kLong64_t) type="long64";
   else type="int"; // ctype == 3
   return type;
 }
@@ -211,7 +243,19 @@ Data::Data(string t){
     u = new unsigned int();
   } else if ( type == "int" ){
     i = new int();
-  } else{
+  }
+  else if ( type == "long" ){
+    l = new long();
+  } 
+  else if ( type == "ulong") {
+    ul = new unsigned long();
+  }
+  else if ( type == "long64" ){
+    l64 = new Long64_t();
+  } 
+  else if ( type == "ulong64") {
+    ul64 = new ULong64_t();
+  }else{
     b = new bool();
   }
 }
@@ -225,7 +269,20 @@ Data::~Data(){
     delete i;
   } else if ( type == "uint" ){
     delete u;
-  } else{
+  } 
+  else if (type == "long"){
+    delete l;
+  }
+  else if (type == "ulong"){
+    delete ul;
+  }
+  else if (type == "long64"){
+    delete l64;
+  }
+  else if (type == "ulong64"){
+    delete ul64;
+  }
+  else{
     delete b;
   }
 }

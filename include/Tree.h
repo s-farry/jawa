@@ -25,6 +25,10 @@ class Data{
   float* f;
   bool* b;
   unsigned int* u;
+  long* l;
+  Long64_t* l64;
+  unsigned long* ul;
+  ULong64_t* ul64;
   string type;
   string GetType();
 };

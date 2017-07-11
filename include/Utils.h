@@ -81,6 +81,7 @@ namespace Utils{
   //void FCN_func(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag);
 
   double GetWeightSum(TTree* t, string w, string cut);
+  double GetWeightSqSum(TTree* t, string w, string cut);
   vector<double> GetWeightSum(TTree* t, vector<string> w, string cut);
   void saveAsTree(string fileName, vector<string> varNames, string output);
 
@@ -103,6 +104,7 @@ namespace Utils{
   PyObject* GetRatioHist2D_py(string name, PyObject* h1, PyObject* h2);
 
   double GetWeightSum_py(PyObject* py, string w, string cut);
+  double GetWeightSqSum_py(PyObject* py, string w, string cut);
   boost::python::list GetWeightSum2_py(PyObject* py, boost::python::list& weights, string cut);
   void RemoveErrors_py(PyObject* pyObj);
   double GetSum_py(PyObject* t, string leaf);

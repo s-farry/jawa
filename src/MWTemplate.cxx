@@ -46,7 +46,7 @@ MWTemplate::MWTemplate(string name, MWTemplate* A, MWTemplate* B) : Template(nam
 	string title(histA->GetTitle());
 	title += "_"+name+"_combined";
 	TH1F* histC = (TH1F*)histA->Clone(title.c_str());
-	histC->Add(histA);
+	histC->Add(histB);
 	varmap.insert(pair<string, TH1F*>((*imm).first, histC));
       }
     }
@@ -67,7 +67,7 @@ MWTemplate::MWTemplate(string name, MWTemplate* A, MWTemplate* B) : Template(nam
 	string title(histA->GetTitle());
 	title += "_combined";
 	TH2F* histC = (TH2F*)histA->Clone(title.c_str());
-	histC->Add(histA);
+	histC->Add(histB);
 	varmap.insert(pair<string, TH2F*>((*imm).first, histC));
       }
     }

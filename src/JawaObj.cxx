@@ -37,14 +37,17 @@ void JawaObj::verbose(const char* msg){
 }
 
 void JawaObj::progress(double progress, double width){
-  std::cout<< GetTime()<<" INFO [";
+  std::cout<< GetTime()<<" INFO" << BOLDCYAN<<" [";
   int pos = width * progress;
   for (int i = 0 ; i < width; ++i){
-    if (i < pos) std::cout << "=";
-    else if (i == pos) std::cout << ">";
+    //if (i < pos) std::cout << "=";
+    if (i < pos) std::cout<<"\u2588";
+    //else if (i == pos) std::cout << ">";
+    //else if ( i == pos ) std::cout<<"\u25B6";
+    //else if ( i == pos ) std::cout<<BOLDMAGENTA<<"\u2588";
     else std::cout<<" ";
   }
-  std::cout<<" ] " << int(progress * 100.0) << "%";
+  std::cout<<"] " << RESET << int(progress * 100.0) << "%" ;
   if (progress != 1) {
     std::cout<<"\r";
   }
@@ -62,7 +65,7 @@ string JawaObj::GetTime(){
   time (&rawtime);
   timeinfo = localtime(&rawtime);
   
-  strftime(buffer,80,"%d-%m-%Y %I:%M:%S",timeinfo);
+  strftime(buffer,80,"%d-%m-%Y %H:%M:%S",timeinfo);
   std::string str(buffer);
   return str;
 }

@@ -11,6 +11,7 @@ BOOST_PYTHON_MODULE(Jawa)
     def("RemoveErrors",  &Utils::RemoveErrors_py );
     def("GetWeightSum",  &Utils::GetWeightSum_py );
     def("GetWeightSum",  &Utils::GetWeightSum2_py );
+    def("GetWeightSqSum",&Utils::GetWeightSqSum_py );
     def("GetWeightHist", &Utils::GetWeightHist_py);
     def("GetWeightHist2D",&Utils::GetWeightHist2D_py);
     def("GetRatioHist" , &Utils::GetRatioHist_py);

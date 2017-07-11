@@ -770,8 +770,12 @@ namespace Utils{
   }
 
   double GetWeightSum(TTree* t, string w, string cut){
-    t->Draw(">>e", cut.c_str() , "entrylist");
+    if (!t) {
+      cout<<"tree passed is null"<<endl;
+      return 0.0;
+    }
     double val;
+    t->Draw(">>e", cut.c_str() , "entrylist");
     TEntryList* l = (TEntryList*)gDirectory->Get("e");
     t->SetBranchStatus("*",0);
     t->SetBranchStatus(w.c_str(),1);
@@ -788,10 +792,37 @@ namespace Utils{
 
   }
 
+  double GetWeightSqSum(TTree* t, string w, string cut){
+    if (!t) {
+      cout<<"tree passed is null"<<endl;
+      return 0.0;
+    }
+    double val;
+    t->Draw(">>e", cut.c_str() , "entrylist");
+    TEntryList* l = (TEntryList*)gDirectory->Get("e");
+    t->SetBranchStatus("*",0);
+    t->SetBranchStatus(w.c_str(),1);
+    t->SetBranchAddress(w.c_str(), &val);
+    int nentries = l->GetN();
+    double sqsum = 0;
+    for (int i = 0; i < nentries; ++i){
+      int entry = l->GetEntry(i);
+      t->GetEntry(entry);
+      sqsum += (val*val);
+    }
+    t->SetBranchStatus("*",1);
+    return sqsum;
+
+  }
+
   vector<double> GetWeightSum(TTree* t, vector<string> weights, string cut){
+    vector<double> sums(weights.size(), 0.0);
+    if (!t){
+      cout<<"tree passed is null"<<endl;
+      return sums;
+    }
     t->Draw(">>e", cut.c_str() , "entrylist");
     vector<double> vals(weights.size(), 0.0);
-    vector<double> sums(weights.size(), 0.0);
     TEntryList* l = (TEntryList*)gDirectory->Get("e");
     t->SetBranchStatus("*",0);
     for (unsigned int i = 0 ; i < weights.size() ; ++i){
@@ -1137,6 +1168,11 @@ namespace Utils{
   double GetWeightSum_py(PyObject* pyObj, string w, string cut){
     TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
     return GetWeightSum(t, w, cut);
+  }
+  
+  double GetWeightSqSum_py(PyObject* pyObj, string w, string cut){
+    TTree* t = (TTree*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
+    return GetWeightSqSum(t, w, cut);
   }
   
   PyObject* GetWeightHist_py(string name, PyObject* h1, PyObject* h2){

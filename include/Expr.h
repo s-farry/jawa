@@ -65,7 +65,7 @@ class Expr : public JawaObj {
   double CB(double x, double N, double a, double n, double m, double s, double sl, double c);
   double Voigtian(double x, double N, double m, double s, double a);
   double Gaussian(double x, double N, double m, double s);
-
+  double ptrel(double x1, double y1, double z1, double x2, double y2, double z2);
 
 
   #ifdef WITHPYTHON

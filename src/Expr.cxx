@@ -144,7 +144,8 @@ bool Expr::isFunction( const std::string& token)
     token == "tan" || token == "log" || token == "log10" ||
     token == "min" || token == "max" || token == "cosh" ||
     token == "sinh" || token == "tanh" || token == "exp" ||
-    token == "CB" || token == "Voigtian" || token == "Gaussian";
+    token == "CB" || token == "Voigtian" || token == "Gaussian" ||
+    token == "atanh" || token == "ptrel"  ;
 }
 
       
@@ -397,6 +398,7 @@ double Expr::RPNtoDouble( std::vector<double>& input )
 	  else if (token == "tanh") result =  tanh(d);
 	  else if (token == "log") result =  log(d);
 	  else if (token == "log10") result =  log10(d);
+	  else if (token == "atanh") result = atanh(d);
 	  else if (token == "exp") result = exp(d);
 	  else if (token == "min") {
 	    double d2 = st.top();
@@ -445,6 +447,19 @@ double Expr::RPNtoDouble( std::vector<double>& input )
 	    st.pop();
 	    result = Gaussian(d4, d3, d2, d);
 	  }
+	  else if (token == "ptrel") {
+	    double d2 = st.top();
+	    st.pop();
+	    double d3 = st.top();
+	    st.pop();
+	    double d4 = st.top();
+	    st.pop();
+	    double d5 = st.top();
+	    st.pop();
+	    double d6 = st.top();
+	    st.pop();
+	    result = ptrel(d6, d5, d4, d3, d2, d);
+	  }
 	  else result = -1.0;
 	  // Push result onto stack         
 	  //std::ostringstream s;        
@@ -456,6 +471,21 @@ double Expr::RPNtoDouble( std::vector<double>& input )
   return st.top();        
 }          
 
+
+double Expr::ptrel(double x1, double y1, double z1, double x2, double y2, double z2){
+
+
+  //double ptrel = std::sqrt((*ip)->momentum().Vect().mag2() - (jet->momentum().Vect().Dot((*ip)->momentum().Vect())/jet->momentum().Vect().mag2()));
+
+  double amag2 = x1*x1 + y1*y1 + z1*z1;
+  double bmag2 = x2*x2 + y2*y2 + z2*z2;
+  double bdota = x1*x2 + y1*y2 + z1*z2;
+
+  //double pLrel2 = bdota*bdota / bmag2;
+
+
+  return std::sqrt(amag2 - (bdota*bdota/bmag2));
+}
 
 /*
 double Expr::RPNtoDouble( std::vector<double>& input )          
